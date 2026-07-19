@@ -365,6 +365,7 @@
 .status-badge.pending { color: var(--pending); background: var(--pending-dim); }
 .status-badge.in-progress { color: var(--progress); background: var(--progress-dim); }
 .status-badge.resolved { color: var(--resolved); background: var(--resolved-dim); }
+.status-badge.cancelled { color: var(--text-dim); background: var(--surface-2); }
 
 .hazard-tag {
   display: inline-flex;
@@ -654,6 +655,63 @@
 .detail-meta { margin-top: 1rem; }
 .detail-meta .reported-by,
 .detail-meta .date { margin-top: 0.3rem; }
+
+/* ===== Complaint detail: edit / withdraw actions ===== */
+.detail-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+.detail-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.1rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: filter 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.detail-actions button svg { width: 15px; height: 15px; }
+.detail-actions button:disabled { opacity: 0.6; cursor: wait; }
+
+.edit-btn, .save-btn {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.edit-btn:hover:not(:disabled), .save-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.cancel-btn {
+  background: var(--hazard-dim);
+  color: var(--hazard);
+  border-color: var(--hazard-dim);
+}
+.cancel-btn:hover:not(:disabled) {
+  background: var(--hazard);
+  color: #fff;
+}
+
+.secondary-btn {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--line);
+}
+.secondary-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--text-h);
+}
+
+@media (max-width: 480px) {
+  .detail-actions { flex-direction: column; align-items: stretch; }
+  .detail-actions button { justify-content: center; }
+}
 
 /* ===== Card action buttons (variant colors) ===== */
 .complaint-card button.assign-btn { color: var(--accent-ink); background: var(--accent); }
