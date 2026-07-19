@@ -1,4 +1,5 @@
-import { IconAlertTriangle, IconPin, IconUserPlus, IconCheckCircle } from "./Icons";
+import { Link } from "react-router-dom";
+import { IconAlertTriangle, IconPin, IconUserPlus, IconCheckCircle, IconArrowRight } from "./Icons";
 
 export default function ComplaintCard({ complaint, onAssign, onComplete }) {
   const statusClass = complaint.status.toLowerCase().replace(" ", "-");
@@ -7,7 +8,7 @@ export default function ComplaintCard({ complaint, onAssign, onComplete }) {
     <div className="complaint-card">
       <span className="case-no">Case No. {String(complaint.id).padStart(4, "0")}</span>
       <div className="complaint-header">
-        <h3>{complaint.location}</h3>
+        <h3><Link to={`/complaint/${complaint.id}`} className="card-title-link">{complaint.location}</Link></h3>
         <span className={`status-badge ${statusClass}`}>{complaint.status}</span>
       </div>
       <p>{complaint.description}</p>
@@ -16,17 +17,22 @@ export default function ComplaintCard({ complaint, onAssign, onComplete }) {
       )}
       {complaint.reportedBy && <p className="reported-by">Filed by {complaint.reportedBy}</p>}
       <p className="date">Reported: {complaint.createdAt}</p>
-      {complaint.coords && (
-        <a className="map-link" href={`https://www.google.com/maps?q=${complaint.coords.lat},${complaint.coords.lng}`} target="_blank" rel="noopener noreferrer">
-          <IconPin /> View on Map
-        </a>
-      )}
-      {onAssign && complaint.status === "Pending" && (
-        <button className="assign-btn" onClick={() => onAssign(complaint.id)}><IconUserPlus /> Assign Crew</button>
-      )}
-      {onComplete && complaint.status === "In Progress" && (
-        <button className="complete-btn" onClick={() => onComplete(complaint.id)}><IconCheckCircle /> Mark Completed</button>
-      )}
+      <div className="card-actions">
+        {complaint.coords && (
+          <a className="map-link" href={`https://www.google.com/maps?q=${complaint.coords.lat},${complaint.coords.lng}`} target="_blank" rel="noopener noreferrer">
+            <IconPin /> View on Map
+          </a>
+        )}
+        {onAssign && complaint.status === "Pending" && (
+          <button className="assign-btn" onClick={() => onAssign(complaint.id)}><IconUserPlus /> Assign Crew</button>
+        )}
+        {onComplete && complaint.status === "In Progress" && (
+          <button className="complete-btn" onClick={() => onComplete(complaint.id)}><IconCheckCircle /> Mark Completed</button>
+        )}
+        <Link to={`/complaint/${complaint.id}`} className="card-details-link">
+          View Details <IconArrowRight />
+        </Link>
+      </div>
     </div>
   );
 }

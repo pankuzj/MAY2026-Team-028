@@ -8,6 +8,7 @@ import ReportComplaint from "./pages/ReportComplaint";
 import MyComplaints from "./pages/MyComplaints";
 import CrewTasks from "./pages/CrewTasks";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
+import ComplaintDetail from "./pages/ComplaintDetail";
 import "./App.css";
 
 function App() {
@@ -29,6 +30,9 @@ function App() {
           } />
           <Route path="/dashboard" element={
             <ProtectedRoute allowedRoles={["admin"]}><SupervisorDashboard /></ProtectedRoute>
+          } />
+          <Route path="/complaint/:id" element={
+            <ProtectedRoute><ComplaintDetail /></ProtectedRoute>
           } />
         </Routes>
       </main>
