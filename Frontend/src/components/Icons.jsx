@@ -125,3 +125,34 @@ export const IconStar = (props) => (
     <path d="M12 3.8 14.5 9l5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4L9.5 9Z" />
   </svg>
 );
+
+export const IconSearch = (props) => (
+  <svg {...base} {...props}>
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <path d="M19.5 19.5 15.3 15.3" />
+  </svg>
+);
+
+export const IconSliders = (props) => (
+  <svg {...base} {...props}>
+    <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h13M21 18h-1" />
+    <circle cx="14.5" cy="6" r="2" />
+    <circle cx="8.5" cy="12" r="2" />
+    <circle cx="18.5" cy="18" r="2" />
+  </svg>
+);
+
+export const IconX = (props) => (
+  <svg {...base} {...props}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </svg>
+);
+
+export const IconRadar = (props) => (
+  <svg {...base} {...props}>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="4.5" />
+    <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+    <path d="M12 3.5V1.5M20.5 12H12" />
+  </svg>
+);

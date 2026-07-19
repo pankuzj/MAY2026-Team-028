@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useComplaints } from "../context/ComplaintsContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { getDuplicateMatches } from "../utils/duplicateDetection";
 import {
   IconArrowRight,
   IconPin,
@@ -14,7 +15,16 @@ import {
   IconGrid,
   IconStar,
   IconUserPlus,
+  IconRadar,
 } from "../components/Icons";
+
+// Same ~200m / text-overlap thresholds as the duplicate warning shown to
+// citizens on ReportComplaint (#5) — just surfaced here as a browsable
+// panel for supervisors instead of a blocking confirm dialog.
+const formatDistance = (meters) => {
+  if (meters === null || meters === undefined) return null;
+  return meters < 1000 ? `${Math.round(meters)} m away` : `${(meters / 1000).toFixed(1)} km away`;
+};
 
 const STEPS = ["Pending", "In Progress", "Resolved"];
 
@@ -44,6 +54,14 @@ export default function ComplaintDetail() {
 
   // Crew can flag a case as needing backup while it's actively being worked.
   const canRequestSupport = user?.role === "crew" && complaint?.status === "In Progress";
+
+  // Admin-only "Similar/Nearby Complaints" panel (#10) — reuses the exact
+  // same Haversine + text-overlap heuristic as the duplicate warning (#5),
+  // just displayed as a browsable panel instead of a blocking prompt.
+  const nearby = useMemo(
+    () => (complaint && user?.role === "admin" ? getDuplicateMatches(complaint, complaints) : []),
+    [complaint, complaints, user]
+  );
 
   // Citizens can rate the resolution once it's done, but only once.
   const canGiveFeedback =
@@ -195,6 +213,43 @@ export default function ComplaintDetail() {
           </div>
         ))}
       </div>
+
+      {user?.role === "admin" && (
+        <div className="nearby-panel">
+          <h2><IconRadar /> Similar / Nearby Complaints</h2>
+          {nearby.length === 0 ? (
+            <p>No similar or nearby complaints found.</p>
+          ) : (
+            <ul className="nearby-list">
+              {nearby.map((m) => {
+                const dist = formatDistance(m.distance);
+                const statusClass = m.complaint.status.toLowerCase().replace(" ", "-");
+                return (
+                  <li key={m.complaint.id} className="nearby-item">
+                    <Link to={`/complaint/${m.complaint.id}`} className="nearby-item-link">
+                      <div className="nearby-item-main">
+                        <span className="case-no">
+                          Case No. {String(m.complaint.id).padStart(4, "0")}
+                        </span>
+                        <span className={`status-badge ${statusClass}`}>{m.complaint.status}</span>
+                      </div>
+                      <p className="nearby-item-location"><IconPin /> {m.complaint.location}</p>
+                      <p className="nearby-item-desc">{m.complaint.description}</p>
+                      <div className="nearby-item-meta">
+                        {dist && <span>{dist}</span>}
+                        {m.locationScore >= 0.6 && <span>Matching location text</span>}
+                        {m.locationScore < 0.6 && m.descScore >= 0.35 && (
+                          <span>Similar description</span>
+                        )}
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
 
       {error && <p className="loc-error"><IconAlertCircle /> {error}</p>}
 
