@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useComplaints } from "../context/ComplaintsContext";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { IconPin, IconAlertCircle, IconCamera, IconReport } from "../components/Icons";
 
 export default function ReportComplaint() {
   const { addComplaint } = useComplaints();
   const { user } = useAuth();
+  const { notify } = useToast();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -62,10 +64,11 @@ export default function ReportComplaint() {
     );
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.location || !form.description) return;
-    addComplaint({ ...form, reportedBy: user?.name });
+    await addComplaint({ ...form, reportedBy: user?.name });
+    notify("Complaint submitted successfully", "success");
     navigate("/my-complaints");
   };
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useComplaints } from "../context/ComplaintsContext";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import {
   IconArrowRight,
   IconPin,
@@ -25,6 +26,7 @@ export default function ComplaintDetail() {
   const { id } = useParams();
   const { complaints, updateComplaint, cancelComplaint } = useComplaints();
   const { user } = useAuth();
+  const { notify } = useToast();
   const navigate = useNavigate();
 
   const complaint = complaints.find((c) => String(c.id) === id);
@@ -64,8 +66,11 @@ export default function ComplaintDetail() {
     const result = await updateComplaint(complaint.id, form);
     if (result.success) {
       setEditing(false);
+      notify("Changes saved", "success");
     } else {
-      setError(result.error || "Couldn't save changes. Try again.");
+      const msg = result.error || "Couldn't save changes. Try again.";
+      setError(msg);
+      notify(msg, "error");
     }
   };
 
@@ -75,9 +80,12 @@ export default function ComplaintDetail() {
     const result = await cancelComplaint(complaint.id);
     setCancelling(false);
     if (result.success) {
+      notify("Complaint withdrawn", "info");
       navigate(back.to);
     } else {
-      setError(result.error || "Couldn't withdraw this complaint.");
+      const msg = result.error || "Couldn't withdraw this complaint.";
+      setError(msg);
+      notify(msg, "error");
     }
   };
 
