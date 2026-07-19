@@ -1,24 +1,25 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconArrowRight } from "../components/Icons";
 
 const roleConfig = {
   citizen: {
     heading: "Citizen Portal",
     blurb: "Report garbage issues and track their status.",
     actions: [
-      { to: "/report", label: "File a Report" },
-      { to: "/my-complaints", label: "My Complaints" },
+      { to: "/report", label: "File a Report", icon: IconReport },
+      { to: "/my-complaints", label: "My Complaints", icon: IconClipboard },
     ],
   },
   crew: {
     heading: "Cleanup Crew",
     blurb: "View assigned tasks and mark work complete.",
-    actions: [{ to: "/crew", label: "Assigned Tasks" }],
+    actions: [{ to: "/crew", label: "Assigned Tasks", icon: IconBroom }],
   },
   admin: {
     heading: "Operations Console",
     blurb: "Manage incoming complaints and assign crews.",
-    actions: [{ to: "/dashboard", label: "Open Dashboard" }],
+    actions: [{ to: "/dashboard", label: "Open Dashboard", icon: IconGrid }],
   },
 };
 
@@ -35,7 +36,9 @@ export default function Home() {
       <div className="role-cards">
         {config.actions.map((a) => (
           <div key={a.to} className="role-card" onClick={() => navigate(a.to)}>
+            <span className="role-card-icon"><a.icon /></span>
             <h2>{a.label}</h2>
+            <span className="card-arrow">Open <IconArrowRight /></span>
           </div>
         ))}
       </div>

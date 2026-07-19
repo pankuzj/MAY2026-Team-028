@@ -1,19 +1,20 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { IconHome, IconReport, IconClipboard, IconBroom, IconGrid } from "./Icons";
 
 const roleLinks = {
   citizen: [
-    { to: "/", label: "Home", icon: "🏠" },
-    { to: "/report", label: "Report", icon: "📝" },
-    { to: "/my-complaints", label: "Mine", icon: "📋" },
+    { to: "/", label: "Home", icon: IconHome },
+    { to: "/report", label: "Report", icon: IconReport },
+    { to: "/my-complaints", label: "Mine", icon: IconClipboard },
   ],
   crew: [
-    { to: "/", label: "Home", icon: "🏠" },
-    { to: "/crew", label: "Tasks", icon: "🧹" },
+    { to: "/", label: "Home", icon: IconHome },
+    { to: "/crew", label: "Tasks", icon: IconBroom },
   ],
   admin: [
-    { to: "/", label: "Home", icon: "🏠" },
-    { to: "/dashboard", label: "Admin", icon: "🗂️" },
+    { to: "/", label: "Home", icon: IconHome },
+    { to: "/dashboard", label: "Admin", icon: IconGrid },
   ],
 };
 
@@ -27,7 +28,7 @@ export default function BottomNav() {
     <nav className="bottom-nav">
       {links.map((link) => (
         <Link key={link.to} to={link.to} className={location.pathname === link.to ? "active" : ""}>
-          <span className="icon">{link.icon}</span>
+          <link.icon />
           <span className="label">{link.label}</span>
         </Link>
       ))}

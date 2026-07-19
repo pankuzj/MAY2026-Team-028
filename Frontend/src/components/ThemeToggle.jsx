@@ -1,4 +1,5 @@
 import { useTheme } from "../context/ThemeContext";
+import { IconSun, IconMoon } from "./Icons";
 
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
@@ -9,7 +10,7 @@ export default function ThemeToggle() {
       aria-label="Toggle dark/light mode"
       title="Toggle theme"
     >
-      {theme === "dark" ? "☀️" : "🌙"}
+      {theme === "dark" ? <IconSun /> : <IconMoon />}
     </button>
   );
 }

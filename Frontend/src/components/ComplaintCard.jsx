@@ -1,3 +1,5 @@
+import { IconAlertTriangle, IconPin, IconUserPlus, IconCheckCircle } from "./Icons";
+
 export default function ComplaintCard({ complaint, onAssign, onComplete }) {
   const statusClass = complaint.status.toLowerCase().replace(" ", "-");
 
@@ -10,20 +12,20 @@ export default function ComplaintCard({ complaint, onAssign, onComplete }) {
       </div>
       <p>{complaint.description}</p>
       {complaint.hazard && complaint.hazard !== "None" && (
-        <p className="hazard-tag">⚠ {complaint.hazard}</p>
+        <p className="hazard-tag"><IconAlertTriangle /> {complaint.hazard}</p>
       )}
       {complaint.reportedBy && <p className="reported-by">Filed by {complaint.reportedBy}</p>}
       <p className="date">Reported: {complaint.createdAt}</p>
       {complaint.coords && (
         <a className="map-link" href={`https://www.google.com/maps?q=${complaint.coords.lat},${complaint.coords.lng}`} target="_blank" rel="noopener noreferrer">
-          📍 View on Map
+          <IconPin /> View on Map
         </a>
       )}
       {onAssign && complaint.status === "Pending" && (
-        <button className="assign-btn" onClick={() => onAssign(complaint.id)}>Assign Crew</button>
+        <button className="assign-btn" onClick={() => onAssign(complaint.id)}><IconUserPlus /> Assign Crew</button>
       )}
       {onComplete && complaint.status === "In Progress" && (
-        <button className="complete-btn" onClick={() => onComplete(complaint.id)}>Mark Completed</button>
+        <button className="complete-btn" onClick={() => onComplete(complaint.id)}><IconCheckCircle /> Mark Completed</button>
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useComplaints } from "../context/ComplaintsContext";
 import { useAuth } from "../context/AuthContext";
+import { IconPin, IconAlertCircle, IconCamera, IconReport } from "../components/Icons";
 
 export default function ReportComplaint() {
   const { addComplaint } = useComplaints();
@@ -91,16 +92,16 @@ export default function ReportComplaint() {
             onClick={handleUseLocation}
             disabled={locating}
           >
-            {locating ? "Locating..." : "📍 Use My Location"}
+            <IconPin /> {locating ? "Locating..." : "Use My Location"}
           </button>
         </div>
 
         {form.coords && (
           <p className="coords-preview">
-            GPS captured: {form.coords.lat.toFixed(5)}, {form.coords.lng.toFixed(5)}
+            <IconPin /> GPS captured: {form.coords.lat.toFixed(5)}, {form.coords.lng.toFixed(5)}
           </p>
         )}
-        {locError && <p className="loc-error">{locError}</p>}
+        {locError && <p className="loc-error"><IconAlertCircle /> {locError}</p>}
 
         <label>
           Description
@@ -125,7 +126,7 @@ export default function ReportComplaint() {
         </label>
 
         <label>
-          Upload Photo
+          <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}><IconCamera /> Upload Photo</span>
           <input type="file" accept="image/*" onChange={handlePhoto} />
         </label>
 
@@ -133,7 +134,7 @@ export default function ReportComplaint() {
           <img src={form.photo} alt="preview" className="photo-preview" />
         )}
 
-        <button type="submit">Submit Complaint</button>
+        <button type="submit"><IconReport /> Submit Complaint</button>
       </form>
     </div>
   );

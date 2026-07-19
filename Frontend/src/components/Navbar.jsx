@@ -1,14 +1,15 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut } from "./Icons";
 
 const roleLinks = {
   citizen: [
-    { to: "/report", label: "Report Issue" },
-    { to: "/my-complaints", label: "My Complaints" },
+    { to: "/report", label: "Report Issue", icon: IconReport },
+    { to: "/my-complaints", label: "My Complaints", icon: IconClipboard },
   ],
-  crew: [{ to: "/crew", label: "Assigned Tasks" }],
-  admin: [{ to: "/dashboard", label: "Dashboard" }],
+  crew: [{ to: "/crew", label: "Assigned Tasks", icon: IconBroom }],
+  admin: [{ to: "/dashboard", label: "Dashboard", icon: IconGrid }],
 };
 
 export default function Navbar() {
@@ -26,11 +27,19 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <Link to={user ? "/" : "/login"} className="brand">SmartSweep</Link>
+      <Link to={user ? "/" : "/login"} className="brand">
+        <span className="brand-mark">
+          <IconBroom />
+        </span>
+        SmartSweep
+      </Link>
       {user && (
         <div className="nav-links desktop-nav-links">
           {links.map((l) => (
-            <Link key={l.to} to={l.to} className={isActive(l.to)}>{l.label}</Link>
+            <Link key={l.to} to={l.to} className={isActive(l.to)}>
+              <l.icon />
+              {l.label}
+            </Link>
           ))}
         </div>
       )}
@@ -38,7 +47,10 @@ export default function Navbar() {
         {user && (
           <>
             <span className="user-badge desktop-nav-links">{user.name}</span>
-            <button className="logout-btn" onClick={handleLogout}>Log Out</button>
+            <button className="logout-btn" onClick={handleLogout}>
+              <IconLogOut />
+              Log Out
+            </button>
           </>
         )}
         <ThemeToggle />
