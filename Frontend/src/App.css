@@ -380,7 +380,22 @@
   border-radius: var(--radius-pill);
 }
 .hazard-tag svg { width: 13px; height: 13px; flex-shrink: 0; }
-.complaint-card p:not(.hazard-tag):not(.date):not(.reported-by) { margin-top: 0.6rem; color: var(--text); font-size: 0.88rem; line-height: 1.5; }
+
+.duplicate-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--pending);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin: 0.65rem 0.4rem 0.15rem 0;
+  background: var(--pending-dim);
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-pill);
+}
+.duplicate-tag svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+.complaint-card p:not(.hazard-tag):not(.duplicate-tag):not(.date):not(.reported-by) { margin-top: 0.6rem; color: var(--text); font-size: 0.88rem; line-height: 1.5; }
 .date { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.7rem; }
 .reported-by { font-size: 0.78rem; color: var(--text-dim); margin-top: 0.3rem; }
 
@@ -655,6 +670,75 @@
 .detail-meta { margin-top: 1rem; }
 .detail-meta .reported-by,
 .detail-meta .date { margin-top: 0.3rem; }
+
+/* ===== Duplicate complaint warning ===== */
+.duplicate-warning {
+  border: 1px solid var(--pending-dim);
+  background: var(--pending-dim);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.duplicate-warning-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--pending);
+  font-size: 0.88rem;
+}
+.duplicate-warning-title svg { width: 17px; height: 17px; flex-shrink: 0; }
+.duplicate-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.duplicate-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+  flex-wrap: wrap;
+}
+.duplicate-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-h);
+  text-decoration: none;
+}
+.duplicate-list a:hover { color: var(--accent); }
+.duplicate-list a svg { width: 13px; height: 13px; }
+.duplicate-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.duplicate-actions button {
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+@media (max-width: 480px) {
+  .duplicate-actions { flex-direction: column; align-items: stretch; }
+  .duplicate-actions button { justify-content: center; }
+}
 
 /* ===== Complaint detail: edit / withdraw actions ===== */
 .detail-actions {

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { IconAlertTriangle, IconPin, IconUserPlus, IconCheckCircle, IconArrowRight } from "./Icons";
 
-export default function ComplaintCard({ complaint, onAssign, onComplete }) {
+export default function ComplaintCard({ complaint, onAssign, onComplete, duplicatesOf }) {
   const statusClass = complaint.status.toLowerCase().replace(" ", "-");
 
   return (
@@ -12,6 +12,12 @@ export default function ComplaintCard({ complaint, onAssign, onComplete }) {
         <span className={`status-badge ${statusClass}`}>{complaint.status}</span>
       </div>
       <p>{complaint.description}</p>
+      {duplicatesOf?.length > 0 && (
+        <p className="duplicate-tag">
+          <IconAlertTriangle /> Possible Duplicate of Case #{String(duplicatesOf[0].complaint.id).padStart(4, "0")}
+          {duplicatesOf.length > 1 && ` (+${duplicatesOf.length - 1} more)`}
+        </p>
+      )}
       {complaint.hazard && complaint.hazard !== "None" && (
         <p className="hazard-tag"><IconAlertTriangle /> {complaint.hazard}</p>
       )}

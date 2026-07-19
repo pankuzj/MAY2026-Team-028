@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useComplaints } from "../context/ComplaintsContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { IconPin, IconAlertCircle, IconCamera, IconReport } from "../components/Icons";
+import { findPossibleDuplicates } from "../utils/duplicateDetection";
+import { IconPin, IconAlertCircle, IconAlertTriangle, IconCamera, IconReport, IconArrowRight } from "../components/Icons";
 
 export default function ReportComplaint() {
-  const { addComplaint } = useComplaints();
+  const { complaints, addComplaint } = useComplaints();
   const { user } = useAuth();
   const { notify } = useToast();
   const navigate = useNavigate();
@@ -21,10 +22,12 @@ export default function ReportComplaint() {
 
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState("");
+  const [duplicates, setDuplicates] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (duplicates.length) setDuplicates([]);
   };
 
   const handlePhoto = (e) => {
@@ -64,12 +67,27 @@ export default function ReportComplaint() {
     );
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.location || !form.description) return;
+  const submitComplaint = async () => {
     await addComplaint({ ...form, reportedBy: user?.name });
     notify("Complaint submitted successfully", "success");
     navigate("/my-complaints");
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.location || !form.description) return;
+
+    const matches = findPossibleDuplicates(form, complaints);
+    if (matches.length) {
+      setDuplicates(matches);
+      return;
+    }
+    await submitComplaint();
+  };
+
+  const handleSubmitAnyway = async () => {
+    setDuplicates([]);
+    await submitComplaint();
   };
 
   return (
@@ -135,6 +153,35 @@ export default function ReportComplaint() {
 
         {form.photo && (
           <img src={form.photo} alt="preview" className="photo-preview" />
+        )}
+
+        {duplicates.length > 0 && (
+          <div className="duplicate-warning">
+            <p className="duplicate-warning-title">
+              <IconAlertTriangle /> This looks similar to {duplicates.length === 1 ? "an existing report" : "existing reports"}
+            </p>
+            <ul className="duplicate-list">
+              {duplicates.slice(0, 3).map(({ complaint }) => (
+                <li key={complaint.id}>
+                  <Link to={`/complaint/${complaint.id}`} target="_blank" rel="noopener noreferrer">
+                    Case #{String(complaint.id).padStart(4, "0")} — {complaint.location}
+                    <IconArrowRight />
+                  </Link>
+                  <span className={`status-badge ${complaint.status.toLowerCase().replace(" ", "-")}`}>
+                    {complaint.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="duplicate-actions">
+              <button type="button" className="secondary-btn" onClick={() => setDuplicates([])}>
+                Let me edit
+              </button>
+              <button type="button" className="edit-btn" onClick={handleSubmitAnyway}>
+                Submit Anyway
+              </button>
+            </div>
+          </div>
         )}
 
         <button type="submit"><IconReport /> Submit Complaint</button>
