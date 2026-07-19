@@ -12,6 +12,8 @@ import {
   IconClipboard,
   IconReport,
   IconGrid,
+  IconStar,
+  IconUserPlus,
 } from "../components/Icons";
 
 const STEPS = ["Pending", "In Progress", "Resolved"];
@@ -40,10 +42,24 @@ export default function ComplaintDetail() {
     complaint?.reportedBy === user?.name &&
     complaint?.status === "Pending";
 
+  // Crew can flag a case as needing backup while it's actively being worked.
+  const canRequestSupport = user?.role === "crew" && complaint?.status === "In Progress";
+
+  // Citizens can rate the resolution once it's done, but only once.
+  const canGiveFeedback =
+    user?.role === "citizen" &&
+    complaint?.reportedBy === user?.name &&
+    complaint?.status === "Resolved" &&
+    !complaint?.feedback;
+
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
   const [error, setError] = useState("");
   const [cancelling, setCancelling] = useState(false);
+  const [requestingSupport, setRequestingSupport] = useState(false);
+  const [feedbackForm, setFeedbackForm] = useState({ rating: 0, comment: "" });
+  const [hoveredStar, setHoveredStar] = useState(0);
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
   const startEditing = () => {
     setForm({
@@ -89,6 +105,39 @@ export default function ComplaintDetail() {
     }
   };
 
+  const handleRequestSupport = async () => {
+    setRequestingSupport(true);
+    const result = await updateComplaint(complaint.id, { needsHelp: !complaint.needsHelp });
+    setRequestingSupport(false);
+    if (result.success) {
+      notify(
+        complaint.needsHelp ? "Support request cancelled" : "Additional support requested",
+        complaint.needsHelp ? "info" : "success"
+      );
+    } else {
+      notify(result.error || "Couldn't update the support request.", "error");
+    }
+  };
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (!feedbackForm.rating) return;
+    setSubmittingFeedback(true);
+    const result = await updateComplaint(complaint.id, {
+      feedback: {
+        rating: feedbackForm.rating,
+        comment: feedbackForm.comment,
+        submittedAt: new Date().toISOString().slice(0, 10),
+      },
+    });
+    setSubmittingFeedback(false);
+    if (result.success) {
+      notify("Thanks for your feedback!", "success");
+    } else {
+      notify(result.error || "Couldn't submit feedback.", "error");
+    }
+  };
+
   if (!complaint) {
     return (
       <div className="page">
@@ -125,6 +174,16 @@ export default function ComplaintDetail() {
           <div className="detail-photo detail-photo-empty">No photo attached</div>
         )}
       </div>
+
+      {user?.role === "crew" && complaint.hazard && complaint.hazard !== "None" && (
+        <div className="hazard-banner">
+          <IconAlertTriangle />
+          <div>
+            <strong>Hazard Reported: {complaint.hazard}</strong>
+            <p>Take appropriate precautions while attending this site.</p>
+          </div>
+        </div>
+      )}
 
       {/* Status timeline */}
       <div className="status-timeline">
@@ -221,6 +280,73 @@ export default function ComplaintDetail() {
               >
                 {cancelling ? "Withdrawing..." : "Withdraw Complaint"}
               </button>
+            </div>
+          )}
+
+          {canRequestSupport && (
+            <div className="detail-actions">
+              <button
+                type="button"
+                className={complaint.needsHelp ? "secondary-btn" : "edit-btn"}
+                onClick={handleRequestSupport}
+                disabled={requestingSupport}
+              >
+                <IconUserPlus />
+                {requestingSupport
+                  ? "Updating..."
+                  : complaint.needsHelp
+                  ? "Cancel Support Request"
+                  : "Request Additional Support"}
+              </button>
+            </div>
+          )}
+
+          {canGiveFeedback && (
+            <form onSubmit={handleFeedbackSubmit} className="complaint-form feedback-form">
+              <h2>Rate the Resolution</h2>
+              <div className="star-rating">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={`star-btn ${n <= (hoveredStar || feedbackForm.rating) ? "filled" : ""}`}
+                    onMouseEnter={() => setHoveredStar(n)}
+                    onMouseLeave={() => setHoveredStar(0)}
+                    onClick={() => setFeedbackForm((prev) => ({ ...prev, rating: n }))}
+                    aria-label={`${n} star${n > 1 ? "s" : ""}`}
+                  >
+                    <IconStar />
+                  </button>
+                ))}
+              </div>
+              <label>
+                Comments (optional)
+                <textarea
+                  value={feedbackForm.comment}
+                  onChange={(e) =>
+                    setFeedbackForm((prev) => ({ ...prev, comment: e.target.value }))
+                  }
+                  placeholder="How did the cleanup go?"
+                />
+              </label>
+              <button type="submit" className="edit-btn" disabled={!feedbackForm.rating || submittingFeedback}>
+                {submittingFeedback ? "Submitting..." : "Submit Feedback"}
+              </button>
+            </form>
+          )}
+
+          {complaint.feedback && (
+            <div className="detail-section feedback-display">
+              <h2>Your Feedback</h2>
+              <div className="star-rating read-only">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <span key={n} className={`star-btn ${n <= complaint.feedback.rating ? "filled" : ""}`}>
+                    <IconStar />
+                  </span>
+                ))}
+              </div>
+              {complaint.feedback.comment && <p>{complaint.feedback.comment}</p>}
+              <p className="date">Submitted: {complaint.feedback.submittedAt}</p>
             </div>
           )}
         </>

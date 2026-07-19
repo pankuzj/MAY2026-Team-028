@@ -119,3 +119,9 @@ export const IconAlertCircle = (props) => (
     <path d="M12 8v4.5M12 16v.01" />
   </svg>
 );
+
+export const IconStar = (props) => (
+  <svg {...base} {...props}>
+    <path d="M12 3.8 14.5 9l5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4L9.5 9Z" />
+  </svg>
+);
