@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut } from "./Icons";
 
 const roleLinks = {
@@ -16,10 +17,12 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { notify } = useToast();
   const isActive = (path) => (location.pathname === path ? "active" : "");
 
   const handleLogout = () => {
     logout();
+    notify("Logged out", "info");
     navigate("/login", { replace: true });
   };
 

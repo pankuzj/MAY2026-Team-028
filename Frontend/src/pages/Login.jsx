@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth, DEMO_USERS } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { IconAlertCircle, IconBroom } from "../components/Icons";
 
 const roleHome = { citizen: "/report", crew: "/crew", admin: "/dashboard" };
 
 export default function Login() {
   const { login, user } = useAuth();
+  const { notify } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,8 +31,10 @@ export default function Login() {
     const result = login(username, password);
     if (!result.success) {
       setError(result.error);
+      notify(result.error, "error");
       return;
     }
+    notify(`Welcome back, ${result.name}`, "success");
     navigate(location.state?.from || roleHome[result.role] || "/", { replace: true });
   };
 

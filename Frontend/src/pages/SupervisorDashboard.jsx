@@ -1,16 +1,23 @@
 import { useState } from "react";
 import { useComplaints } from "../context/ComplaintsContext";
+import { useToast } from "../context/ToastContext";
 import ComplaintCard from "../components/ComplaintCard";
 
 export default function SupervisorDashboard() {
   const { complaints, updateStatus } = useComplaints();
+  const { notify } = useToast();
   const [filter, setFilter] = useState("All");
 
   const filtered =
     filter === "All" ? complaints : complaints.filter((c) => c.status === filter);
 
-  const handleAssign = (id) => {
-    updateStatus(id, "In Progress");
+  const handleAssign = async (id) => {
+    const result = await updateStatus(id, "In Progress");
+    if (result.success) {
+      notify(`Crew assigned to case #${String(id).padStart(4, "0")}`, "success");
+    } else {
+      notify(result.error || "Couldn't assign crew.", "error");
+    }
   };
 
   return (

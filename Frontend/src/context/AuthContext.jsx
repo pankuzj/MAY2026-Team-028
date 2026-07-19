@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
     );
     if (!match) return { success: false, error: "Invalid username or password." };
     setUser({ username: match.username, role: match.role, name: match.name });
-    return { success: true, role: match.role };
+    return { success: true, role: match.role, name: match.name };
   };
 
   const logout = () => setUser(null);
