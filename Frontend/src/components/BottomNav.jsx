@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { IconHome, IconReport, IconClipboard, IconBroom, IconGrid, IconFeed } from "./Icons";
+import { IconHome, IconReport, IconClipboard, IconBroom, IconGrid, IconUsers, IconFeed } from "./Icons";
 
 const roleLinks = {
   citizen: [
@@ -12,11 +12,13 @@ const roleLinks = {
   crew: [
     { to: "/", label: "Home", icon: IconHome },
     { to: "/crew", label: "Tasks", icon: IconBroom },
+    { to: "/workforce", label: "Workforce", icon: IconUsers },
     { to: "/feed", label: "Feed", icon: IconFeed },
   ],
   admin: [
     { to: "/", label: "Home", icon: IconHome },
     { to: "/dashboard", label: "Admin", icon: IconGrid },
+    { to: "/workforce", label: "Workforce", icon: IconUsers },
     { to: "/feed", label: "Feed", icon: IconFeed },
   ],
 };

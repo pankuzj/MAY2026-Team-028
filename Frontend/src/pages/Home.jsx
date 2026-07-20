@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { IconReport, IconClipboard, IconBroom, IconGrid, IconArrowRight, IconFeed } from "../components/Icons";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconArrowRight, IconUsers, IconFeed } from "../components/Icons";
 
 const roleConfig = {
   citizen: {
@@ -17,6 +17,7 @@ const roleConfig = {
     blurb: "View assigned tasks, update machinery status, and manage fleet vehicles.",
     actions: [
       { to: "/crew", label: "Assigned Tasks", icon: IconBroom },
+      { to: "/workforce", label: "Workforce & Equipment", icon: IconUsers },
       { to: "/feed", label: "Public Transparency Feed", icon: IconFeed },
     ],
   },
@@ -25,6 +26,7 @@ const roleConfig = {
     blurb: "Manage complaints, allocate workforce & equipment, dispatch fleet, and oversee public feed.",
     actions: [
       { to: "/dashboard", label: "Open Dashboard", icon: IconGrid },
+      { to: "/workforce", label: "Workforce & Equipment", icon: IconUsers },
       { to: "/feed", label: "Public Feed Audit", icon: IconFeed },
     ],
   },

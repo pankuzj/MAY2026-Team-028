@@ -8,6 +8,7 @@ import MyComplaints from "./pages/MyComplaints";
 import CrewTasks from "./pages/CrewTasks";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import ComplaintDetail from "./pages/ComplaintDetail";
+import WorkforceEquipment from "./pages/WorkforceEquipment";
 import PublicTransparencyFeed from "./pages/PublicTransparencyFeed";
 import "./App.css";
 
@@ -31,6 +32,9 @@ function App() {
           } />
           <Route path="/dashboard" element={
             <ProtectedRoute allowedRoles={["admin"]}><SupervisorDashboard /></ProtectedRoute>
+          } />
+          <Route path="/workforce" element={
+            <ProtectedRoute allowedRoles={["admin", "crew"]}><WorkforceEquipment /></ProtectedRoute>
           } />
           <Route path="/feed" element={
             <ProtectedRoute><PublicTransparencyFeed /></ProtectedRoute>

@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut, IconFeed } from "./Icons";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut, IconUsers, IconFeed } from "./Icons";
 
 const roleLinks = {
   citizen: [
@@ -12,10 +12,12 @@ const roleLinks = {
   ],
   crew: [
     { to: "/crew", label: "Tasks", icon: IconBroom },
+    { to: "/workforce", label: "Workforce", icon: IconUsers },
     { to: "/feed", label: "Public Feed", icon: IconFeed },
   ],
   admin: [
     { to: "/dashboard", label: "Dashboard", icon: IconGrid },
+    { to: "/workforce", label: "Workforce & Tools", icon: IconUsers },
     { to: "/feed", label: "Public Feed", icon: IconFeed },
   ],
 };
