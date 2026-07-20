@@ -48,9 +48,9 @@ export default function Login() {
       <div className="role-tabs">
         {DEMO_USERS.map((u) => (
           <button
-            key={u.role}
+            key={u.username}
             type="button"
-            className={activeRole === u.role ? "active" : ""}
+            className={username === u.username ? "active" : ""}
             onClick={() => fillDemo(u)}
           >
             {u.label}
@@ -74,7 +74,7 @@ export default function Login() {
       <div className="demo-hint">
         <span className="eyebrow">Demo Credentials</span>
         {DEMO_USERS.map((u) => (
-          <p key={u.role}><strong>{u.label}:</strong> {u.username} / {u.password}</p>
+          <p key={u.username}><strong>{u.label}:</strong> {u.username} / {u.password}</p>
         ))}
       </div>
     </div>
