@@ -8,6 +8,8 @@ const base = {
   strokeWidth: 1.8,
   strokeLinecap: "round",
   strokeLinejoin: "round",
+  width: "1.2em",
+  height: "1.2em",
 };
 
 export const IconHome = (props) => (

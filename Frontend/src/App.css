@@ -177,95 +177,113 @@
   .role-card { width: 100%; }
 }
 
+/* ===== Page Layout Helpers ===== */
+.page-narrow {
+  max-width: 680px;
+  margin: 0 auto;
+}
+.text-center {
+  text-align: center;
+}
+.page-header.text-center {
+  align-items: center;
+}
+
 /* ===== Complaint form ===== */
 .complaint-form {
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1.25rem;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1.75rem;
   box-shadow: var(--shadow-sm);
+  width: 100%;
 }
-.complaint-form label {
+.complaint-form .field-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.78rem;
-  font-weight: 600;
+  gap: 0.45rem;
+}
+.complaint-form label {
+  font-size: 0.82rem;
+  font-weight: 700;
   color: var(--text-h);
 }
-.complaint-form input,
-.complaint-form select {
-  padding: 0.7rem 0.85rem;
+.complaint-form input[type="text"],
+.complaint-form select,
+.complaint-form textarea {
+  padding: 0.75rem 0.95rem;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-family: var(--font-body);
   font-size: 0.92rem;
   background: var(--surface-2);
   color: var(--text-h);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 .complaint-form input:focus,
 .complaint-form select:focus,
 .complaint-form textarea:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 .complaint-form textarea {
-  font-family: var(--font-body);
-  font-size: 0.92rem;
-  color: var(--text-h);
   min-height: 120px;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
   line-height: 1.55;
   resize: vertical;
-}
-.complaint-form input[type="file"] {
-  background: transparent;
-  border: 1px dashed var(--line);
-  color: var(--text);
-  font-size: 0.82rem;
-  cursor: pointer;
 }
 
 .location-row {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.75rem;
   align-items: flex-end;
-  flex-wrap: wrap;
 }
-.location-row .field-group { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 0.5rem; }
-.location-row .field-group label {
-  font-size: 0.78rem; font-weight: 600; color: var(--text-h);
+.location-row .field-group {
+  flex: 1;
 }
 
 .gps-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.7rem 1rem;
-  border-radius: var(--radius-sm);
+  justify-content: center;
+  gap: 0.45rem;
+  height: 42px;
+  padding: 0 1rem;
+  border-radius: var(--radius-md);
   border: 1px solid var(--accent);
   background: var(--accent-dim);
   color: var(--accent);
   font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
-.gps-btn svg { width: 15px; height: 15px; }
-.gps-btn:hover:not(:disabled) { background: var(--accent); color: var(--accent-ink); }
-.gps-btn:disabled { opacity: 0.55; cursor: wait; }
+.gps-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.gps-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-ink);
+  transform: translateY(-1px);
+}
+.gps-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 
 @media (max-width: 480px) {
   .location-row { flex-direction: column; align-items: stretch; }
-  .gps-btn { width: 100%; justify-content: center; }
+  .gps-btn { width: 100%; }
 }
 
 .coords-preview {
@@ -273,37 +291,127 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.78rem;
-  color: var(--accent);
-  margin: -0.5rem 0 0;
+  color: var(--resolved);
+  font-weight: 600;
+  margin: -0.3rem 0 0;
 }
-.coords-preview svg { width: 13px; height: 13px; flex-shrink: 0; }
-.loc-error { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--hazard); margin: -0.5rem 0 0; }
-.loc-error svg { width: 13px; height: 13px; flex-shrink: 0; }
+.coords-preview svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-.photo-preview {
-  max-width: 220px;
-  border-radius: var(--radius-md);
-  margin-top: 0.25rem;
-  border: 1px solid var(--line);
+.loc-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--hazard);
+  margin: -0.3rem 0 0;
 }
+.loc-error svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-.complaint-form button[type="submit"] {
-  display: inline-flex;
+/* Custom Photo Upload Dropzone */
+.photo-drop-zone {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.85rem 1rem;
+  padding: 1.5rem 1rem;
+  border: 2px dashed var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.photo-drop-zone:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.photo-drop-zone .upload-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--accent);
+}
+.photo-drop-zone .upload-text strong {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--text-h);
+}
+.photo-drop-zone .upload-text small {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.hidden-file-input {
+  display: none;
+}
+
+/* Photo Preview Box */
+.photo-preview-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.photo-preview-img {
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+.remove-photo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--hazard);
+  background: var(--hazard-dim);
+  border: 1px solid var(--hazard-dim);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.remove-photo-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.remove-photo-btn:hover {
+  background: var(--hazard);
+  color: #fff;
+}
+
+/* Submit Button Styling */
+.submit-complaint-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  height: 48px;
+  padding: 0 1.75rem;
   border-radius: var(--radius-pill);
   border: none;
   background: var(--accent);
   color: var(--accent-ink);
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: filter 0.15s ease, transform 0.15s ease;
+  transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+  box-shadow: 0 4px 14px var(--accent-dim);
 }
-.complaint-form button[type="submit"]:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.submit-complaint-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.submit-complaint-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px var(--accent-dim);
+}
 
 /* ===== Complaint list / cards ===== */
 .complaint-list { display: grid; grid-template-columns: 1fr; gap: 0.9rem; }
