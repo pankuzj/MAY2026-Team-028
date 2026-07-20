@@ -156,3 +156,21 @@ export const IconRadar = (props) => (
     <path d="M12 3.5V1.5M20.5 12H12" />
   </svg>
 );
+
+// Vehicle assignment (#12) — kept in the same stroke-icon language as the
+// rest of the set rather than pulling in a separate truck glyph library.
+export const IconTruck = (props) => (
+  <svg {...base} {...props}>
+    <rect x="2.5" y="7.5" width="11" height="9" rx="1.2" />
+    <path d="M13.5 10.5h3.6l3.4 3v3H13.5Z" />
+    <circle cx="7" cy="17.8" r="1.7" />
+    <circle cx="17" cy="17.8" r="1.7" />
+  </svg>
+);
+
+// Equipment checklist (#11).
+export const IconTool = (props) => (
+  <svg {...base} {...props}>
+    <path d="M14.5 6.5a3.5 3.5 0 0 0-4.6 4.2L4.5 15.1a1.8 1.8 0 0 0 2.5 2.5l4.4-5.4a3.5 3.5 0 0 0 4.2-4.6l-2.3 2.3-1.7-.5-.5-1.7Z" />
+  </svg>
+);

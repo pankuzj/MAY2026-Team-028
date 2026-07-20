@@ -21,6 +21,12 @@ export default function ComplaintCard({ complaint, onAssign, onComplete, duplica
       {complaint.needsHelp && (
         <p className="support-tag"><IconAlertCircle /> Support Requested</p>
       )}
+      {complaint.crew && (
+        <p className="assignment-tag">
+          Assigned: {complaint.crew}
+          {complaint.vehicle && ` · ${complaint.vehicle.split(" — ")[1] || complaint.vehicle}`}
+        </p>
+      )}
       {complaint.hazard && complaint.hazard !== "None" && (
         <p className="hazard-tag"><IconAlertTriangle /> {complaint.hazard}</p>
       )}
