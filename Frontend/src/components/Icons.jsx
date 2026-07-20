@@ -156,3 +156,29 @@ export const IconRadar = (props) => (
     <path d="M12 3.5V1.5M20.5 12H12" />
   </svg>
 );
+export const IconFeed = (props) => (
+  <svg {...base} {...props}>
+    <path d="M4 11a9 9 0 0 1 9 9" />
+    <path d="M4 4a16 16 0 0 1 16 16" />
+    <circle cx="5" cy="19" r="1" fill="currentColor" />
+  </svg>
+);
+
+export const IconThumbsUp = (props) => (
+  <svg {...base} {...props}>
+    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+  </svg>
+);
+
+export const IconShieldCheck = (props) => (
+  <svg {...base} {...props}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path d="M9 12l2 2 4-4" />
+  </svg>
+);
+
+export const IconPlus = (props) => (
+  <svg {...base} {...props}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);

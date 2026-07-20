@@ -1,46 +1,104 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { IconReport, IconClipboard, IconBroom, IconGrid, IconArrowRight } from "../components/Icons";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconArrowRight, IconFeed } from "../components/Icons";
 
 const roleConfig = {
   citizen: {
     heading: "Citizen Portal",
-    blurb: "Report garbage issues and track their status.",
+    blurb: "Report garbage issues, track status, and view community impact.",
     actions: [
       { to: "/report", label: "File a Report", icon: IconReport },
       { to: "/my-complaints", label: "My Complaints", icon: IconClipboard },
+      { to: "/feed", label: "Public Transparency Feed", icon: IconFeed },
     ],
   },
   crew: {
-    heading: "Cleanup Crew",
-    blurb: "View assigned tasks and mark work complete.",
-    actions: [{ to: "/crew", label: "Assigned Tasks", icon: IconBroom }],
+    heading: "Cleanup Crew Portal",
+    blurb: "View assigned tasks, update machinery status, and manage fleet vehicles.",
+    actions: [
+      { to: "/crew", label: "Assigned Tasks", icon: IconBroom },
+      { to: "/feed", label: "Public Transparency Feed", icon: IconFeed },
+    ],
   },
   admin: {
     heading: "Operations Console",
-    blurb: "Manage incoming complaints and assign crews.",
-    actions: [{ to: "/dashboard", label: "Open Dashboard", icon: IconGrid }],
+    blurb: "Manage complaints, allocate workforce & equipment, dispatch fleet, and oversee public feed.",
+    actions: [
+      { to: "/dashboard", label: "Open Dashboard", icon: IconGrid },
+      { to: "/feed", label: "Public Feed Audit", icon: IconFeed },
+    ],
   },
 };
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
-  const config = roleConfig[user.role];
+
+  if (!user) {
+    return (
+      <div className="page page-center">
+        <div className="hero-card">
+          <span className="eyebrow">Smart City Sanitation Management</span>
+          <h1>Smart<span className="brand-accent">Sweep</span> Portal</h1>
+          <p className="hero-lead">
+            Select your role to access garbage reporting, crew dispatches, and supervisor insights.
+          </p>
+          <div className="role-selector">
+            <button className="role-btn citizen" onClick={() => login("citizen")}>
+              <IconReport />
+              <div>
+                <strong>Continue as Citizen</strong>
+                <small>Report issues & track status</small>
+              </div>
+            </button>
+            <button className="role-btn crew" onClick={() => login("crew")}>
+              <IconBroom />
+              <div>
+                <strong>Continue as Crew</strong>
+                <small>View & resolve assigned tasks</small>
+              </div>
+            </button>
+            <button className="role-btn admin" onClick={() => login("admin")}>
+              <IconGrid />
+              <div>
+                <strong>Continue as Supervisor</strong>
+                <small>Overview & team dispatch</small>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const config = roleConfig[user.role] || roleConfig.citizen;
 
   return (
-    <div className="role-select">
-      <span className="eyebrow">Welcome back, {user.name}</span>
-      <h1>{config.heading}</h1>
-      <p>{config.blurb}</p>
-      <div className="role-cards">
-        {config.actions.map((a) => (
-          <div key={a.to} className="role-card" onClick={() => navigate(a.to)}>
-            <span className="role-card-icon"><a.icon /></span>
-            <h2>{a.label}</h2>
-            <span className="card-arrow">Open <IconArrowRight /></span>
-          </div>
-        ))}
+    <div className="page">
+      <div className="dashboard-welcome">
+        <div>
+          <span className="eyebrow">Welcome back</span>
+          <h1>{user.name}</h1>
+          <p className="lead">{config.blurb}</p>
+        </div>
+        <span className="role-badge-lg">{user.role}</span>
+      </div>
+
+      <div className="home-actions-grid">
+        {config.actions.map((act) => {
+          const Icon = act.icon;
+          return (
+            <button key={act.to} className="action-card" onClick={() => navigate(act.to)}>
+              <div className="action-card-header">
+                <Icon />
+                <IconArrowRight className="arrow-icon" />
+              </div>
+              <div className="action-card-body">
+                <h3>{act.label}</h3>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

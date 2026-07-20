@@ -2,15 +2,22 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut } from "./Icons";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut, IconFeed } from "./Icons";
 
 const roleLinks = {
   citizen: [
     { to: "/report", label: "Report Issue", icon: IconReport },
     { to: "/my-complaints", label: "My Complaints", icon: IconClipboard },
+    { to: "/feed", label: "Public Feed", icon: IconFeed },
   ],
-  crew: [{ to: "/crew", label: "Assigned Tasks", icon: IconBroom }],
-  admin: [{ to: "/dashboard", label: "Dashboard", icon: IconGrid }],
+  crew: [
+    { to: "/crew", label: "Tasks", icon: IconBroom },
+    { to: "/feed", label: "Public Feed", icon: IconFeed },
+  ],
+  admin: [
+    { to: "/dashboard", label: "Dashboard", icon: IconGrid },
+    { to: "/feed", label: "Public Feed", icon: IconFeed },
+  ],
 };
 
 export default function Navbar() {
@@ -18,46 +25,51 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { notify } = useToast();
-  const isActive = (path) => (location.pathname === path ? "active" : "");
-
-  const handleLogout = () => {
-    logout();
-    notify("Logged out", "info");
-    navigate("/login", { replace: true });
-  };
 
   const links = user ? roleLinks[user.role] || [] : [];
 
+  const handleLogout = () => {
+    logout();
+    notify("Logged out successfully.", "info");
+    navigate("/");
+  };
+
   return (
-    <nav className="navbar">
-      <Link to={user ? "/" : "/login"} className="brand">
-        <span className="brand-mark">
-          <IconBroom />
-        </span>
-        SmartSweep
-      </Link>
-      {user && (
-        <div className="nav-links desktop-nav-links">
-          {links.map((l) => (
-            <Link key={l.to} to={l.to} className={isActive(l.to)}>
-              <l.icon />
-              {l.label}
-            </Link>
-          ))}
-        </div>
-      )}
-      <div className="navbar-right">
+    <header className="navbar">
+      <div className="navbar-container">
+        <Link to="/" className="brand">
+          <span className="brand-dot" />
+          <span className="brand-text">Smart<span className="brand-accent">Sweep</span></span>
+        </Link>
+
         {user && (
-          <>
-            <span className="user-badge desktop-nav-links">{user.name}</span>
-            <button className="logout-btn" onClick={handleLogout}>
-              <IconLogOut />
-              Log Out
-            </button>
-          </>
+          <nav className="nav-links">
+            {links.map((link) => {
+              const Icon = link.icon;
+              const active = location.pathname === link.to;
+              return (
+                <Link key={link.to} to={link.to} className={`nav-item ${active ? "active" : ""}`}>
+                  <Icon />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         )}
-        <ThemeToggle />
+
+        <div className="nav-right">
+          <ThemeToggle />
+          {user && (
+            <div className="user-badge">
+              <span className="role-pill">{user.role}</span>
+              <span className="user-name">{user.name}</span>
+              <button className="logout-btn" onClick={handleLogout} title="Log out">
+                <IconLogOut />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </nav>
+    </header>
   );
 }
