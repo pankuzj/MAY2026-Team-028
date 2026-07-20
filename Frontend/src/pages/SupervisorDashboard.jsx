@@ -3,7 +3,6 @@ import { useComplaints } from "../context/ComplaintsContext";
 import { useToast } from "../context/ToastContext";
 import { getDuplicateMatches } from "../utils/duplicateDetection";
 import ComplaintCard from "../components/ComplaintCard";
-import AssignCrewModal from "../components/AssignCrewModal";
 import { IconSearch, IconSliders, IconX } from "../components/Icons";
 
 // Kept in sync with the hazard options offered on ReportComplaint /
@@ -30,15 +29,12 @@ const DEFAULT_ADVANCED = {
 };
 
 export default function SupervisorDashboard() {
-  const { complaints, updateComplaint } = useComplaints();
+  const { complaints, updateStatus } = useComplaints();
   const { notify } = useToast();
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [advanced, setAdvanced] = useState(DEFAULT_ADVANCED);
-  // Case currently open in the Workforce & Equipment Allocation modal
-  // (#11) — null means the modal is closed.
-  const [assigningId, setAssigningId] = useState(null);
 
   const advancedActive =
     advanced.hazard !== "All" ||
@@ -82,7 +78,7 @@ export default function SupervisorDashboard() {
       );
   }, [complaints, filter, search, advanced]);
 
-  const handleAssign = (id) => {
+  const handleAssign = async (id) => {
     const complaint = complaints.find((c) => c.id === id);
     const dupes = complaint ? getDuplicateMatches(complaint, complaints) : [];
     if (dupes.length) {
@@ -94,29 +90,14 @@ export default function SupervisorDashboard() {
       );
       if (!proceed) return;
     }
-    setAssigningId(id);
-  };
 
-  // #11/#12 — the modal collects crew, worker count, equipment and
-  // vehicle together, so they land in a single updateComplaint call
-  // (same "one merge, one source of truth" pattern as everything else
-  // built on top of updateComplaint) alongside the status flip that
-  // used to happen on its own.
-  const handleAssignSubmit = async (allocation) => {
-    const result = await updateComplaint(assigningId, {
-      ...allocation,
-      status: "In Progress",
-    });
+    const result = await updateStatus(id, "In Progress");
     if (result.success) {
-      notify(`Crew assigned to case #${String(assigningId).padStart(4, "0")}`, "success");
-      setAssigningId(null);
+      notify(`Crew assigned to case #${String(id).padStart(4, "0")}`, "success");
     } else {
       notify(result.error || "Couldn't assign crew.", "error");
     }
-    return result;
   };
-
-  const assigningComplaint = complaints.find((c) => c.id === assigningId);
 
   return (
     <div className="page">
@@ -249,14 +230,6 @@ export default function SupervisorDashboard() {
             />
           ))}
         </div>
-      )}
-
-      {assigningComplaint && (
-        <AssignCrewModal
-          complaint={assigningComplaint}
-          onClose={() => setAssigningId(null)}
-          onSubmit={handleAssignSubmit}
-        />
       )}
     </div>
   );

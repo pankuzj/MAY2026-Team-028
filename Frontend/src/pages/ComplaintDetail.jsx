@@ -311,18 +311,6 @@ export default function ComplaintDetail() {
             <p className="date">Reported: {complaint.createdAt}</p>
           </div>
 
-          {complaint.crew && (user?.role === "admin" || user?.role === "crew") && (
-            <div className="detail-section allocation-panel">
-              <h2>Workforce & Equipment Allocation</h2>
-              <p><strong>Crew:</strong> {complaint.crew}</p>
-              {complaint.workerCount && <p><strong>Workers:</strong> {complaint.workerCount}</p>}
-              {complaint.vehicle && <p><strong>Vehicle:</strong> {complaint.vehicle}</p>}
-              {complaint.equipment?.length > 0 && (
-                <p><strong>Equipment:</strong> {complaint.equipment.join(", ")}</p>
-              )}
-            </div>
-          )}
-
           {complaint.coords && (
             <a
               className="map-link"
