@@ -156,6 +156,31 @@ export const IconRadar = (props) => (
     <path d="M12 3.5V1.5M20.5 12H12" />
   </svg>
 );
+
+export const IconTruck = (props) => (
+  <svg {...base} {...props}>
+    <rect x="1" y="3" width="15" height="13" rx="2" />
+    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+    <circle cx="5.5" cy="18.5" r="2.5" />
+    <circle cx="18.5" cy="18.5" r="2.5" />
+  </svg>
+);
+
+export const IconUsers = (props) => (
+  <svg {...base} {...props}>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+export const IconWrench = (props) => (
+  <svg {...base} {...props}>
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+  </svg>
+);
+
 export const IconFeed = (props) => (
   <svg {...base} {...props}>
     <path d="M4 11a9 9 0 0 1 9 9" />
@@ -180,14 +205,5 @@ export const IconShieldCheck = (props) => (
 export const IconPlus = (props) => (
   <svg {...base} {...props}>
     <path d="M12 5v14M5 12h14" />
-  </svg>
-);
-
-export const IconUsers = (props) => (
-  <svg {...base} {...props}>
-    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
   </svg>
 );

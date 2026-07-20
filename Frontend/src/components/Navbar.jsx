@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut, IconUsers, IconFeed } from "./Icons";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut, IconUsers, IconTruck, IconFeed } from "./Icons";
 
 const roleLinks = {
   citizen: [
@@ -13,11 +13,13 @@ const roleLinks = {
   crew: [
     { to: "/crew", label: "Tasks", icon: IconBroom },
     { to: "/workforce", label: "Workforce", icon: IconUsers },
+    { to: "/vehicles", label: "Vehicles", icon: IconTruck },
     { to: "/feed", label: "Public Feed", icon: IconFeed },
   ],
   admin: [
     { to: "/dashboard", label: "Dashboard", icon: IconGrid },
     { to: "/workforce", label: "Workforce & Tools", icon: IconUsers },
+    { to: "/vehicles", label: "Fleet & Vehicles", icon: IconTruck },
     { to: "/feed", label: "Public Feed", icon: IconFeed },
   ],
 };
@@ -27,51 +29,46 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { notify } = useToast();
-
-  const links = user ? roleLinks[user.role] || [] : [];
+  const isActive = (path) => (location.pathname === path ? "active" : "");
 
   const handleLogout = () => {
     logout();
-    notify("Logged out successfully.", "info");
-    navigate("/");
+    notify("Logged out", "info");
+    navigate("/login", { replace: true });
   };
 
+  const links = user ? roleLinks[user.role] || [] : [];
+
   return (
-    <header className="navbar">
-      <div className="navbar-container">
-        <Link to="/" className="brand">
-          <span className="brand-dot" />
-          <span className="brand-text">Smart<span className="brand-accent">Sweep</span></span>
-        </Link>
-
-        {user && (
-          <nav className="nav-links">
-            {links.map((link) => {
-              const Icon = link.icon;
-              const active = location.pathname === link.to;
-              return (
-                <Link key={link.to} to={link.to} className={`nav-item ${active ? "active" : ""}`}>
-                  <Icon />
-                  <span>{link.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        )}
-
-        <div className="nav-right">
-          <ThemeToggle />
-          {user && (
-            <div className="user-badge">
-              <span className="role-pill">{user.role}</span>
-              <span className="user-name">{user.name}</span>
-              <button className="logout-btn" onClick={handleLogout} title="Log out">
-                <IconLogOut />
-              </button>
-            </div>
-          )}
+    <nav className="navbar">
+      <Link to={user ? "/" : "/login"} className="brand">
+        <span className="brand-mark">
+          <IconBroom />
+        </span>
+        SmartSweep
+      </Link>
+      {user && (
+        <div className="nav-links desktop-nav-links">
+          {links.map((l) => (
+            <Link key={l.to} to={l.to} className={isActive(l.to)}>
+              <l.icon />
+              {l.label}
+            </Link>
+          ))}
         </div>
+      )}
+      <div className="navbar-right">
+        {user && (
+          <>
+            <span className="user-badge desktop-nav-links">{user.name}</span>
+            <button className="logout-btn" onClick={handleLogout}>
+              <IconLogOut />
+              Log Out
+            </button>
+          </>
+        )}
+        <ThemeToggle />
       </div>
-    </header>
+    </nav>
   );
 }
