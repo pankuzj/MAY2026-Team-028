@@ -6,15 +6,21 @@ import App from "./App.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ComplaintsProvider } from "./context/ComplaintsContext.jsx";
+import { OperationalProvider } from "./context/OperationalContext.jsx";
+import { ToastProvider } from "./context/ToastContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
-          <ComplaintsProvider>
-            <App />
-          </ComplaintsProvider>
+          <ToastProvider>
+            <ComplaintsProvider>
+              <OperationalProvider>
+                <App />
+              </OperationalProvider>
+            </ComplaintsProvider>
+          </ToastProvider>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

@@ -3,7 +3,9 @@ import { createContext, useContext, useEffect, useState } from "react";
 const AuthContext = createContext(null);
 
 export const DEMO_USERS = [
-  { username: "citizen", password: "citizen123", role: "citizen", name: "Sagnik Halder", label: "Citizen" },
+  { username: "citizen", password: "citizen123", role: "citizen", name: "Sagnik Halder", label: "Citizen 1 (Sagnik)" },
+  { username: "anita", password: "anita123", role: "citizen", name: "Anita Rao", label: "Citizen 2 (Anita)" },
+  { username: "mohammed", password: "mohammed123", role: "citizen", name: "Mohammed Iqbal", label: "Citizen 3 (Mohammed)" },
   { username: "crew", password: "crew123", role: "crew", name: "Suresh Patil", label: "Cleanup Crew" },
   { username: "admin", password: "admin123", role: "admin", name: "Admin", label: "Ward Supervisor / Admin" },
 ];
@@ -31,7 +33,7 @@ export function AuthProvider({ children }) {
     );
     if (!match) return { success: false, error: "Invalid username or password." };
     setUser({ username: match.username, role: match.role, name: match.name });
-    return { success: true, role: match.role };
+    return { success: true, role: match.role, name: match.name };
   };
 
   const logout = () => setUser(null);

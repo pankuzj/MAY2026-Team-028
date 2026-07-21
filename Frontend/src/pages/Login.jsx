@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth, DEMO_USERS } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { IconAlertCircle, IconBroom } from "../components/Icons";
 
 const roleHome = { citizen: "/report", crew: "/crew", admin: "/dashboard" };
 
 export default function Login() {
   const { login, user } = useAuth();
+  const { notify } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -28,13 +31,16 @@ export default function Login() {
     const result = login(username, password);
     if (!result.success) {
       setError(result.error);
+      notify(result.error, "error");
       return;
     }
+    notify(`Welcome back, ${result.name}`, "success");
     navigate(location.state?.from || roleHome[result.role] || "/", { replace: true });
   };
 
   return (
     <div className="login-page">
+      <span className="brand-mark" style={{ display: "flex", margin: "0 auto 1rem" }}><IconBroom /></span>
       <span className="eyebrow">Restricted Access</span>
       <h1>SmartSweep</h1>
       <p className="login-sub">Sign in to continue</p>
@@ -42,9 +48,9 @@ export default function Login() {
       <div className="role-tabs">
         {DEMO_USERS.map((u) => (
           <button
-            key={u.role}
+            key={u.username}
             type="button"
-            className={activeRole === u.role ? "active" : ""}
+            className={username === u.username ? "active" : ""}
             onClick={() => fillDemo(u)}
           >
             {u.label}
@@ -61,14 +67,14 @@ export default function Login() {
           Password
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" required />
         </label>
-        {error && <p className="loc-error">{error}</p>}
+        {error && <p className="loc-error"><IconAlertCircle /> {error}</p>}
         <button type="submit">Access System</button>
       </form>
 
       <div className="demo-hint">
         <span className="eyebrow">Demo Credentials</span>
         {DEMO_USERS.map((u) => (
-          <p key={u.role}><strong>{u.label}:</strong> {u.username} / {u.password}</p>
+          <p key={u.username}><strong>{u.label}:</strong> {u.username} / {u.password}</p>
         ))}
       </div>
     </div>
