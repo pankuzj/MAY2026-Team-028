@@ -1,25 +1,36 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { IconReport, IconClipboard, IconBroom, IconGrid, IconArrowRight } from "../components/Icons";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconArrowRight, IconUsers, IconTruck, IconFeed } from "../components/Icons";
 
 const roleConfig = {
   citizen: {
     heading: "Citizen Portal",
-    blurb: "Report garbage issues and track their status.",
+    blurb: "Report garbage issues, track status, and view community impact.",
     actions: [
       { to: "/report", label: "File a Report", icon: IconReport },
       { to: "/my-complaints", label: "My Complaints", icon: IconClipboard },
+      { to: "/feed", label: "Public Transparency Feed", icon: IconFeed },
     ],
   },
   crew: {
-    heading: "Cleanup Crew",
-    blurb: "View assigned tasks and mark work complete.",
-    actions: [{ to: "/crew", label: "Assigned Tasks", icon: IconBroom }],
+    heading: "Cleanup Crew Portal",
+    blurb: "View assigned tasks, update machinery status, and manage fleet vehicles.",
+    actions: [
+      { to: "/crew", label: "Assigned Tasks", icon: IconBroom },
+      { to: "/workforce", label: "Workforce & Equipment", icon: IconUsers },
+      { to: "/vehicles", label: "Vehicle Fleet", icon: IconTruck },
+      { to: "/feed", label: "Public Transparency Feed", icon: IconFeed },
+    ],
   },
   admin: {
     heading: "Operations Console",
-    blurb: "Manage incoming complaints and assign crews.",
-    actions: [{ to: "/dashboard", label: "Open Dashboard", icon: IconGrid }],
+    blurb: "Manage complaints, allocate workforce & equipment, dispatch fleet, and oversee public feed.",
+    actions: [
+      { to: "/dashboard", label: "Open Dashboard", icon: IconGrid },
+      { to: "/workforce", label: "Workforce & Equipment", icon: IconUsers },
+      { to: "/vehicles", label: "Vehicle Assignment", icon: IconTruck },
+      { to: "/feed", label: "Public Feed Audit", icon: IconFeed },
+    ],
   },
 };
 

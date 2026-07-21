@@ -2,15 +2,26 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut } from "./Icons";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut, IconUsers, IconTruck, IconFeed } from "./Icons";
 
 const roleLinks = {
   citizen: [
     { to: "/report", label: "Report Issue", icon: IconReport },
     { to: "/my-complaints", label: "My Complaints", icon: IconClipboard },
+    { to: "/feed", label: "Public Feed", icon: IconFeed },
   ],
-  crew: [{ to: "/crew", label: "Assigned Tasks", icon: IconBroom }],
-  admin: [{ to: "/dashboard", label: "Dashboard", icon: IconGrid }],
+  crew: [
+    { to: "/crew", label: "Tasks", icon: IconBroom },
+    { to: "/workforce", label: "Workforce", icon: IconUsers },
+    { to: "/vehicles", label: "Vehicles", icon: IconTruck },
+    { to: "/feed", label: "Public Feed", icon: IconFeed },
+  ],
+  admin: [
+    { to: "/dashboard", label: "Dashboard", icon: IconGrid },
+    { to: "/workforce", label: "Workforce & Tools", icon: IconUsers },
+    { to: "/vehicles", label: "Fleet & Vehicles", icon: IconTruck },
+    { to: "/feed", label: "Public Feed", icon: IconFeed },
+  ],
 };
 
 export default function Navbar() {
