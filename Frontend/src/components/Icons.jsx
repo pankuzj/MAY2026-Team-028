@@ -209,3 +209,26 @@ export const IconPlus = (props) => (
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
+
+export const IconCalendar = (props) => (
+  <svg {...base} {...props}>
+    <rect x="4" y="5.5" width="16" height="15" rx="2" />
+    <path d="M4 9.5h16M8 3.5v4M16 3.5v4" />
+    <path d="M8 13h2M14 13h2M8 16.5h2M14 16.5h2" />
+  </svg>
+);
+
+export const IconPackage = (props) => (
+  <svg {...base} {...props}>
+    <path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z" />
+    <path d="M4 7l8 4 8-4M12 11v10" />
+    <path d="M8 5 16 9" />
+  </svg>
+);
+
+export const IconClock = (props) => (
+  <svg {...base} {...props}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </svg>
+);

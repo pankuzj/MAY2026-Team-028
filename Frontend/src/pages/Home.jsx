@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { IconReport, IconClipboard, IconBroom, IconGrid, IconArrowRight, IconUsers, IconTruck, IconFeed } from "../components/Icons";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconArrowRight, IconUsers, IconTruck, IconFeed, IconPackage } from "../components/Icons";
 
 const roleConfig = {
   citizen: {
@@ -9,6 +9,7 @@ const roleConfig = {
     actions: [
       { to: "/report", label: "File a Report", icon: IconReport },
       { to: "/my-complaints", label: "My Complaints", icon: IconClipboard },
+      { to: "/bulk-pickup", label: "Schedule Bulk Pickup", icon: IconPackage },
       { to: "/feed", label: "Public Transparency Feed", icon: IconFeed },
     ],
   },
@@ -19,6 +20,7 @@ const roleConfig = {
       { to: "/crew", label: "Assigned Tasks", icon: IconBroom },
       { to: "/workforce", label: "Workforce & Equipment", icon: IconUsers },
       { to: "/vehicles", label: "Vehicle Fleet", icon: IconTruck },
+      { to: "/bulk-pickup-manage", label: "Bulk Pickup Management", icon: IconPackage },
       { to: "/feed", label: "Public Transparency Feed", icon: IconFeed },
     ],
   },
@@ -29,6 +31,7 @@ const roleConfig = {
       { to: "/dashboard", label: "Open Dashboard", icon: IconGrid },
       { to: "/workforce", label: "Workforce & Equipment", icon: IconUsers },
       { to: "/vehicles", label: "Vehicle Assignment", icon: IconTruck },
+      { to: "/bulk-pickup-manage", label: "Bulk Pickup Management", icon: IconPackage },
       { to: "/feed", label: "Public Feed Audit", icon: IconFeed },
     ],
   },

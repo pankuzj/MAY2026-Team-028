@@ -11,6 +11,8 @@ import SupervisorDashboard from "./pages/SupervisorDashboard";
 import ComplaintDetail from "./pages/ComplaintDetail";
 import WorkforceEquipment from "./pages/WorkforceEquipment";
 import VehicleAssignment from "./pages/VehicleAssignment";
+import BulkPickupScheduler from "./pages/BulkPickupScheduler";
+import BulkPickupManagement from "./pages/BulkPickupManagement";
 import PublicTransparencyFeed from "./pages/PublicTransparencyFeed";
 import "./App.css";
 
@@ -39,6 +41,12 @@ function App() {
           } />
           <Route path="/vehicles" element={
             <ProtectedRoute allowedRoles={["admin", "crew"]}><VehicleAssignment /></ProtectedRoute>
+          } />
+          <Route path="/bulk-pickup" element={
+            <ProtectedRoute allowedRoles={["citizen"]}><BulkPickupScheduler /></ProtectedRoute>
+          } />
+          <Route path="/bulk-pickup-manage" element={
+            <ProtectedRoute allowedRoles={["admin", "crew"]}><BulkPickupManagement /></ProtectedRoute>
           } />
           <Route path="/feed" element={
             <ProtectedRoute><PublicTransparencyFeed /></ProtectedRoute>

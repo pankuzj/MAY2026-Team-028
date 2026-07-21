@@ -7,6 +7,7 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ComplaintsProvider } from "./context/ComplaintsContext.jsx";
 import { OperationalProvider } from "./context/OperationalContext.jsx";
+import { BulkPickupProvider } from "./context/BulkPickupContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
 
 createRoot(document.getElementById("root")).render(
@@ -17,7 +18,9 @@ createRoot(document.getElementById("root")).render(
           <ToastProvider>
             <ComplaintsProvider>
               <OperationalProvider>
-                <App />
+                <BulkPickupProvider>
+                  <App />
+                </BulkPickupProvider>
               </OperationalProvider>
             </ComplaintsProvider>
           </ToastProvider>
