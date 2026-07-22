@@ -1360,6 +1360,115 @@ span.star-btn { cursor: default; }
 .primary-btn:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
 .primary-btn:disabled { opacity: 0.6; cursor: wait; }
 
+/* ===== Collection Schedule + Reminder (#15) ===== */
+.section-heading { font-size: 1rem; font-weight: 700; color: var(--text-h); margin: 1.75rem 0 0.9rem; }
+.ward-select-group { max-width: 340px; margin-bottom: 0.5rem; }
+.ward-select-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 0.4rem; }
+.ward-select-group select {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-h);
+  font-size: 0.88rem;
+}
+
+.week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.6rem; }
+@media (max-width: 640px) {
+  .week-strip { grid-template-columns: repeat(4, 1fr); }
+}
+.week-cell {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 96px;
+}
+.week-cell.has-pickup { border-color: var(--line-focus); }
+.week-cell-day { font-size: 0.72rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.4px; }
+.week-cell-chips { display: flex; flex-direction: column; gap: 0.3rem; align-items: center; }
+.week-cell-empty { color: var(--text-dim); font-size: 0.8rem; }
+
+.waste-chip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.waste-chip.wet { background: var(--resolved-dim); color: var(--resolved); }
+.waste-chip.dry { background: var(--progress-dim); color: var(--progress); }
+.waste-chip.hazardous { background: var(--hazard-dim); color: var(--hazard); }
+
+.waste-chip-plain { font-size: 0.95rem; font-weight: 700; }
+.waste-chip-plain.wet { color: var(--resolved); }
+.waste-chip-plain.dry { color: var(--progress); }
+.waste-chip-plain.hazardous { color: var(--hazard); }
+
+.reminder-card { align-items: flex-start; }
+.reminder-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text-h);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.reminder-toggle-btn svg { width: 15px; height: 15px; }
+.reminder-toggle-btn:hover { border-color: var(--line-focus); }
+.reminder-toggle-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent-dim); }
+
+.exceptions-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.exception-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+}
+.exception-row svg { width: 17px; height: 17px; color: var(--hazard); flex-shrink: 0; margin-top: 0.15rem; }
+.exception-row strong { font-size: 0.85rem; color: var(--text-h); }
+.exception-row p { font-size: 0.83rem; color: var(--text-dim); margin-top: 0.15rem; }
+
+/* ===== Reports & Trends Dashboard (#16) ===== */
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.25rem; margin-top: 0.5rem; }
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.35rem 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+.chart-card h3 { font-size: 0.92rem; font-weight: 700; color: var(--text-h); margin-bottom: 0.15rem; }
+.chart-card .chart-subtitle { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+.chart-card .recharts-cartesian-axis-tick text { fill: var(--text-dim); font-size: 0.72rem; }
+.chart-card .recharts-legend-item-text { color: var(--text) !important; font-size: 0.78rem; }
+.chart-tooltip {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.78rem;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-h);
+}
+.chart-tooltip .tooltip-label { color: var(--text-dim); margin-bottom: 0.2rem; }
+
 .empty-state {
   grid-column: 1 / -1;
   text-align: center;

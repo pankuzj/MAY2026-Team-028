@@ -14,6 +14,8 @@ import VehicleAssignment from "./pages/VehicleAssignment";
 import BulkPickupScheduler from "./pages/BulkPickupScheduler";
 import BulkPickupManagement from "./pages/BulkPickupManagement";
 import PublicTransparencyFeed from "./pages/PublicTransparencyFeed";
+import CollectionSchedule from "./pages/CollectionSchedule";
+import ReportsTrends from "./pages/ReportsTrends";
 import "./App.css";
 
 function App() {
@@ -50,6 +52,12 @@ function App() {
           } />
           <Route path="/feed" element={
             <ProtectedRoute><PublicTransparencyFeed /></ProtectedRoute>
+          } />
+          <Route path="/schedule" element={
+            <ProtectedRoute allowedRoles={["citizen"]}><CollectionSchedule /></ProtectedRoute>
+          } />
+          <Route path="/reports" element={
+            <ProtectedRoute allowedRoles={["admin"]}><ReportsTrends /></ProtectedRoute>
           } />
           <Route path="/complaint/:id" element={
             <ProtectedRoute><ComplaintDetail /></ProtectedRoute>

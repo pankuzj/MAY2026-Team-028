@@ -232,3 +232,16 @@ export const IconClock = (props) => (
     <path d="M12 7.5V12l3 2" />
   </svg>
 );
+
+export const IconBell = (props) => (
+  <svg {...base} {...props}>
+    <path d="M6 9.5a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13.5 6 9.5Z" />
+    <path d="M10 19a2 2 0 0 0 4 0" />
+  </svg>
+);
+
+export const IconChartBar = (props) => (
+  <svg {...base} {...props}>
+    <path d="M4 20V10M10 20V4M16 20v-7M4 20h16" strokeLinejoin="round" />
+  </svg>
+);
