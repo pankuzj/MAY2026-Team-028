@@ -2,13 +2,14 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut, IconUsers, IconTruck, IconFeed, IconPackage } from "./Icons";
+import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut, IconUsers, IconTruck, IconFeed, IconPackage, IconCalendar, IconChartBar } from "./Icons";
 
 const roleLinks = {
   citizen: [
     { to: "/report", label: "Report Issue", icon: IconReport },
     { to: "/my-complaints", label: "My Complaints", icon: IconClipboard },
     { to: "/bulk-pickup", label: "Bulk Pickup", icon: IconPackage },
+    { to: "/schedule", label: "Schedule", icon: IconCalendar },
     { to: "/feed", label: "Public Feed", icon: IconFeed },
   ],
   crew: [
@@ -20,6 +21,7 @@ const roleLinks = {
   ],
   admin: [
     { to: "/dashboard", label: "Dashboard", icon: IconGrid },
+    { to: "/reports", label: "Reports & Trends", icon: IconChartBar },
     { to: "/workforce", label: "Workforce & Tools", icon: IconUsers },
     { to: "/vehicles", label: "Fleet & Vehicles", icon: IconTruck },
     { to: "/bulk-pickup-manage", label: "Bulk Pickups", icon: IconPackage },
