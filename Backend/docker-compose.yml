@@ -1,0 +1,22 @@
+# Local development stack: FastAPI api + PostgreSQL.
+# Placeholder skeleton — enable the api service once the app runs.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: smartsweep
+      POSTGRES_PASSWORD: smartsweep
+      POSTGRES_DB: smartsweep
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # api:
+  #   build: .
+  #   env_file: .env
+  #   depends_on: [db]
+  #   ports: ["8000:8000"]
+
+volumes:
+  pgdata:
