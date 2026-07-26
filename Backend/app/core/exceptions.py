@@ -3,3 +3,5 @@
 # TODO: NotFound, PermissionDenied, InvalidStateTransition, ... and the
 #       handlers that map them to HTTP responses.
 """
+
+__all__: list[str] = []

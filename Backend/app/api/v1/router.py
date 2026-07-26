@@ -4,3 +4,5 @@
 #       complaints, bulk_pickups, tasks, workforce, vehicles, equipment,
 #       feed, schedule, reports).
 """
+
+__all__: list[str] = []

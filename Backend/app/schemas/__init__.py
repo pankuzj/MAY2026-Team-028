@@ -4,3 +4,5 @@ Never expose ORM models directly; services translate models <-> schemas.
 
 # TODO: one module per entity, mirroring models/.
 """
+
+__all__: list[str] = []

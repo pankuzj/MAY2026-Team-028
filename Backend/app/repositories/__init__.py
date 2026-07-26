@@ -4,3 +4,5 @@ CRUD + queries returning ORM objects/primitives. No business rules, no HTTP.
 
 # TODO: one repository per aggregate (complaint, bulk_pickup, task, user, ...).
 """
+
+__all__: list[str] = []
