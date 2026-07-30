@@ -1,0 +1,59 @@
+# Frontend CI — new in task S1-F10.
+#
+# Nothing checked the frontend before this: ~4,900 lines of working React with no
+# automated gate at all. A broken import or a syntax error would only surface when
+# someone ran `npm run dev` locally.
+#
+# There is no test step because the frontend has no test runner (plan section 2).
+# `npm run build` is still a real check — Vite resolves and type-checks every
+# import, so a bad path or a missing export fails the build.
+
+name: Frontend CI
+
+on:
+  pull_request:
+    paths: ["Frontend/**", ".github/workflows/frontend-ci.yml"]
+  push:
+    branches: [main]
+    paths: ["Frontend/**"]
+
+defaults:
+  run:
+    working-directory: Frontend
+
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job name `frontend` matches the required status check in branch protection.
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: Frontend/package-lock.json
+
+      # `npm ci` not `npm install`: installs exactly what package-lock.json says
+      # and fails if the lockfile is out of sync, rather than silently updating it.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (oxlint)
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: Frontend/dist
+          retention-days: 7
