@@ -1,5 +1,17 @@
-# Local development stack: FastAPI api + PostgreSQL.
-# Placeholder skeleton — enable the api service once the app runs.
+# Local development stack: FastAPI api + PostgreSQL — task S1-F09.
+#
+#   docker compose up -d db          # just the database (the common case)
+#   docker compose up --build        # database + api
+#   docker compose logs -f api
+#   docker compose down              # stop; data survives in the pgdata volume
+#   docker compose down -v           # stop and DELETE the database volume
+#
+# You do not need the api service to develop. Most of the team should run
+# `docker compose up -d db` and then `uv run uvicorn app.main:app --reload` on the
+# host — that gives faster reloads and a debugger that attaches normally. The api
+# service exists so the whole stack can be brought up on a machine with nothing
+# but Docker installed, and to prove the Dockerfile actually works before the demo.
+
 services:
   db:
     image: postgres:16
@@ -8,15 +20,55 @@ services:
       POSTGRES_PASSWORD: smartsweep
       POSTGRES_DB: smartsweep
     ports:
+      # Published on the host so host-side tooling (uvicorn, alembic, psql, a GUI
+      # client) can reach it at localhost:5432.
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    # api waits on this via `condition: service_healthy`. Postgres accepts
+    # connections briefly during init and then restarts, so "the port is open" is
+    # not the same as "the database is ready".
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartsweep -d smartsweep"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
-  # api:
-  #   build: .
-  #   env_file: .env
-  #   depends_on: [db]
-  #   ports: ["8000:8000"]
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      # Copy .env.example to .env first. Compose fails with a clear error if the
+      # file is missing, which is better than starting with silent defaults.
+      - .env
+    environment:
+      # Overrides .env: inside the compose network the database is reachable at
+      # the service name `db`, not localhost. A .env written for host-side
+      # development points at localhost:5432, which from inside this container
+      # means the container itself.
+      DATABASE_URL: postgresql+psycopg://smartsweep:smartsweep@db:5432/smartsweep
+    ports:
+      - "8000:8000"
+    volumes:
+      # Named volume so uploaded photos survive `docker compose up --build`.
+      - uploads:/app/uploads
+    restart: unless-stopped
+
+    # --- Optional: live-reload development inside the container ---------------
+    # Uncomment both lines to edit code on the host and have the container
+    # reload. Note this shadows the image's /app/app with your working tree, so
+    # the container then runs your uncommitted code rather than what was built.
+    #
+    # volumes:
+    #   - ./app:/app/app:ro
+    #   - uploads:/app/uploads
+    # command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 volumes:
   pgdata:
+  uploads:

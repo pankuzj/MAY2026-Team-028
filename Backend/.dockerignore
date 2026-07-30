@@ -1,8 +1,46 @@
+# Keep the build context small and secrets out of the image.
+#
+# Two reasons this file matters beyond image size: every file in the context is
+# sent to the daemon and can invalidate build cache layers, and anything COPYed in
+# stays in that layer forever — deleting it in a later step does not remove it
+# from the image history.
+
+# Version control
 .git/
+.gitignore
+
+# Virtualenvs — built inside the image; copying a host venv would bring in
+# binaries compiled against the host's libc.
 .venv/
 venv/
+
+# Python artifacts
 __pycache__/
+*.py[cod]
+*.egg-info/
+
+# Secrets. Compose injects the real values via env_file at *runtime*; baking
+# them into an image layer would publish them with the image.
 .env
+.env.*
+!.env.example
+
+# Tests and their caches — not needed at runtime (Dockerfile installs --no-dev).
 tests/
 .pytest_cache/
+.coverage
+htmlcov/
+
+# Tooling caches
 .ruff_cache/
+.mypy_cache/
+
+# Local uploads — the image gets an empty directory; real files live in a volume.
+uploads/
+
+# Docs and container config that the image itself never reads
+README.md
+docker-compose.yml
+Dockerfile
+.dockerignore
+.pre-commit-config.yaml
