@@ -1,0 +1,35 @@
+# CODEOWNERS — task S1-C07.
+#
+# Listed owners are requested for review automatically on any PR touching their
+# paths, which is how the plan's "Sagnik reviews every backend PR" (S1-C01)
+# happens without anyone remembering to add him.
+#
+# EVERY LINE IS COMMENTED OUT until the real GitHub usernames are filled in.
+# GitHub silently ignores a CODEOWNERS entry naming a user who does not exist or
+# lacks write access — you get no review request and no error, which is worse
+# than having no file. Get each person's handle from their profile URL
+# (github.com/<handle>), replace the placeholders, and uncomment.
+#
+# Also required: the owners must have write access to the repo, and for the rule
+# to be enforced rather than advisory, enable "Require review from Code Owners"
+# in the branch-protection settings for main.
+
+# Fallback owner for anything not matched below.
+# *                       @pankuzj
+
+# Backend application code — code review is Sagnik's nominal role (S1-C01).
+# /Backend/app/           @<sagnik-handle>
+
+# Test suites — Nitin owns both end-to-end integration tests.
+# /Backend/tests/         @<nitin-handle>
+
+# Frontend — Jatin owns the heaviest context-integration work (S1-C06, S2-C01).
+# /Frontend/              @<jatin-handle>
+
+# API contract and submission docs — Pankaj owns all OpenAPI YAML (S1-Y01/Y02).
+# /docs/                  @pankuzj
+
+# Build, CI, and repo configuration — PM owns the pipeline.
+# /.github/               @pankuzj
+# /Backend/pyproject.toml @pankuzj
+# /Backend/uv.lock        @pankuzj

@@ -1,0 +1,70 @@
+# Spectral ruleset for docs/**/openapi.yaml — task S1-Y03.
+#
+# `spectral:oas` is the built-in OpenAPI ruleset. The overrides below promote the
+# rules the project rubric actually marks from warning to error, so a missing
+# description fails CI rather than printing a message nobody reads.
+#
+# Run locally before pushing:
+#   npx --yes @stoplight/spectral-cli lint "docs/**/openapi.yaml" --ruleset .spectral.yaml
+
+extends: ["spectral:oas"]
+
+rules:
+  # --- Rubric-critical: documentation completeness -------------------------
+  # "Every endpoint has summary and description" is a graded line item.
+  operation-description: error
+  operation-summary: error
+  operation-tags: error
+  operation-tag-defined: error
+
+  # operationId is what generated clients turn into method names, and what lets
+  # us diff the hand-written YAML against FastAPI's generated /openapi.json.
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-operationId-valid-in-url: error
+
+  # --- Contract hygiene ---------------------------------------------------
+  operation-parameters: error
+  operation-success-response: error       # every operation documents a 2xx
+  no-$ref-siblings: error
+  duplicated-entry-in-enum: error
+  typed-enum: error
+  oas3-valid-media-example: error
+  oas3-valid-schema-example: error
+
+  # Path segments stay kebab-case and consistent: /bulk-pickups, /high-risk.
+  path-keys-no-trailing-slash: error
+  path-declarations-must-exist: error
+  no-eval-in-markdown: error
+
+  # --- Deliberately relaxed ----------------------------------------------
+  # `info.contact` and a license block add nothing to an academic submission and
+  # would fail every file for no benefit.
+  info-contact: off
+  license: off
+  oas3-api-servers: warn
+
+  # --- Project-specific: enforce the user-story trace --------------------
+  # The rubric requires user-story -> endpoint mapping. This makes the mapping
+  # machine-checkable instead of a table someone has to keep in sync by hand:
+  # every operation must carry x-user-story listing its US-xx ids.
+  smartsweep-operation-has-user-story:
+    description: Every operation must declare the user stories it implements via x-user-story.
+    message: "{{path}} is missing x-user-story (e.g. x-user-story: [US-01, US-04])"
+    severity: error
+    given: "$.paths[*][get,put,post,delete,patch]"
+    then:
+      field: x-user-story
+      function: truthy
+
+  # Each error the frontend must handle has to be documented, or the client
+  # cannot be written against the spec. These are the codes in the shared
+  # error envelope (app/schemas/common.py).
+  smartsweep-operation-documents-validation-error:
+    description: Operations with a request body must document a 422 response.
+    message: "{{path}} accepts a body but does not document a 422 response"
+    severity: warn
+    given: "$.paths[*][put,post,patch][?(@.requestBody)]"
+    then:
+      field: responses.422
+      function: truthy

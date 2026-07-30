@@ -1,3 +1,14 @@
+# Backend CI — task S1-F10.
+#
+# Gate order is deliberate: cheap checks that fail fast come first. A formatting
+# error is reported in ~20 seconds instead of after a four-minute test run.
+#
+#   lockfile -> lint -> format -> fast tests (SQLite) -> migrations -> integration (Postgres)
+#
+# The job is named `quality` because that string is the required status check in
+# the branch-protection rule for `main` (plan section 13.1). Renaming the job
+# silently disables that protection, since GitHub matches contexts by name.
+
 name: Backend CI
 
 on:
@@ -11,9 +22,21 @@ defaults:
   run:
     working-directory: Backend
 
+# Cancel superseded runs on the same branch. Pushing three times in five minutes
+# should not queue three full pipelines.
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Only the integration steps use this. The fast suite deliberately runs without
+  # DATABASE_URL set so tests/conftest.py falls back to in-memory SQLite.
+  TEST_DATABASE_URL: postgresql+psycopg://smartsweep:smartsweep@localhost:5432/smartsweep_test
+
 jobs:
   quality:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:16
@@ -22,20 +45,84 @@ jobs:
           POSTGRES_PASSWORD: smartsweep
           POSTGRES_DB: smartsweep_test
         ports: ["5432:5432"]
+        # Without the healthcheck, steps can start before Postgres finishes
+        # initialising and fail with "connection refused" on a cold runner.
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Install uv
         uses: astral-sh/setup-uv@v3
-      - name: Set up Python 3.13
-        run: uv python install 3.13
-      # Steps below are stubbed until dependencies are pinned in pyproject.toml.
-      # - run: uv sync
-      # - run: uv run ruff check .
-      # - run: uv run black --check .
-      # - run: uv run alembic upgrade head
-      # - run: uv run pytest --cov=app
+        with:
+          # Cache keyed on the lockfile: dependency install drops from ~40s to ~3s
+          # on any run where deps did not change.
+          enable-cache: true
+          cache-dependency-glob: "Backend/uv.lock"
+
+      # 3.12, matching requires-python and the team's dev machines. Testing on a
+      # version nobody develops on invites failures that reproduce only in CI.
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      # --locked fails if uv.lock disagrees with pyproject.toml, instead of
+      # quietly re-resolving. That turns "someone edited pyproject and forgot to
+      # commit the lockfile" into a clear CI error rather than a build that used
+      # different dependency versions than everyone's local machine.
+      - name: Install dependencies (lockfile must be current)
+        run: uv sync --all-groups --locked
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Format check (black)
+        run: uv run black --check --diff .
+
+      # No DATABASE_URL here on purpose -> SQLite in memory. Fast, and it is the
+      # suite every developer runs locally, so CI checks the same thing they do.
+      - name: Unit + API tests with coverage
+        run: uv run pytest --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      # Proves the migrations apply cleanly to an empty database, which is the
+      # only thing that catches a broken or non-linear revision chain.
+      - name: Apply migrations
+        run: uv run alembic upgrade head
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+
+      - name: Migrations are reversible
+        run: uv run alembic downgrade base && uv run alembic upgrade head
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+
+      # Explicit -m overrides the `-m "not integration"` default in pyproject.
+      - name: Integration tests (real PostgreSQL)
+        run: uv run pytest -m integration
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+
+      # Catches drift between the hand-written contract and what the code serves
+      # (plan section 14, "contract drift"). Non-blocking until the YAML exists.
+      - name: Export FastAPI's generated OpenAPI document
+        run: |
+          uv run python -c "
+          import json, pathlib
+          from app.main import create_app
+          spec = create_app().openapi()
+          pathlib.Path('openapi.generated.json').write_text(json.dumps(spec, indent=2))
+          print(f\"{len(spec['paths'])} paths documented\")
+          "
+
+      - name: Upload generated OpenAPI document
+        uses: actions/upload-artifact@v4
+        # Publish it even on failure — if tests broke, the spec is still useful
+        # for review, and a missing artifact makes debugging harder.
+        if: always()
+        with:
+          name: openapi-generated
+          path: Backend/openapi.generated.json
+          if-no-files-found: warn

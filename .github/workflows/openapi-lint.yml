@@ -1,0 +1,56 @@
+# OpenAPI lint — new in task S1-F10, supports S1-Y03.
+#
+# The rubric weights API documentation at 15 points, and the specific things it
+# marks (every operation has a summary, a description, an operationId, documented
+# error responses) are exactly what Spectral checks mechanically. Linting the YAML
+# in CI turns those points from "hope we remembered" into a gate.
+#
+# Runs only when a spec file changes, so it costs nothing on backend-only PRs.
+
+name: OpenAPI Lint
+
+on:
+  pull_request:
+    paths:
+      - "docs/**/openapi.yaml"
+      - ".spectral.yaml"
+      - ".github/workflows/openapi-lint.yml"
+  push:
+    branches: [main]
+    paths: ["docs/**/openapi.yaml", ".spectral.yaml"]
+
+concurrency:
+  group: openapi-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job name `openapi-lint` matches the branch-protection status check.
+  openapi-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Guard against a silent pass: with no spec files, the glob matches nothing
+      # and Spectral exits 0, so the job would report green while linting nothing.
+      - name: Check that a spec exists
+        id: check
+        run: |
+          if compgen -G "docs/**/openapi.yaml" > /dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "Specs found:"
+            ls -1 docs/**/openapi.yaml
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No docs/**/openapi.yaml yet (tasks S1-Y01/Y02). Nothing linted."
+          fi
+        shell: bash --noprofile --norc -o globstar -o pipefail {0}
+
+      - name: Lint with Spectral
+        if: steps.check.outputs.found == 'true'
+        run: npx --yes @stoplight/spectral-cli lint "docs/**/openapi.yaml" --ruleset .spectral.yaml --fail-severity warn
