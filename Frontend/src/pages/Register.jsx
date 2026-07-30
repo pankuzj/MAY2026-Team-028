@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { IconAlertCircle, IconBroom, IconCheck } from "../components/Icons";
+import { IconAlertCircle, IconBroom } from "../components/Icons";
 
 const roleHome = { citizen: "/report", crew: "/crew", admin: "/dashboard" };
 
