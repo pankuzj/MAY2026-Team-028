@@ -7,3 +7,5 @@ Keep this file thin — no business logic and no route definitions here.
 
 # TODO: implement create_app(); wire middleware + app.api.v1.router.
 """
+
+__all__: list[str] = []
