@@ -4,14 +4,29 @@ Responsibility: build the FastAPI app (app factory), attach middleware,
 include the versioned API router, and register exception handlers.
 """
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
+from app.db.init_db import init_db
+from app.db.session import SessionLocal
 
 __all__ = ["app", "create_app"]
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize database tables and seed demo data on application startup."""
+    db = SessionLocal()
+    try:
+        init_db(db)
+    finally:
+        db.close()
+    yield
 
 
 def create_app() -> FastAPI:
@@ -21,6 +36,7 @@ def create_app() -> FastAPI:
         docs_url="/docs" if settings.docs_enabled else None,
         redoc_url="/redoc" if settings.docs_enabled else None,
         openapi_url="/openapi.json" if settings.docs_enabled else None,
+        lifespan=lifespan,
     )
 
     # Attach CORS middleware

@@ -19,9 +19,12 @@ class UserRepository:
         return db.get(User, user_id)
 
     @staticmethod
-    def get_by_email(db: Session, email: str) -> User | None:
-        """Fetch a single user by lowercased email."""
-        stmt = select(User).where(User.email == email.lower().strip())
+    def get_by_email(db: Session, email_or_username: str) -> User | None:
+        """Fetch a single user by lowercased email or username."""
+        clean = email_or_username.lower().strip()
+        stmt = select(User).where(
+            (User.email == clean) | (User.email == f"{clean}@smartsweep.gov")
+        )
         return db.scalar(stmt)
 
     @staticmethod
