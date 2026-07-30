@@ -3,7 +3,11 @@
  * Handles JWT authentication headers, token storage, auto-refresh, and error envelopes.
  */
 
-const API_BASE_URL = "/api/v1";
+const BASE_CANDIDATES = [
+  "/api/v1",
+  "http://localhost:8000/api/v1",
+  "http://127.0.0.1:8000/api/v1",
+];
 
 export const getStoredTokenPair = () => {
   try {
@@ -28,6 +32,25 @@ export const clearStoredTokenPair = () => {
   localStorage.removeItem("smartsweep-refresh-token");
 };
 
+async function rawFetch(endpoint, config) {
+  let lastError = null;
+  for (const base of BASE_CANDIDATES) {
+    try {
+      const url = `${base}${endpoint}`;
+      const response = await fetch(url, config);
+      // If we get a 404 HTML response from Vite dev server for relative route, try next candidate
+      const contentType = response.headers.get("content-type") || "";
+      if (response.status === 404 && contentType.includes("text/html") && base === "/api/v1") {
+        continue;
+      }
+      return response;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError || new Error("Failed to connect to backend server. Make sure backend is running on port 8000.");
+}
+
 export async function apiFetch(endpoint, options = {}) {
   const { access } = getStoredTokenPair();
   const headers = {
@@ -44,7 +67,17 @@ export async function apiFetch(endpoint, options = {}) {
     headers,
   };
 
-  let response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+  let response;
+  try {
+    response = await rawFetch(endpoint, config);
+  } catch (err) {
+    return {
+      success: false,
+      status: 0,
+      error: err.message || "Failed to connect to server.",
+      code: "NETWORK_ERROR",
+    };
+  }
 
   // Auto-refresh token on 401 UNAUTHENTICATED
   if (response.status === 401 && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh")) {
@@ -53,7 +86,11 @@ export async function apiFetch(endpoint, options = {}) {
       const refreshed = await refreshTokenApi(refresh);
       if (refreshed.success) {
         headers["Authorization"] = `Bearer ${refreshed.access_token}`;
-        response = await fetch(`${API_BASE_URL}${endpoint}`, { ...config, headers });
+        try {
+          response = await rawFetch(endpoint, { ...config, headers });
+        } catch {
+          // ignore
+        }
       } else {
         clearStoredTokenPair();
       }
@@ -99,11 +136,16 @@ export async function getMeApi() {
 }
 
 export async function refreshTokenApi(refreshToken) {
-  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh_token: refreshToken }),
-  });
+  let response;
+  try {
+    response = await rawFetch("/auth/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+  } catch {
+    return { success: false };
+  }
 
   const data = await response.json().catch(() => ({}));
   if (response.ok && data.access_token) {
