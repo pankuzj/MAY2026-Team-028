@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     # --- Database ---
-    database_url: str = "postgresql+psycopg://smartsweep:smartsweep@localhost:5432/smartsweep"
+    database_url: str = "sqlite:///./smartsweep.db"
     # Echo every SQL statement. Useful when debugging a query, far too noisy
     # otherwise, so it is opt-in via the environment.
     db_echo: bool = False
