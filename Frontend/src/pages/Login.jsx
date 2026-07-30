@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useNavigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth, DEMO_USERS } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { IconAlertCircle, IconBroom } from "../components/Icons";
@@ -96,6 +96,15 @@ export default function Login() {
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Authenticating..." : "Access System"}
         </button>
+
+        <div style={{ textAlign: "center", marginTop: "1rem" }}>
+          <p style={{ color: "#888", fontSize: "0.9rem" }}>
+            Don't have an account?{" "}
+            <Link to="/register" style={{ color: "#38ef7d", fontWeight: "600" }}>
+              Create Account
+            </Link>
+          </p>
+        </div>
       </form>
 
       <div className="demo-hint">
