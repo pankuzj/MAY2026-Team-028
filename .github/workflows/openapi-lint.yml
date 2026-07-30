@@ -38,18 +38,26 @@ jobs:
 
       # Guard against a silent pass: with no spec files, the glob matches nothing
       # and Spectral exits 0, so the job would report green while linting nothing.
+      #
+      # globstar (for `**`) and nullglob are `shopt` options, NOT `set -o` ones —
+      # `bash -o globstar` fails with "invalid option name". They have to be
+      # enabled inside the script. nullglob is what makes an unmatched pattern
+      # expand to nothing instead of to the literal string "docs/**/openapi.yaml",
+      # which would otherwise make the array look non-empty.
       - name: Check that a spec exists
         id: check
+        shell: bash
         run: |
-          if compgen -G "docs/**/openapi.yaml" > /dev/null; then
+          shopt -s globstar nullglob
+          specs=(docs/**/openapi.yaml)
+          if (( ${#specs[@]} > 0 )); then
             echo "found=true" >> "$GITHUB_OUTPUT"
             echo "Specs found:"
-            ls -1 docs/**/openapi.yaml
+            printf '  %s\n' "${specs[@]}"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
             echo "::warning::No docs/**/openapi.yaml yet (tasks S1-Y01/Y02). Nothing linted."
           fi
-        shell: bash --noprofile --norc -o globstar -o pipefail {0}
 
       - name: Lint with Spectral
         if: steps.check.outputs.found == 'true'

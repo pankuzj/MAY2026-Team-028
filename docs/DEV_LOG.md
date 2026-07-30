@@ -68,11 +68,18 @@ python -c "from app.main import app"   -> builds, 6 routes
    `history`, and `downgrade base` all work, but autogenerate has never produced a
    file here because there are no models yet. Nitin will be first to exercise it
    (S1-F08); if `target_metadata` is wrong, that is where it surfaces.
-3. **No CI run has happened.** The workflows are syntactically valid YAML and the
-   commands they run were all verified locally, but GitHub Actions has not executed
-   them. Expect one or two rounds of fixes on the first PR.
-4. **The integration suite has never run against real PostgreSQL** locally, for the
-   same reason as (1). It will first run in CI.
+3. ~~No CI run has happened.~~ **Resolved on PR #13.** `Backend CI` and
+   `Frontend CI` both passed on the first attempt. `OpenAPI Lint` failed once —
+   `bash -o globstar` is invalid, because `globstar` is a `shopt` option and not a
+   `set -o` one; fixed by enabling it inside the script with
+   `shopt -s globstar nullglob`. Worth remembering: `nullglob` matters as much as
+   `globstar` there, since an unmatched `**` pattern otherwise expands to the
+   literal string and the "no specs" guard would never fire.
+4. ~~The integration suite has never run against real PostgreSQL.~~ **Resolved on
+   PR #13:** 5 integration tests passed against the postgres:16 service, after
+   `alembic upgrade head` and a `downgrade base && upgrade head` reversibility
+   check. So the SQLite/PostgreSQL split (D-08) is proven end to end, and the
+   `assert not settings.is_sqlite` guard confirmed it really was on PostgreSQL.
 
 ---
 
