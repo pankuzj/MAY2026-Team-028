@@ -2,10 +2,43 @@
 
 Responsibility: build the FastAPI app (app factory), attach middleware,
 include the versioned API router, and register exception handlers.
-
-Keep this file thin — no business logic and no route definitions here.
-
-# TODO: implement create_app(); wire middleware + app.api.v1.router.
 """
 
-__all__: list[str] = []
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.v1.router import router as api_v1_router
+from app.core.config import settings
+from app.core.exceptions import register_exception_handlers
+
+__all__ = ["app", "create_app"]
+
+
+def create_app() -> FastAPI:
+    """FastAPI application factory."""
+    app = FastAPI(
+        title=settings.project_name,
+        docs_url="/docs" if settings.docs_enabled else None,
+        redoc_url="/redoc" if settings.docs_enabled else None,
+        openapi_url="/openapi.json" if settings.docs_enabled else None,
+    )
+
+    # Attach CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origin_list,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Register domain & framework exception handlers
+    register_exception_handlers(app)
+
+    # Include versioned API routers
+    app.include_router(api_v1_router, prefix=settings.api_v1_prefix)
+
+    return app
+
+
+app = create_app()

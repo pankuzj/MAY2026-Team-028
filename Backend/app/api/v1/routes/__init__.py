@@ -1,10 +1,5 @@
-"""Resource route modules (one per aggregate).
+"""Resource route modules (one per aggregate)."""
 
-Routes parse the request, call a service, and return a schema.
-No DB access and no business rules live here.
+from app.api.v1.routes import auth
 
-# TODO: add route modules — auth, users, wards, complaints, bulk_pickups,
-#       tasks, workforce, vehicles, equipment, feed, schedule, reports.
-"""
-
-__all__: list[str] = []
+__all__ = ["auth"]
