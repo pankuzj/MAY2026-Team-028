@@ -36,6 +36,7 @@ from app.schemas.resources import (
     WorkerStatus,
     WorkerUpdate,
 )
+from app.schemas.task import TaskBase, TaskCreate, TaskRead, TaskStatus, TaskUpdate
 from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.schemas.ward import WardBase, WardCreate, WardRead, WardUpdate
 
@@ -60,6 +61,11 @@ __all__ = [
     "Page",
     "PageMeta",
     "RefreshTokenRequest",
+    "TaskBase",
+    "TaskCreate",
+    "TaskRead",
+    "TaskStatus",
+    "TaskUpdate",
     "Token",
     "UserCreate",
     "UserRead",

@@ -2,6 +2,7 @@
 
 from app.models.complaint import Complaint, ComplaintStatus, ComplaintStatusHistory
 from app.models.equipment import Equipment, EquipmentStatus
+from app.models.task import Task, TaskStatus, task_equipment, task_workers
 from app.models.user import User, UserRole
 from app.models.vehicle import Vehicle, VehicleStatus
 from app.models.ward import Ward
@@ -13,6 +14,8 @@ __all__ = [
     "ComplaintStatusHistory",
     "Equipment",
     "EquipmentStatus",
+    "Task",
+    "TaskStatus",
     "User",
     "UserRole",
     "Vehicle",
@@ -20,4 +23,6 @@ __all__ = [
     "Ward",
     "Worker",
     "WorkerStatus",
+    "task_equipment",
+    "task_workers",
 ]
