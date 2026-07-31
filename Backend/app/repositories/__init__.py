@@ -1,6 +1,5 @@
-"""Repositories — the only layer that talks to the database.
+"""Repositories — the only layer that talks to the database."""
 
-CRUD + queries returning ORM objects/primitives. No business rules, no HTTP.
+from app.repositories.user_repository import UserRepository
 
-# TODO: one repository per aggregate (complaint, bulk_pickup, task, user, ...).
-"""
+__all__ = ["UserRepository"]

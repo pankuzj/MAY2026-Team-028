@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar";
 import BottomNav from "./components/BottomNav";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Home from "./pages/Home";
 import ReportComplaint from "./pages/ReportComplaint";
 import MyComplaints from "./pages/MyComplaints";
@@ -25,6 +26,7 @@ function App() {
       <main className="app-main">
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/report" element={
             <ProtectedRoute allowedRoles={["citizen"]}><ReportComplaint /></ProtectedRoute>

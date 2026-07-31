@@ -1,4 +1,11 @@
-"""SQLAlchemy declarative base + shared metadata.
+"""SQLAlchemy declarative base + shared metadata."""
 
-# TODO: define Base; import all models here so Alembic can discover them.
-"""
+from sqlalchemy.orm import DeclarativeBase
+
+__all__ = ["Base"]
+
+
+class Base(DeclarativeBase):
+    """Base class for all SQLAlchemy ORM models."""
+
+    pass

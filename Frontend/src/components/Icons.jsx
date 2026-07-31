@@ -245,3 +245,9 @@ export const IconChartBar = (props) => (
     <path d="M4 20V10M10 20V4M16 20v-7M4 20h16" strokeLinejoin="round" />
   </svg>
 );
+
+export const IconCheck = (props) => (
+  <svg {...base} {...props}>
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+);

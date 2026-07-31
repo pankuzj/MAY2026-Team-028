@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useNavigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth, DEMO_USERS } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { IconAlertCircle, IconBroom } from "../components/Icons";
@@ -15,6 +15,7 @@ export default function Login() {
   const [activeRole, setActiveRole] = useState("citizen");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   if (user) return <Navigate to={roleHome[user.role] || "/"} replace />;
@@ -26,16 +27,27 @@ export default function Login() {
     setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = login(username, password);
-    if (!result.success) {
-      setError(result.error);
-      notify(result.error, "error");
-      return;
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      const result = await login(username, password);
+      if (!result.success) {
+        setError(result.error);
+        notify(result.error, "error");
+        return;
+      }
+      notify(`Welcome back, ${result.name}`, "success");
+      navigate(location.state?.from || roleHome[result.role] || "/", { replace: true });
+    } catch (err) {
+      const msg = err?.message || "Authentication failed. Make sure backend is running.";
+      setError(msg);
+      notify(msg, "error");
+    } finally {
+      setIsSubmitting(false);
     }
-    notify(`Welcome back, ${result.name}`, "success");
-    navigate(location.state?.from || roleHome[result.role] || "/", { replace: true });
   };
 
   return (
@@ -60,19 +72,43 @@ export default function Login() {
 
       <form className="login-form" onSubmit={handleSubmit}>
         <label>
-          Username
-          <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter username" required />
+          Username or Email
+          <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Enter username or email"
+            required
+            disabled={isSubmitting}
+          />
         </label>
         <label>
           Password
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" required />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter password"
+            required
+            disabled={isSubmitting}
+          />
         </label>
         {error && <p className="loc-error"><IconAlertCircle /> {error}</p>}
-        <button type="submit">Access System</button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Authenticating..." : "Access System"}
+        </button>
+
+        <div style={{ textAlign: "center", marginTop: "1rem" }}>
+          <p style={{ color: "#888", fontSize: "0.9rem" }}>
+            Don't have an account?{" "}
+            <Link to="/register" style={{ color: "#38ef7d", fontWeight: "600" }}>
+              Create Account
+            </Link>
+          </p>
+        </div>
       </form>
 
       <div className="demo-hint">
-        <span className="eyebrow">Demo Credentials</span>
+        <span className="eyebrow">Demo Credentials (DB Seeded)</span>
         {DEMO_USERS.map((u) => (
           <p key={u.username}><strong>{u.label}:</strong> {u.username} / {u.password}</p>
         ))}

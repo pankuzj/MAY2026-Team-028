@@ -1,7 +1,5 @@
-"""SQLAlchemy ORM models — the persistence shape of each entity.
+"""SQLAlchemy ORM models — the persistence shape of each entity."""
 
-Imported only by repositories (and Alembic). One file per entity.
+from app.models.user import User, UserRole
 
-# TODO: user, ward, complaint, bulk_pickup, task (assignment), worker,
-#       vehicle, equipment, feed_post, comment, collection_schedule, audit.
-"""
+__all__ = ["User", "UserRole"]

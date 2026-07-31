@@ -1,8 +1,5 @@
-"""Services — all business logic.
+"""Services — all business logic."""
 
-State-machine enforcement, assignment orchestration, duplicate detection,
-schedule computation, analytics rollups. Depend on repositories, not FastAPI.
+from app.services.auth_service import AuthService
 
-# TODO: auth, complaint, bulk_pickup, assignment, duplicate_detection,
-#       schedule, reports, feed.
-"""
+__all__ = ["AuthService"]
