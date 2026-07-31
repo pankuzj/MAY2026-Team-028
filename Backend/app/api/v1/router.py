@@ -2,10 +2,11 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.routes import auth, wards
+from app.api.v1.routes import auth, complaints, wards
 
 router = APIRouter()
 router.include_router(auth.router)
 router.include_router(wards.router)
+router.include_router(complaints.router)
 
 __all__ = ["router"]
