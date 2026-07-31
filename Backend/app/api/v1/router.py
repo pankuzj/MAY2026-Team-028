@@ -1,8 +1,10 @@
-"""Aggregates all v1 resource routers into a single APIRouter.
+"""Aggregates all v1 resource routers into a single APIRouter."""
 
-# TODO: include routers from app.api.v1.routes (auth, users, wards,
-#       complaints, bulk_pickups, tasks, workforce, vehicles, equipment,
-#       feed, schedule, reports).
-"""
+from fastapi import APIRouter
 
-__all__: list[str] = []
+from app.api.v1.routes import auth
+
+router = APIRouter()
+router.include_router(auth.router)
+
+__all__ = ["router"]

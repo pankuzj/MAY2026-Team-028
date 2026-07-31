@@ -1,8 +1,20 @@
-"""Pydantic v2 DTOs — the API contract (separate Create / Update / Read).
+"""Pydantic v2 DTOs — the API contract for requests and responses."""
 
-Never expose ORM models directly; services translate models <-> schemas.
+from app.schemas.auth import LoginRequest, RefreshTokenRequest, Token
+from app.schemas.common import ErrorDetail, ErrorPayload, ErrorResponse, Page, PageMeta, error_response
+from app.schemas.user import UserCreate, UserRead, UserUpdate
 
-# TODO: one module per entity, mirroring models/.
-"""
-
-__all__: list[str] = []
+__all__ = [
+    "ErrorDetail",
+    "ErrorPayload",
+    "ErrorResponse",
+    "LoginRequest",
+    "Page",
+    "PageMeta",
+    "RefreshTokenRequest",
+    "Token",
+    "UserCreate",
+    "UserRead",
+    "UserUpdate",
+    "error_response",
+]

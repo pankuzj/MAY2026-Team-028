@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     # --- Database ---
-    database_url: str = "postgresql+psycopg://smartsweep:smartsweep@localhost:5432/smartsweep"
+    database_url: str = "sqlite:///./smartsweep.db"
     # Echo every SQL statement. Useful when debugging a query, far too noisy
     # otherwise, so it is opt-in via the environment.
     db_echo: bool = False
@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     # tries to JSON-decode complex types read from the environment, so a plain
     # ``CORS_ORIGINS=http://localhost:5173`` would raise a parse error. Read the
     # parsed value through ``cors_origin_list`` below.
-    cors_origins: str = "http://localhost:5173"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:3000,http://localhost:4173"
 
     # --- File storage (local disk; no S3/CDN in this project) ---
     upload_dir: Path = Path("./uploads")
