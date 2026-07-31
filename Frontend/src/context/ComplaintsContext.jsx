@@ -1,4 +1,6 @@
 import { createContext, useContext, useState } from "react";
+import { useAuth } from "./AuthContext";
+import { createComplaintApi } from "../utils/api";
 
 const ComplaintsContext = createContext(null);
 
@@ -101,21 +103,50 @@ const initialComplaints = [
 
 export function ComplaintsProvider({ children }) {
   const [complaints, setComplaints] = useState(initialComplaints);
+  const { user } = useAuth();
 
   // All mutators are Promise-returning even though today they just touch
   // local state. That keeps every call site already using `await`, so
   // swapping the body for a `fetch()` to a FastAPI backend later won't
   // require touching any component.
 
+  const toLocalComplaint = (apiComplaint, fallbackData) => ({
+    id: apiComplaint.id,
+    location: apiComplaint.title || apiComplaint.address || fallbackData.location,
+    description: apiComplaint.description || fallbackData.description,
+    hazard: apiComplaint.category || fallbackData.hazard || "None",
+    photo: apiComplaint.photo_url || fallbackData.photo || null,
+    coords:
+      apiComplaint.latitude != null && apiComplaint.longitude != null
+        ? { lat: apiComplaint.latitude, lng: apiComplaint.longitude }
+        : fallbackData.coords || null,
+    reportedBy: user?.name || fallbackData.reportedBy || "Citizen",
+    status:
+      apiComplaint.status?.replace(/_/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase()) ||
+      "Pending",
+    createdAt: (apiComplaint.created_at || new Date().toISOString()).slice(0, 10),
+    resolvedAt: apiComplaint.resolved_at ? apiComplaint.resolved_at.slice(0, 10) : undefined,
+    cancelledAt: apiComplaint.cancelled_at ? apiComplaint.cancelled_at.slice(0, 10) : undefined,
+  });
+
   const addComplaint = (data) =>
-    new Promise((resolve) => {
+    new Promise(async (resolve) => {
+      const result = await createComplaintApi({
+        location: data.location,
+        description: data.description,
+        hazard: data.hazard,
+        photo: data.photo,
+        coords: data.coords,
+        ward_id: user?.ward_id ?? null,
+      });
+
+      if (!result.success) {
+        resolve({ success: false, error: result.error });
+        return;
+      }
+
       setComplaints((prev) => {
-        const newComplaint = {
-          id: prev.length ? Math.max(...prev.map((c) => c.id)) + 1 : 1,
-          status: "Pending",
-          createdAt: new Date().toISOString().slice(0, 10),
-          ...data,
-        };
+        const newComplaint = toLocalComplaint(result.data, data);
         resolve({ success: true, complaint: newComplaint });
         return [newComplaint, ...prev];
       });

@@ -135,6 +135,13 @@ export async function getMeApi() {
   return await apiFetch("/auth/me");
 }
 
+export async function createComplaintApi(payload) {
+  return await apiFetch("/complaints", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function refreshTokenApi(refreshToken) {
   let response;
   try {
