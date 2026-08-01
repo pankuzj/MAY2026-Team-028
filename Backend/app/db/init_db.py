@@ -3,6 +3,7 @@
 import logging
 from sqlalchemy.orm import Session
 
+from app import models as _models
 from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import engine
@@ -52,6 +53,7 @@ DEMO_USERS_SEED = [
 
 def init_db(db: Session) -> None:
     """Ensure database tables exist and seed initial demo users."""
+    _ = _models.__all__
     Base.metadata.create_all(bind=engine)
 
     for user_data in DEMO_USERS_SEED:
