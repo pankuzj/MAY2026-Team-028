@@ -100,9 +100,21 @@ export async function apiFetch(endpoint, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const errorMsg = data?.error?.message || data?.message || "An unexpected error occurred.";
+    let errorMsg = data?.error?.message || data?.message;
+    let details = data?.error?.details;
+
+    // Handle FastAPI Pydantic validation errors (422)
+    if (!errorMsg && Array.isArray(data?.detail)) {
+      errorMsg = "Validation failed: " + data.detail.map((e) => e.msg).join(", ");
+      details = data.detail;
+    } else if (!errorMsg && typeof data?.detail === "string") {
+      errorMsg = data.detail;
+    }
+
+    if (!errorMsg) errorMsg = "An unexpected error occurred.";
+
     const errorCode = data?.error?.code || "API_ERROR";
-    return { success: false, status: response.status, error: errorMsg, code: errorCode, details: data?.error?.details };
+    return { success: false, status: response.status, error: errorMsg, code: errorCode, details };
   }
 
   return { success: true, data };
@@ -132,7 +144,12 @@ export async function registerApi(userData) {
 }
 
 export async function getMeApi() {
-  return await apiFetch("/auth/me");
+  return await apiFetch("/auth/me", {
+    headers: {
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache"
+    }
+  });
 }
 
 export async function createComplaintApi(payload) {

@@ -3,10 +3,10 @@
 from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user, get_db, require_role
 from app.core.config import settings
 from app.models.complaint import Complaint
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.repositories.complaint_repository import ComplaintRepository
 from app.schemas.common import Page
 from app.schemas.complaint import (
@@ -39,22 +39,25 @@ def create_complaint(
 @router.get("", response_model=Page[ComplaintRead])
 def list_complaints(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     search: str | None = None,
     status_filter: str | None = Query(default=None, alias="status"),
     ward_id: int | None = None,
     page: int = 1,
     page_size: int = 20,
 ) -> Page[ComplaintRead]:
-    items, total = ComplaintService.list_complaints(
-        db,
-        filters={
-            "search": search,
-            "status": status_filter,
-            "ward_id": ward_id,
-            "page": page,
-            "page_size": page_size,
-        },
-    )
+    filters: dict = {
+        "search": search,
+        "status": status_filter,
+        "ward_id": ward_id,
+        "page": page,
+        "page_size": page_size,
+    }
+    # Citizens are scoped to their own complaints only.
+    if current_user.role == UserRole.CITIZEN.value:
+        filters["reported_by_user_id"] = current_user.id
+
+    items, total = ComplaintService.list_complaints(db, filters=filters)
     return Page[ComplaintRead].build(
         [_to_read_model(item) for item in items], page=page, page_size=page_size, total=total
     )
@@ -68,6 +71,7 @@ def list_complaints(
 @router.get("/high-risk", response_model=Page[ComplaintRead])
 def high_risk_complaints(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     page: int = 1,
     page_size: int = 20,
 ) -> Page[ComplaintRead]:
@@ -97,7 +101,10 @@ def high_risk_complaints(
 
 
 @router.post("/upload-photo")
-async def upload_complaint_photo(photo: UploadFile = File(...)) -> dict[str, object]:
+async def upload_complaint_photo(
+    photo: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, object]:
     content_type = (photo.content_type or "").lower()
     if content_type not in settings.upload_allowed_mime_type_set:
         raise HTTPException(
@@ -118,8 +125,14 @@ async def upload_complaint_photo(photo: UploadFile = File(...)) -> dict[str, obj
 
 
 @router.get("/{complaint_id}", response_model=ComplaintRead)
-def get_complaint(complaint_id: int, db: Session = Depends(get_db)) -> ComplaintRead:
-    return _to_read_model(ComplaintService.get_complaint(db, complaint_id))
+def get_complaint(
+    complaint_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ComplaintRead:
+    complaint = ComplaintService.get_complaint(db, complaint_id)
+    ComplaintService.assert_can_read(complaint, current_user)
+    return _to_read_model(complaint)
 
 
 @router.patch("/{complaint_id}", response_model=ComplaintRead)
@@ -127,7 +140,10 @@ def update_complaint(
     complaint_id: int,
     complaint_in: ComplaintUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> ComplaintRead:
+    complaint = ComplaintService.get_complaint(db, complaint_id)
+    ComplaintService.assert_can_read(complaint, current_user)
     return _to_read_model(ComplaintService.update_complaint(db, complaint_id, complaint_in))
 
 
@@ -165,16 +181,24 @@ def cancel_complaint(
 def complaint_history(
     complaint_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> list[ComplaintStatusHistoryRead]:
-    ComplaintService.get_complaint(db, complaint_id)
+    complaint = ComplaintService.get_complaint(db, complaint_id)
+    ComplaintService.assert_can_read(complaint, current_user)
     return [
         ComplaintStatusHistoryRead.model_validate(history)
         for history in ComplaintRepository.get_history(db, complaint_id)
     ]
 
 
-@router.get("/{complaint_id}/duplicates")
-def get_duplicates(complaint_id: int, db: Session = Depends(get_db)) -> list[dict]:
+@router.get(
+    "/{complaint_id}/duplicates",
+    dependencies=[Depends(require_role(UserRole.CREW, UserRole.ADMIN))],
+)
+def get_duplicates(
+    complaint_id: int,
+    db: Session = Depends(get_db),
+) -> list[dict]:
     complaint = ComplaintService.get_complaint(db, complaint_id)
     matches = DuplicateDetectionService.find_possible_duplicates(db, complaint)
     # The service hands back the matched ORM row under "complaint"; convert it to

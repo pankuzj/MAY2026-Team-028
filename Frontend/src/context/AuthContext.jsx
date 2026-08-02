@@ -86,11 +86,36 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (userData) => {
-    const result = await registerApi(userData);
-    if (!result.success) {
-      return { success: false, error: result.error };
+    // 1. Create the account
+    const regResult = await registerApi(userData);
+    if (!regResult.success) {
+      return { success: false, error: regResult.error };
     }
-    return { success: true, user: result.data };
+
+    // 2. Immediately log in to get tokens
+    const loginRes = await loginApi(userData.email, userData.password);
+    if (!loginRes.success) {
+      return { success: false, error: loginRes.error };
+    }
+
+    // 3. Fetch the canonical profile (source of truth for role)
+    const meRes = await getMeApi();
+    if (!meRes.success || !meRes.data) {
+      return { success: false, error: "Account created but failed to load profile." };
+    }
+
+    const profile = meRes.data;
+    const userObj = {
+      id: profile.id,
+      email: profile.email,
+      username: profile.email.split("@")[0],
+      name: profile.full_name,
+      role: profile.role,
+      ward_id: profile.ward_id,
+    };
+
+    setUser(userObj);
+    return { success: true, role: profile.role, name: profile.full_name };
   };
 
   const logout = () => {

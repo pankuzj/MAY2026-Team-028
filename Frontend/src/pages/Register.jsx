@@ -7,7 +7,7 @@ import { IconAlertCircle, IconBroom } from "../components/Icons";
 const roleHome = { citizen: "/report", crew: "/crew", admin: "/dashboard" };
 
 export default function Register() {
-  const { register, login, user } = useAuth();
+  const { register, user } = useAuth();
   const { notify } = useToast();
   const navigate = useNavigate();
 
@@ -51,16 +51,10 @@ export default function Register() {
         return;
       }
 
-      notify("Account registered! Signing you in...", "success");
-
-      // Auto login after registration
-      const loginRes = await login(email.trim().toLowerCase(), password);
-      if (loginRes.success) {
-        notify(`Welcome to SmartSweep, ${loginRes.name}!`, "success");
-        navigate(roleHome[loginRes.role] || "/", { replace: true });
-      } else {
-        navigate("/login");
-      }
+      // register() now handles login + profile fetch internally.
+      // regRes.role comes from /auth/me — the server's canonical value.
+      notify(`Welcome to SmartSweep, ${regRes.name}!`, "success");
+      navigate(roleHome[regRes.role] || "/", { replace: true });
     } catch (err) {
       const msg = err?.message || "Registration failed. Please check backend connection.";
       setError(msg);
@@ -156,9 +150,10 @@ export default function Register() {
         )}
 
         <p style={{ color: "#888", fontSize: "0.85rem", marginTop: "-0.5rem" }}>
-          Choose Citizen to report issues, or Crew Member to access cleanup
-          task tools. Admin accounts are provisioned separately and aren't
-          available through sign-up.
+          {role === "citizen"
+            ? "Register as a Citizen to report garbage issues and track their status."
+            : "Register as a Crew Member to access cleanup task tools and fleet management."}
+          {" "}Admin accounts are provisioned separately and aren't available through sign-up.
         </p>
 
         <button type="submit" disabled={isSubmitting}>
