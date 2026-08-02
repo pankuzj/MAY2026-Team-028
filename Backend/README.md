@@ -158,47 +158,47 @@ Pickup to the crew, vehicle, and equipment fulfilling it.
 
 ## Development workflow
 
-### Getting started (once dependencies are pinned)
+### Getting started
+
+You have two ways to run the backend locally — pick whichever fits your setup. Either way, the database schema is created and seeded automatically on startup; you do **not** need to run migrations to get a working local environment (see the Migrations note below).
+
+#### Option A: Docker Compose (recommended, easiest)
+
+Runs Postgres **and** the API in containers — no local Python/uv setup required.
 
 ```bash
 cd Backend
+docker compose up --build
+```
+
+Confirm it's up at `http://localhost:8000/docs`.
+
+```bash
+docker compose up --build -d     # run in the background
+docker compose logs -f api       # tail logs when running detached
+docker compose down              # stop everything
+docker compose down -v           # stop everything and wipe the DB volume (clean slate)
+```
+
+Code changes don't hot-reload in this mode — stop and re-run `docker compose up --build` to pick them up.
+
+#### Option B: Local with uv (hot-reload, faster iteration)
+
+Still uses Docker for Postgres only; the API runs natively.
+
+```bash
+cd Backend
+docker compose up -d db       # start just Postgres
+
 cp .env.example .env          # fill in local values
-uv sync                       # create venv + install deps
-docker compose up -d db       # start PostgreSQL
-uv run alembic upgrade head   # apply migrations
+# make sure DATABASE_URL points at the db service, e.g.:
+#   DATABASE_URL=postgresql+psycopg://smartsweep:smartsweep@localhost:5432/smartsweep
+
+uv sync --all-extras          # create venv + install deps
 uv run uvicorn app.main:app --reload
 ```
 
-### Git
-
-- `main` is protected and always deployable.
-- Work on short-lived branches (`feature/*`, `fix/*`), open a PR, get one review,
-  then squash-merge. Use Conventional Commit messages
-  (`feat:`, `fix:`, `chore:`, `docs:`, `test:`).
-
-### Testing
-
-- `tests/unit` — services and utils with the DB faked (where the logic lives;
-  aim for high coverage here).
-- `tests/integration` — repositories against a real Postgres test DB.
-- `tests/api` — full request cycle via `TestClient`.
-- Run: `uv run pytest` (with `--cov=app` for coverage).
-
-### Migrations
-
-- Autogenerate with Alembic, but **review every migration by hand** before
-  committing. Never edit an applied migration — always roll forward.
-
-### Docker
-
-- `docker compose up` brings up `api` + `postgres` for local dev.
-- The `Dockerfile` builds the production image (multi-stage, via uv).
-
-### Quality gates
-
-- `pre-commit install` runs Ruff + Black + basic hygiene on every commit.
-- CI (`.github/workflows/backend-ci.yml`) re-runs lint, format check,
-  migrations, and tests on every PR; merges are blocked on failure.
+Confirm it's up at `http://localhost:8000/docs`.
 
 ---
 
