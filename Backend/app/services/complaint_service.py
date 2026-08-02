@@ -4,9 +4,9 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import InvalidStateTransitionError, NotFoundError
+from app.core.exceptions import InvalidStateTransitionError, NotFoundError, PermissionDeniedError
 from app.models.complaint import Complaint, ComplaintStatus, ComplaintStatusHistory
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.repositories.complaint_repository import ComplaintRepository
 from app.schemas.complaint import ComplaintSubmit, ComplaintUpdate
 
@@ -64,6 +64,19 @@ class ComplaintService:
         if not complaint:
             raise NotFoundError("Complaint not found.")
         return complaint
+
+    @staticmethod
+    def assert_can_read(complaint: Complaint, current_user: User) -> None:
+        """Raise PermissionDeniedError if a citizen tries to read another user's complaint.
+
+        Crew and Admin roles have unrestricted read access to all complaints.
+        Citizens may only read complaints they reported themselves.
+        """
+        if (
+            current_user.role == UserRole.CITIZEN.value
+            and complaint.reported_by_user_id != current_user.id
+        ):
+            raise PermissionDeniedError("You do not have permission to access this complaint.")
 
     @staticmethod
     def list_complaints(db: Session, *, filters: dict | None = None) -> tuple[list[Complaint], int]:

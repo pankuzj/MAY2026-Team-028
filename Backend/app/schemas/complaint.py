@@ -59,8 +59,6 @@ class ComplaintUpdate(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     photo_url: str | None = Field(default=None, max_length=2048)
-    resolved_at: datetime | None = None
-    cancelled_at: datetime | None = None
 
 
 class ComplaintRead(ComplaintBase):
