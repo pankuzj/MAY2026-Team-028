@@ -12,8 +12,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
+from app.core.logging import configure_logging
 from app.db.init_db import init_db
 from app.db.session import SessionLocal
+from app.middleware import RequestContextMiddleware
 
 __all__ = ["app", "create_app"]
 
@@ -31,6 +33,8 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     """FastAPI application factory."""
+    configure_logging(settings.log_level)
+
     app = FastAPI(
         title=settings.project_name,
         docs_url="/docs" if settings.docs_enabled else None,
@@ -39,7 +43,9 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Attach CORS middleware
+    # Middleware runs in reverse registration order (last added = outermost),
+    # so request-id/access-log wraps CORS to time and tag the whole response
+    # including CORS headers.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
@@ -47,6 +53,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(RequestContextMiddleware)
 
     # Register domain & framework exception handlers
     register_exception_handlers(app)
