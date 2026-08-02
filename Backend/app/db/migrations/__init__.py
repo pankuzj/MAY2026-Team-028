@@ -1,7 +1,3 @@
-"""Alembic migrations.
-
-# TODO: run `alembic init` targeting this directory; versions/ holds scripts.
-# Autogenerate from models, then review every migration by hand before commit.
-"""
+"""Alembic migrations. See README in this directory for the workflow."""
 
 __all__: list[str] = []

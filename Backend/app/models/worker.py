@@ -1,12 +1,11 @@
 """Worker ORM model."""
 
-from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.db.base import Base, TimestampMixin
 
 
 class WorkerStatus(str, Enum):
@@ -18,7 +17,7 @@ class WorkerStatus(str, Enum):
     UNAVAILABLE = "unavailable"
 
 
-class Worker(Base):
+class Worker(Base, TimestampMixin):
     """Assignable cleanup crew member."""
 
     __tablename__ = "workers"
@@ -34,9 +33,3 @@ class Worker(Base):
     )
     ward_id: Mapped[int | None] = mapped_column(ForeignKey("wards.id"), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )

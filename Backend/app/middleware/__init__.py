@@ -1,6 +1,5 @@
-"""ASGI/HTTP middleware.
+"""ASGI/HTTP middleware."""
 
-# TODO: request-id, request logging, global error handling, CORS setup.
-"""
+from app.middleware.request_context import RequestContextMiddleware
 
-__all__: list[str] = []
+__all__ = ["RequestContextMiddleware"]

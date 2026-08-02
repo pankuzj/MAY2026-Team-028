@@ -1,13 +1,12 @@
 """Vehicle ORM model."""
 
-from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.db.base import Base, TimestampMixin
 
 
 class VehicleStatus(str, Enum):
@@ -19,7 +18,7 @@ class VehicleStatus(str, Enum):
     MAINTENANCE = "maintenance"
 
 
-class Vehicle(Base):
+class Vehicle(Base, TimestampMixin):
     """Assignable municipal fleet vehicle."""
 
     __tablename__ = "vehicles"
@@ -35,9 +34,3 @@ class Vehicle(Base):
     ward_id: Mapped[int | None] = mapped_column(ForeignKey("wards.id"), nullable=True, index=True)
     driver_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )

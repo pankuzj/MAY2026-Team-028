@@ -6,7 +6,7 @@ from enum import Enum
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.db.base import Base, TimestampMixin
 
 
 class ComplaintStatus(str, Enum):
@@ -18,7 +18,7 @@ class ComplaintStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class Complaint(Base):
+class Complaint(Base, TimestampMixin):
     """Citizen-reported waste or sanitation issue."""
 
     __tablename__ = "complaints"
@@ -41,12 +41,6 @@ class Complaint(Base):
     photo_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )
 
 
 class ComplaintStatusHistory(Base):
