@@ -4,7 +4,6 @@ import {
   PICKUP_CATEGORIES,
   LOAD_SIZES,
   TIME_SLOTS,
-  calculateFee,
 } from "../context/BulkPickupContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -48,11 +47,7 @@ export default function BulkPickupScheduler() {
 
   const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  // Live fee estimate that mirrors exactly what the context will store.
-  const estimatedFee = useMemo(
-    () => calculateFee(form.loadSize, form.category),
-    [form.loadSize, form.category]
-  );
+
 
   const myPickups = useMemo(
     () => pickups.filter((p) => p.requestedBy === user.name),
@@ -76,7 +71,7 @@ export default function BulkPickupScheduler() {
     setSubmitting(false);
 
     if (res.success) {
-      notify(`Bulk pickup ${res.pickup.id} scheduled — est. fee ₹${res.pickup.fee}.`, "success");
+      notify(`Bulk pickup ${res.pickup.id} scheduled successfully.`, "success");
       setForm(emptyForm);
     } else {
       notify(res.error || "Could not schedule pickup.", "error");
@@ -202,13 +197,7 @@ export default function BulkPickupScheduler() {
             />
           </div>
 
-          <div className="fee-estimate">
-            <div>
-              <span className="fee-estimate-label">Estimated Pickup Fee</span>
-              <small>Based on load size &amp; category. Final fee confirmed on collection.</small>
-            </div>
-            <span className="fee-estimate-value">₹{estimatedFee}</span>
-          </div>
+
 
           <button type="submit" className="submit-complaint-btn" disabled={submitting}>
             <IconCalendar />
@@ -264,10 +253,6 @@ export default function BulkPickupScheduler() {
                     <div className="op-detail-row">
                       <span className="label">Load / Items</span>
                       <span className="value">{p.loadSize} · {p.quantity} items</span>
-                    </div>
-                    <div className="op-detail-row">
-                      <span className="label">Est. Fee</span>
-                      <span className="value font-bold">₹{p.fee}</span>
                     </div>
                   </div>
 
