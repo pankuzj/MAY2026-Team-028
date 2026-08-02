@@ -1,6 +1,6 @@
 """Auth primitives: password hashing + JWT encode/decode."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import bcrypt
@@ -40,7 +40,7 @@ def create_access_token(
     subject: str | int, role: str, expires_delta: timedelta | None = None
 ) -> str:
     """Create a signed JWT access token."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if expires_delta:
         expire = now + expires_delta
     else:
@@ -60,7 +60,7 @@ def create_refresh_token(
     subject: str | int, role: str, expires_delta: timedelta | None = None
 ) -> str:
     """Create a signed JWT refresh token."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if expires_delta:
         expire = now + expires_delta
     else:
@@ -79,11 +79,9 @@ def create_refresh_token(
 def decode_token(token: str) -> dict[str, Any]:
     """Decode and validate a JWT token. Raises AuthenticationError on failure."""
     try:
-        payload = jwt.decode(
-            token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm]
-        )
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         return payload
-    except jwt.ExpiredSignatureError:
-        raise AuthenticationError("Token has expired.")
-    except jwt.PyJWTError:
-        raise AuthenticationError("Could not validate credentials.")
+    except jwt.ExpiredSignatureError as exc:
+        raise AuthenticationError("Token has expired.") from exc
+    except jwt.PyJWTError as exc:
+        raise AuthenticationError("Could not validate credentials.") from exc

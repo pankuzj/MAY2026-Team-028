@@ -1,7 +1,6 @@
 """Pydantic schemas for User entity."""
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -14,8 +13,8 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: str = Field(min_length=1, max_length=255)
     role: UserRole = UserRole.CITIZEN
-    phone: Optional[str] = None
-    ward_id: Optional[int] = None
+    phone: str | None = None
+    ward_id: int | None = None
 
 
 class UserCreate(UserBase):
@@ -27,10 +26,10 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """Payload for updating user details."""
 
-    full_name: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    phone: Optional[str] = None
-    ward_id: Optional[int] = None
-    is_active: Optional[bool] = None
+    full_name: str | None = Field(default=None, min_length=1, max_length=255)
+    phone: str | None = None
+    ward_id: int | None = None
+    is_active: bool | None = None
 
 
 class UserRead(UserBase):

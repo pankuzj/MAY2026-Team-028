@@ -9,11 +9,11 @@ from app.repositories.ward_repository import WardRepository
 from app.repositories.worker_repository import WorkerRepository
 
 __all__ = [
-	"ComplaintRepository",
-	"EquipmentRepository",
-	"TaskRepository",
-	"UserRepository",
-	"VehicleRepository",
-	"WardRepository",
-	"WorkerRepository",
+    "ComplaintRepository",
+    "EquipmentRepository",
+    "TaskRepository",
+    "UserRepository",
+    "VehicleRepository",
+    "WardRepository",
+    "WorkerRepository",
 ]

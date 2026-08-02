@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -30,8 +29,8 @@ class User(Base):
     role: Mapped[str] = mapped_column(
         String(50), default=UserRole.CITIZEN.value, nullable=False, index=True
     )
-    phone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    ward_id: Mapped[Optional[int]] = mapped_column(ForeignKey("wards.id"), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    ward_id: Mapped[int | None] = mapped_column(ForeignKey("wards.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

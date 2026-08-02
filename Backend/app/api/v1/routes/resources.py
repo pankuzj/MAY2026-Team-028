@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_role
 from app.models.equipment import Equipment
+from app.models.user import UserRole
 from app.models.vehicle import Vehicle
 from app.models.worker import Worker
-from app.models.user import UserRole
 from app.repositories.equipment_repository import EquipmentRepository
 from app.repositories.vehicle_repository import VehicleRepository
 from app.repositories.worker_repository import WorkerRepository
@@ -52,7 +52,9 @@ def list_workers(db: Session = Depends(get_db)) -> list[WorkerRead]:
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.CREW))],
 )
-def update_worker_status(worker_id: int, status_value: WorkerStatus, db: Session = Depends(get_db)) -> WorkerRead:
+def update_worker_status(
+    worker_id: int, status_value: WorkerStatus, db: Session = Depends(get_db)
+) -> WorkerRead:
     worker = ResourceService.update_worker_status(db, worker_id, status=status_value.value)
     return _to_worker_read(worker)
 
@@ -73,7 +75,9 @@ def list_vehicles(db: Session = Depends(get_db)) -> list[VehicleRead]:
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.CREW))],
 )
-def update_vehicle_status(vehicle_id: int, status_value: VehicleStatus, db: Session = Depends(get_db)) -> VehicleRead:
+def update_vehicle_status(
+    vehicle_id: int, status_value: VehicleStatus, db: Session = Depends(get_db)
+) -> VehicleRead:
     vehicle = ResourceService.update_vehicle_status(db, vehicle_id, status=status_value.value)
     return _to_vehicle_read(vehicle)
 

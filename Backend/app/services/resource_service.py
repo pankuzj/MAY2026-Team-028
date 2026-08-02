@@ -15,7 +15,9 @@ __all__ = ["ResourceService"]
 
 class ResourceService:
     @staticmethod
-    def update_worker_status(db: Session, worker_id: int, *, status: str | None = None, **updates) -> Worker:
+    def update_worker_status(
+        db: Session, worker_id: int, *, status: str | None = None, **updates
+    ) -> Worker:
         worker = WorkerRepository.get_by_id(db, worker_id)
         if not worker:
             raise NotFoundError("Worker not found.")
@@ -25,7 +27,9 @@ class ResourceService:
         return WorkerRepository.update(db, worker, payload)
 
     @staticmethod
-    def update_vehicle_status(db: Session, vehicle_id: int, *, status: str | None = None, **updates) -> Vehicle:
+    def update_vehicle_status(
+        db: Session, vehicle_id: int, *, status: str | None = None, **updates
+    ) -> Vehicle:
         vehicle = VehicleRepository.get_by_id(db, vehicle_id)
         if not vehicle:
             raise NotFoundError("Vehicle not found.")
@@ -35,7 +39,9 @@ class ResourceService:
         return VehicleRepository.update(db, vehicle, payload)
 
     @staticmethod
-    def update_equipment_status(db: Session, equipment_id: int, *, status: str | None = None, **updates) -> Equipment:
+    def update_equipment_status(
+        db: Session, equipment_id: int, *, status: str | None = None, **updates
+    ) -> Equipment:
         equipment = EquipmentRepository.get_by_id(db, equipment_id)
         if not equipment:
             raise NotFoundError("Equipment not found.")

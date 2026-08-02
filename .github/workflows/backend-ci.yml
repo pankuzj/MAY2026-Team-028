@@ -14,28 +14,26 @@ defaults:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: smartsweep
-          POSTGRES_PASSWORD: smartsweep
-          POSTGRES_DB: smartsweep_test
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    # NOTE: no postgres service and no `alembic upgrade head` step here.
+    # alembic.ini is still a placeholder (`TODO: initialise with
+    # `alembic init app/db/migrations``) — there's no env.py or versions/
+    # folder yet, so there's nothing for alembic to run against. Tables are
+    # created via Base.metadata.create_all() in app/db/init_db.py instead,
+    # and the test suite runs entirely against in-memory SQLite (see
+    # tests/conftest.py), so neither is needed for this job to be meaningful.
+    # Re-add both once alembic is actually initialized and a real migration
+    # exists to run.
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
         uses: astral-sh/setup-uv@v3
       - name: Set up Python 3.13
         run: uv python install 3.13
-      # Steps below are stubbed until dependencies are pinned in pyproject.toml.
-      # - run: uv sync
-      # - run: uv run ruff check .
-      # - run: uv run black --check .
-      # - run: uv run alembic upgrade head
-      # - run: uv run pytest --cov=app
+      - name: Install dependencies
+        run: uv sync --group dev
+      - name: Lint (ruff)
+        run: uv run ruff check .
+      - name: Format check (black)
+        run: uv run black --check .
+      - name: Test (pytest + coverage)
+        run: uv run pytest --cov=app --cov-report=term-missing --cov-report=xml
