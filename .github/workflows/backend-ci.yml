@@ -27,15 +27,26 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+    env:
+      # Points at the postgres service container above. Only alembic needs a
+      # real database here — the pytest suite runs against in-memory SQLite
+      # per tests/conftest.py, so it works even without this being set.
+      DATABASE_URL: postgresql+psycopg://smartsweep:smartsweep@localhost:5432/smartsweep_test
+      JWT_SECRET_KEY: ci-test-secret-not-for-prod
+      ENV: test
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
         uses: astral-sh/setup-uv@v3
       - name: Set up Python 3.13
         run: uv python install 3.13
-      # Steps below are stubbed until dependencies are pinned in pyproject.toml.
-      # - run: uv sync
-      # - run: uv run ruff check .
-      # - run: uv run black --check .
-      # - run: uv run alembic upgrade head
-      # - run: uv run pytest --cov=app
+      - name: Install dependencies
+        run: uv sync --group dev
+      - name: Lint (ruff)
+        run: uv run ruff check .
+      - name: Format check (black)
+        run: uv run black --check .
+      - name: Run migrations
+        run: uv run alembic upgrade head
+      - name: Test (pytest + coverage)
+        run: uv run pytest --cov=app --cov-report=term-missing --cov-report=xml
