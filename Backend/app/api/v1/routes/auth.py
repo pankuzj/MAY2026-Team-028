@@ -19,8 +19,17 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     summary="Register a new citizen account",
 )
 def register(user_in: UserCreate, db: Session = Depends(get_db)) -> User:
-    """Register a new citizen account."""
-    return AuthService.register_user(db, user_in)
+    """Register a new citizen account.
+
+    This is public and unauthenticated, so it must never trust a
+    client-supplied role — otherwise anyone could self-register as admin.
+    `role` is forced to CITIZEN here regardless of what the request body
+    contains. Staff accounts (crew/admin) are created some other way (demo
+    seed data today; an admin-only endpoint in the future), never through
+    this route.
+    """
+    citizen_only = user_in.model_copy(update={"role": UserRole.CITIZEN})
+    return AuthService.register_user(db, citizen_only)
 
 
 @router.post(

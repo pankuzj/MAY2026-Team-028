@@ -15,7 +15,6 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("citizen");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,12 +32,15 @@ export default function Register() {
     }
 
     try {
+      // Public sign-up always creates a citizen account — the backend
+      // enforces this server-side regardless of what's sent here, so this
+      // is just for clarity/documentation, not the actual guarantee.
       const regRes = await register({
         email: email.trim().toLowerCase(),
         password,
         full_name: fullName.trim(),
         phone: phone.trim() || null,
-        role,
+        role: "citizen",
       });
 
       if (!regRes.success) {
@@ -112,28 +114,6 @@ export default function Register() {
         </label>
 
         <label>
-          Account Role
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            disabled={isSubmitting}
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              borderRadius: "8px",
-              background: "var(--color-bg-secondary, #1a1a2e)",
-              color: "#fff",
-              border: "1px solid rgba(255,255,255,0.1)",
-              marginTop: "0.25rem",
-            }}
-          >
-            <option value="citizen">Citizen (Report complaints & bulk pickup)</option>
-            <option value="crew">Cleanup Crew (Task completion)</option>
-            <option value="admin">Ward Supervisor / Admin</option>
-          </select>
-        </label>
-
-        <label>
           Password
           <input
             type="password"
@@ -150,6 +130,15 @@ export default function Register() {
             <IconAlertCircle /> {error}
           </p>
         )}
+
+        <p style={{ color: "#888", fontSize: "0.85rem", marginTop: "-0.5rem" }}>
+          Sign-up creates a citizen account. Need crew or admin access? Use
+          one of the demo logins on the{" "}
+          <Link to="/login" style={{ color: "#38ef7d" }}>
+            sign-in page
+          </Link>
+          .
+        </p>
 
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Creating Account..." : "Create Account"}
