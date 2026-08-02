@@ -6,7 +6,7 @@ from enum import Enum
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.db.base import Base, TimestampMixin
 
 
 class TaskStatus(str, Enum):
@@ -35,7 +35,7 @@ task_equipment = Table(
 )
 
 
-class Task(Base):
+class Task(Base, TimestampMixin):
     """Assignment that ties a complaint to operational resources."""
 
     __tablename__ = "tasks"
@@ -56,9 +56,3 @@ class Task(Base):
     assigned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )

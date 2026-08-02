@@ -1,12 +1,11 @@
 """Equipment ORM model."""
 
-from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.db.base import Base, TimestampMixin
 
 
 class EquipmentStatus(str, Enum):
@@ -18,7 +17,7 @@ class EquipmentStatus(str, Enum):
     RETIRED = "retired"
 
 
-class Equipment(Base):
+class Equipment(Base, TimestampMixin):
     """Assignable equipment or consumable stock item."""
 
     __tablename__ = "equipment"
@@ -34,9 +33,3 @@ class Equipment(Base):
     )
     ward_id: Mapped[int | None] = mapped_column(ForeignKey("wards.id"), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )
