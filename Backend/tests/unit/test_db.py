@@ -5,7 +5,7 @@ from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
-from app.db.session import SessionLocal, engine, get_db
+from app.db.session import engine, get_db
 from app.models.user import User, UserRole
 
 
@@ -27,7 +27,7 @@ def test_get_db_session_lifecycle():
     Base.metadata.create_all(bind=engine)
     count = session.query(User).count()
     assert isinstance(count, int)
-    
+
     # Close generator
     with pytest.raises(StopIteration):
         next(db_gen)

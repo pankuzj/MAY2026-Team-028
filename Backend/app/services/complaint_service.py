@@ -1,6 +1,6 @@
 """Complaint service — CRUD and status state machine."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
@@ -14,8 +14,14 @@ __all__ = ["ComplaintService"]
 
 
 _ALLOWED_TRANSITIONS = {
-    ComplaintStatus.PENDING.value: {ComplaintStatus.IN_PROGRESS.value, ComplaintStatus.CANCELLED.value},
-    ComplaintStatus.IN_PROGRESS.value: {ComplaintStatus.RESOLVED.value, ComplaintStatus.CANCELLED.value},
+    ComplaintStatus.PENDING.value: {
+        ComplaintStatus.IN_PROGRESS.value,
+        ComplaintStatus.CANCELLED.value,
+    },
+    ComplaintStatus.IN_PROGRESS.value: {
+        ComplaintStatus.RESOLVED.value,
+        ComplaintStatus.CANCELLED.value,
+    },
     ComplaintStatus.RESOLVED.value: set(),
     ComplaintStatus.CANCELLED.value: set(),
 }
@@ -23,7 +29,9 @@ _ALLOWED_TRANSITIONS = {
 
 class ComplaintService:
     @staticmethod
-    def create_complaint(db: Session, current_user: User, complaint_in: ComplaintSubmit) -> Complaint:
+    def create_complaint(
+        db: Session, current_user: User, complaint_in: ComplaintSubmit
+    ) -> Complaint:
         complaint = Complaint(
             title=complaint_in.location,
             description=complaint_in.description,
@@ -45,7 +53,7 @@ class ComplaintService:
                 to_status=created.status,
                 changed_by_user_id=current_user.id,
                 notes="Complaint created",
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
             ),
         )
         return created
@@ -62,7 +70,9 @@ class ComplaintService:
         return ComplaintRepository.list(db, filters=filters)
 
     @staticmethod
-    def update_complaint(db: Session, complaint_id: int, complaint_in: ComplaintUpdate) -> Complaint:
+    def update_complaint(
+        db: Session, complaint_id: int, complaint_in: ComplaintUpdate
+    ) -> Complaint:
         complaint = ComplaintService.get_complaint(db, complaint_id)
         update_data = complaint_in.model_dump(exclude_unset=True)
         status = update_data.pop("status", None)
@@ -73,7 +83,13 @@ class ComplaintService:
         return complaint
 
     @staticmethod
-    def change_status(db: Session, complaint_id: int, new_status: ComplaintStatus | str, *, changed_by_user_id: int | None = None) -> Complaint:
+    def change_status(
+        db: Session,
+        complaint_id: int,
+        new_status: ComplaintStatus | str,
+        *,
+        changed_by_user_id: int | None = None,
+    ) -> Complaint:
         complaint = ComplaintService.get_complaint(db, complaint_id)
         new_status_value = new_status.value if hasattr(new_status, "value") else str(new_status)
         current_status = complaint.status
@@ -87,11 +103,11 @@ class ComplaintService:
         complaint = ComplaintRepository.update(db, complaint, {"status": new_status_value})
         if new_status_value == ComplaintStatus.RESOLVED.value:
             complaint = ComplaintRepository.update(
-                db, complaint, {"resolved_at": datetime.now(timezone.utc)}
+                db, complaint, {"resolved_at": datetime.now(UTC)}
             )
         if new_status_value == ComplaintStatus.CANCELLED.value:
             complaint = ComplaintRepository.update(
-                db, complaint, {"cancelled_at": datetime.now(timezone.utc)}
+                db, complaint, {"cancelled_at": datetime.now(UTC)}
             )
 
         ComplaintRepository.add_history(
@@ -102,13 +118,15 @@ class ComplaintService:
                 to_status=new_status_value,
                 changed_by_user_id=changed_by_user_id or complaint.reported_by_user_id,
                 notes="Status changed",
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
             ),
         )
         return complaint
 
     @staticmethod
-    def cancel_complaint(db: Session, complaint_id: int, *, changed_by_user_id: int | None = None) -> Complaint:
+    def cancel_complaint(
+        db: Session, complaint_id: int, *, changed_by_user_id: int | None = None
+    ) -> Complaint:
         complaint = ComplaintService.get_complaint(db, complaint_id)
         if complaint.status != ComplaintStatus.PENDING.value:
             raise InvalidStateTransitionError("Only pending complaints can be cancelled.")

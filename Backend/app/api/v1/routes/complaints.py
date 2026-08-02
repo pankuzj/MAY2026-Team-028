@@ -55,7 +55,9 @@ def list_complaints(
             "page_size": page_size,
         },
     )
-    return Page[ComplaintRead].build([_to_read_model(item) for item in items], page=page, page_size=page_size, total=total)
+    return Page[ComplaintRead].build(
+        [_to_read_model(item) for item in items], page=page, page_size=page_size, total=total
+    )
 
 
 # NOTE: literal paths must stay above "/{complaint_id}". Starlette matches routes
@@ -79,24 +81,34 @@ def high_risk_complaints(
     high_risk = [
         item
         for item in items
-        if (item.category or "").lower() in {"biohazard", "risk to children", "medical waste", "mosquito breeding"}
+        if (item.category or "").lower()
+        in {"biohazard", "risk to children", "medical waste", "mosquito breeding"}
         or (item.priority or "").lower() in {"high", "urgent", "critical"}
     ]
     start = (page - 1) * page_size
     end = start + page_size
     sliced = high_risk[start:end]
-    return Page[ComplaintRead].build([_to_read_model(item) for item in sliced], page=page, page_size=page_size, total=len(high_risk))
+    return Page[ComplaintRead].build(
+        [_to_read_model(item) for item in sliced],
+        page=page,
+        page_size=page_size,
+        total=len(high_risk),
+    )
 
 
 @router.post("/upload-photo")
 async def upload_complaint_photo(photo: UploadFile = File(...)) -> dict[str, object]:
     content_type = (photo.content_type or "").lower()
     if content_type not in settings.upload_allowed_mime_type_set:
-        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Unsupported image type.")
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Unsupported image type."
+        )
 
     contents = await photo.read()
     if len(contents) > settings.upload_max_bytes:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Image too large.")
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Image too large."
+        )
 
     return {
         "filename": photo.filename,
@@ -119,7 +131,9 @@ def update_complaint(
     return _to_read_model(ComplaintService.update_complaint(db, complaint_id, complaint_in))
 
 
-@router.patch("/{complaint_id}/status", response_model=ComplaintRead, status_code=status.HTTP_200_OK)
+@router.patch(
+    "/{complaint_id}/status", response_model=ComplaintRead, status_code=status.HTTP_200_OK
+)
 def change_complaint_status(
     complaint_id: int,
     status_value: ComplaintStatus = Body(..., embed=True),

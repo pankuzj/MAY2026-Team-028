@@ -43,9 +43,7 @@ def test_refresh_token_creation_and_decoding():
 
 def test_expired_token_raises_authentication_error():
     """Verify expired token raises AuthenticationError."""
-    token = create_access_token(
-        subject=1, role="citizen", expires_delta=timedelta(seconds=-10)
-    )
+    token = create_access_token(subject=1, role="citizen", expires_delta=timedelta(seconds=-10))
     with pytest.raises(AuthenticationError) as exc_info:
         decode_token(token)
     assert "expired" in exc_info.value.message.lower()

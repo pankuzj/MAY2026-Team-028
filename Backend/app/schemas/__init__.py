@@ -1,6 +1,14 @@
 """Pydantic v2 DTOs — the API contract for requests and responses."""
 
 from app.schemas.auth import LoginRequest, RefreshTokenRequest, Token
+from app.schemas.common import (
+    ErrorDetail,
+    ErrorPayload,
+    ErrorResponse,
+    Page,
+    PageMeta,
+    error_response,
+)
 from app.schemas.complaint import (
     ComplaintBase,
     ComplaintCreate,
@@ -10,14 +18,6 @@ from app.schemas.complaint import (
     ComplaintStatusHistoryRead,
     ComplaintSubmit,
     ComplaintUpdate,
-)
-from app.schemas.common import (
-    ErrorDetail,
-    ErrorPayload,
-    ErrorResponse,
-    Page,
-    PageMeta,
-    error_response,
 )
 from app.schemas.resources import (
     EquipmentBase,

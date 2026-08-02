@@ -48,7 +48,11 @@ class TaskRepository:
     def set_equipment_ids(db: Session, task_id: int, equipment_ids: list[int]) -> None:
         db.execute(delete(task_equipment).where(task_equipment.c.task_id == task_id))
         for equipment_id in equipment_ids:
-            db.execute(insert(task_equipment).values(task_id=task_id, equipment_id=equipment_id, quantity=1))
+            db.execute(
+                insert(task_equipment).values(
+                    task_id=task_id, equipment_id=equipment_id, quantity=1
+                )
+            )
         db.commit()
 
     @staticmethod
@@ -58,5 +62,7 @@ class TaskRepository:
 
     @staticmethod
     def get_equipment_ids(db: Session, task_id: int) -> list[int]:
-        rows = db.execute(select(task_equipment.c.equipment_id).where(task_equipment.c.task_id == task_id))
+        rows = db.execute(
+            select(task_equipment.c.equipment_id).where(task_equipment.c.task_id == task_id)
+        )
         return [row[0] for row in rows.all()]

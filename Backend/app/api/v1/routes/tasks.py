@@ -67,8 +67,12 @@ def update_task(task_id: int, task_in: TaskUpdate, db: Session = Depends(get_db)
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(require_role(UserRole.CREW, UserRole.ADMIN))],
 )
-def complete_task(task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> TaskRead:
-    return _to_read_model(TaskService.complete_task(db, task_id, completed_by_user_id=current_user.id), db)
+def complete_task(
+    task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+) -> TaskRead:
+    return _to_read_model(
+        TaskService.complete_task(db, task_id, completed_by_user_id=current_user.id), db
+    )
 
 
 @router.post(

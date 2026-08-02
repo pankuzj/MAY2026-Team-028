@@ -1,6 +1,7 @@
 """Database initialization and seeding of demo users."""
 
 import logging
+
 from sqlalchemy.orm import Session
 
 from app import models as _models

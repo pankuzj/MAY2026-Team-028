@@ -13,12 +13,36 @@ __all__ = ["DuplicateDetectionService"]
 
 
 class DuplicateDetectionService:
-    _STOPWORDS = {"the", "a", "an", "near", "of", "at", "in", "on", "for", "and", "to", "is", "was", "were", "it", "this", "that", "with", "by"}
+    _STOPWORDS = {
+        "the",
+        "a",
+        "an",
+        "near",
+        "of",
+        "at",
+        "in",
+        "on",
+        "for",
+        "and",
+        "to",
+        "is",
+        "was",
+        "were",
+        "it",
+        "this",
+        "that",
+        "with",
+        "by",
+    }
 
     @staticmethod
     def _tokenize(text: str | None) -> set[str]:
         raw = re.sub(r"[^a-z0-9\s]", " ", (text or "").lower())
-        return {word for word in raw.split() if len(word) > 1 and word not in DuplicateDetectionService._STOPWORDS}
+        return {
+            word
+            for word in raw.split()
+            if len(word) > 1 and word not in DuplicateDetectionService._STOPWORDS
+        }
 
     @staticmethod
     def _text_similarity(a: str | None, b: str | None) -> float:
@@ -31,7 +55,9 @@ class DuplicateDetectionService:
         return overlap / union if union else 0.0
 
     @staticmethod
-    def _distance_meters(a: tuple[float, float] | None, b: tuple[float, float] | None) -> float | None:
+    def _distance_meters(
+        a: tuple[float, float] | None, b: tuple[float, float] | None
+    ) -> float | None:
         if not a or not b:
             return None
         lat1, lng1 = a
@@ -47,14 +73,24 @@ class DuplicateDetectionService:
     @staticmethod
     def find_possible_duplicates(db: Session, complaint: Complaint) -> list[dict]:
         candidates, _ = ComplaintRepository.list(db, filters={"page": 1, "page_size": 500})
-        active = [c for c in candidates if c.id != complaint.id and c.status in {"pending", "in_progress"}]
+        active = [
+            c for c in candidates if c.id != complaint.id and c.status in {"pending", "in_progress"}
+        ]
         matches: list[dict] = []
-        draft_coords = (complaint.latitude, complaint.longitude) if complaint.latitude and complaint.longitude else None
+        draft_coords = (
+            (complaint.latitude, complaint.longitude)
+            if complaint.latitude and complaint.longitude
+            else None
+        )
         for item in active:
-            item_coords = (item.latitude, item.longitude) if item.latitude and item.longitude else None
+            item_coords = (
+                (item.latitude, item.longitude) if item.latitude and item.longitude else None
+            )
             dist = DuplicateDetectionService._distance_meters(draft_coords, item_coords)
             location_score = DuplicateDetectionService._text_similarity(complaint.title, item.title)
-            desc_score = DuplicateDetectionService._text_similarity(complaint.description, item.description)
+            desc_score = DuplicateDetectionService._text_similarity(
+                complaint.description, item.description
+            )
             is_nearby = dist is not None and dist <= settings.duplicate_radius_meters
             is_duplicate = (
                 is_nearby
@@ -72,7 +108,9 @@ class DuplicateDetectionService:
                     "distance": dist,
                     "locationScore": location_score,
                     "descScore": desc_score,
-                    "confidence": (0.5 if is_nearby else 0.0) + (location_score * 0.3) + (desc_score * 0.2),
+                    "confidence": (0.5 if is_nearby else 0.0)
+                    + (location_score * 0.3)
+                    + (desc_score * 0.2),
                 }
             )
         return sorted(matches, key=lambda match: match["confidence"], reverse=True)

@@ -43,7 +43,9 @@ class Task(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(50), default=TaskStatus.ASSIGNED.value, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(50), default=TaskStatus.ASSIGNED.value, nullable=False
+    )
     complaint_id: Mapped[int | None] = mapped_column(
         ForeignKey("complaints.id", ondelete="SET NULL"), nullable=True, index=True
     )

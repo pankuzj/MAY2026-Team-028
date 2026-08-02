@@ -64,7 +64,11 @@ class ComplaintRepository:
         total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
         page = int(filters.get("page", 1))
         page_size = int(filters.get("page_size", 20))
-        stmt = stmt.order_by(Complaint.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+        stmt = (
+            stmt.order_by(Complaint.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
         return list(db.scalars(stmt).all()), total
 
     @staticmethod
@@ -76,5 +80,7 @@ class ComplaintRepository:
 
     @staticmethod
     def get_history(db: Session, complaint_id: int) -> list[ComplaintStatusHistory]:
-        stmt = select(ComplaintStatusHistory).where(ComplaintStatusHistory.complaint_id == complaint_id)
+        stmt = select(ComplaintStatusHistory).where(
+            ComplaintStatusHistory.complaint_id == complaint_id
+        )
         return list(db.scalars(stmt.order_by(ComplaintStatusHistory.created_at.asc())).all())

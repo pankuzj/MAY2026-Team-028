@@ -33,7 +33,9 @@ def list_wards(db: Session = Depends(get_db)) -> list[WardRead]:
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(require_role(UserRole.CITIZEN, UserRole.CREW, UserRole.ADMIN))],
 )
-def get_my_ward(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> WardRead:
+def get_my_ward(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> WardRead:
     if current_user.ward_id is None:
         raise NotFoundError("Ward not found.")
     ward = WardRepository.get_by_id(db, current_user.ward_id)
