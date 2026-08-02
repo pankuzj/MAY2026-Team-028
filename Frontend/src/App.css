@@ -704,20 +704,6 @@
 .login-page .eyebrow { justify-content: center; }
 .login-sub { margin: 0.5rem 0 1.75rem; color: var(--text); }
 
-.role-tabs { display: flex; gap: 0.4rem; justify-content: center; margin-bottom: 1.75rem; flex-wrap: wrap; }
-.role-tabs button {
-  padding: 0.45rem 0.9rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 0.76rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-.role-tabs button.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-
 .login-form {
   display: flex;
   flex-direction: column;
@@ -747,6 +733,23 @@
   font-size: 0.92rem;
 }
 .login-form input:focus { outline: none; border-color: var(--accent); }
+
+.role-select { display: flex; gap: 0.5rem; }
+.role-select button {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.role-select button.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
 .login-form button[type="submit"] {
   padding: 0.8rem 1rem;
   border-radius: var(--radius-pill);
@@ -760,17 +763,6 @@
   transition: filter 0.15s ease, transform 0.15s ease;
 }
 .login-form button[type="submit"]:hover { filter: brightness(1.08); transform: translateY(-1px); }
-
-.demo-hint {
-  margin-top: 1.75rem;
-  padding: 1rem 1.2rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  text-align: left;
-  background: var(--surface-2);
-}
-.demo-hint p { font-size: 0.8rem; margin: 0.3rem 0; color: var(--text); }
-.demo-hint strong { color: var(--text-h); }
 
 /* ===== Complaint card links ===== */
 .card-title-link { color: var(--text-h); text-decoration: none; }
@@ -942,6 +934,7 @@
   margin-top: 0.25rem !important;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

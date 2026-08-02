@@ -29,7 +29,8 @@ class AuthService:
         role is passed in. It is NOT safe to call directly from a public,
         unauthenticated endpoint with a client-supplied role; the public
         self-registration route (POST /auth/register) is responsible for
-        forcing role=citizen before it reaches this method. See
+        restricting the role to citizen/crew and forcing anything else
+        (e.g. admin) down to citizen before it reaches this method. See
         app/api/v1/routes/auth.py.
         """
         existing = UserRepository.get_by_email(db, user_in.email)

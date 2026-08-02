@@ -15,6 +15,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("citizen");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -32,15 +33,16 @@ export default function Register() {
     }
 
     try {
-      // Public sign-up always creates a citizen account — the backend
-      // enforces this server-side regardless of what's sent here, so this
-      // is just for clarity/documentation, not the actual guarantee.
+      // Public sign-up can create a citizen or crew account (chosen below).
+      // The backend enforces this server-side too — it accepts citizen/crew
+      // but always forces anything else (e.g. admin) down to citizen — so
+      // this is a UX convenience, not the actual security guarantee.
       const regRes = await register({
         email: email.trim().toLowerCase(),
         password,
         full_name: fullName.trim(),
         phone: phone.trim() || null,
-        role: "citizen",
+        role,
       });
 
       if (!regRes.success) {
@@ -75,9 +77,31 @@ export default function Register() {
       </span>
       <span className="eyebrow">Create Account</span>
       <h1>SmartSweep</h1>
-      <p className="login-sub">Register to report and track waste issues</p>
+      <p className="login-sub">Register as a citizen or crew member</p>
 
       <form className="login-form" onSubmit={handleSubmit}>
+        <label>
+          Account Type
+          <div className="role-select">
+            <button
+              type="button"
+              className={role === "citizen" ? "active" : ""}
+              onClick={() => setRole("citizen")}
+              disabled={isSubmitting}
+            >
+              Citizen
+            </button>
+            <button
+              type="button"
+              className={role === "crew" ? "active" : ""}
+              onClick={() => setRole("crew")}
+              disabled={isSubmitting}
+            >
+              Crew Member
+            </button>
+          </div>
+        </label>
+
         <label>
           Full Name
           <input
@@ -132,12 +156,9 @@ export default function Register() {
         )}
 
         <p style={{ color: "#888", fontSize: "0.85rem", marginTop: "-0.5rem" }}>
-          Sign-up creates a citizen account. Need crew or admin access? Use
-          one of the demo logins on the{" "}
-          <Link to="/login" style={{ color: "#38ef7d" }}>
-            sign-in page
-          </Link>
-          .
+          Choose Citizen to report issues, or Crew Member to access cleanup
+          task tools. Admin accounts are provisioned separately and aren't
+          available through sign-up.
         </p>
 
         <button type="submit" disabled={isSubmitting}>

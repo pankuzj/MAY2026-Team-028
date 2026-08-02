@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { useAuth, DEMO_USERS } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { IconAlertCircle, IconBroom } from "../components/Icons";
 
@@ -12,20 +12,12 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [activeRole, setActiveRole] = useState("citizen");
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   if (user) return <Navigate to={roleHome[user.role] || "/"} replace />;
-
-  const fillDemo = (demoUser) => {
-    setActiveRole(demoUser.role);
-    setUsername(demoUser.username);
-    setPassword(demoUser.password);
-    setError("");
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,7 +25,7 @@ export default function Login() {
     setError("");
 
     try {
-      const result = await login(username, password);
+      const result = await login(email, password);
       if (!result.success) {
         setError(result.error);
         notify(result.error, "error");
@@ -57,26 +49,14 @@ export default function Login() {
       <h1>SmartSweep</h1>
       <p className="login-sub">Sign in to continue</p>
 
-      <div className="role-tabs">
-        {DEMO_USERS.map((u) => (
-          <button
-            key={u.username}
-            type="button"
-            className={username === u.username ? "active" : ""}
-            onClick={() => fillDemo(u)}
-          >
-            {u.label}
-          </button>
-        ))}
-      </div>
-
       <form className="login-form" onSubmit={handleSubmit}>
         <label>
-          Username or Email
+          Email
           <input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter username or email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
             required
             disabled={isSubmitting}
           />
@@ -106,13 +86,6 @@ export default function Login() {
           </p>
         </div>
       </form>
-
-      <div className="demo-hint">
-        <span className="eyebrow">Demo Credentials (DB Seeded)</span>
-        {DEMO_USERS.map((u) => (
-          <p key={u.username}><strong>{u.label}:</strong> {u.username} / {u.password}</p>
-        ))}
-      </div>
     </div>
   );
 }
