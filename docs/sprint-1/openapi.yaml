@@ -1,0 +1,672 @@
+openapi: 3.0.3
+info:
+  title: SmartSweep API - Tasks & Resources
+  description: OpenAPI 3.0 specification for SmartSweep municipal tasks and resource management.
+  version: 1.0.0
+paths:
+  /api/v1/tasks:
+    get:
+      summary: List all tasks
+      description: Retrieve a list of all municipal tasks. Requires CREW or ADMIN role.
+      operationId: listTasks
+      x-user-story: US-TSK-01
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of tasks retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+    post:
+      summary: Create a new task
+      description: Create and assign a new municipal task. Requires ADMIN role.
+      operationId: createTask
+      x-user-story: US-TSK-02
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRead'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/tasks/{task_id}:
+    get:
+      summary: Get task by ID
+      description: Fetch detailed information for a specific task.
+      operationId: getTaskById
+      x-user-story: US-TSK-03
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the task to retrieve.
+      responses:
+        '200':
+          description: Task details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+    patch:
+      summary: Update a task
+      description: Modify fields or update assigned resources of an existing task. Requires ADMIN or CREW role.
+      operationId: updateTask
+      x-user-story: US-TSK-04
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the task to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Task updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/tasks/{task_id}/complete:
+    post:
+      summary: Complete a task
+      description: Mark task as completed and automatically resolve associated complaint if present. Requires CREW or ADMIN role.
+      operationId: completeTask
+      x-user-story: US-TSK-05
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the task to complete.
+      responses:
+        '200':
+          description: Task completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/tasks/{task_id}/cancel:
+    post:
+      summary: Cancel a task
+      description: Cancel a task and free all assigned workers, vehicles, and equipment. Requires ADMIN role.
+      operationId: cancelTask
+      x-user-story: US-TSK-06
+      tags:
+        - Tasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the task to cancel.
+      responses:
+        '200':
+          description: Task cancelled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/resources/workers:
+    get:
+      summary: List workers
+      description: Retrieve list of municipal workers and their current availability statuses. Requires ADMIN or CREW role.
+      operationId: listWorkers
+      x-user-story: US-RES-01
+      tags:
+        - Resources
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Worker list retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkerRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /api/v1/resources/workers/{worker_id}/status:
+    patch:
+      summary: Update worker status
+      description: Update operational availability status of a worker. Requires ADMIN or CREW role.
+      operationId: updateWorkerStatus
+      x-user-story: US-RES-02
+      tags:
+        - Resources
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: worker_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the worker.
+        - name: status_value
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/WorkerStatusEnum'
+          description: Target operational status for the worker.
+      responses:
+        '200':
+          description: Worker status updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkerRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/resources/vehicles:
+    get:
+      summary: List fleet vehicles
+      description: Retrieve list of municipal fleet vehicles and operational statuses. Requires ADMIN or CREW role.
+      operationId: listVehicles
+      x-user-story: US-RES-03
+      tags:
+        - Resources
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Fleet list retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VehicleRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /api/v1/resources/vehicles/{vehicle_id}/status:
+    patch:
+      summary: Update vehicle status
+      description: Update fleet availability or maintenance status of a vehicle. Requires ADMIN or CREW role.
+      operationId: updateVehicleStatus
+      x-user-story: US-RES-04
+      tags:
+        - Resources
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: vehicle_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the vehicle.
+        - name: status_value
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/VehicleStatusEnum'
+          description: Target status for the vehicle.
+      responses:
+        '200':
+          description: Vehicle status updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/resources/equipment:
+    get:
+      summary: List equipment inventory
+      description: Retrieve list of municipal equipment items and stock status. Requires ADMIN or CREW role.
+      operationId: listEquipment
+      x-user-story: US-RES-05
+      tags:
+        - Resources
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Equipment inventory retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EquipmentRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /api/v1/resources/equipment/{equipment_id}/status:
+    patch:
+      summary: Update equipment status
+      description: Update operational or maintenance status of equipment. Requires ADMIN or CREW role.
+      operationId: updateEquipmentStatus
+      x-user-story: US-RES-06
+      tags:
+        - Resources
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: equipment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the equipment.
+        - name: status_value
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/EquipmentStatusEnum'
+          description: Target status for the equipment item.
+      responses:
+        '200':
+          description: Equipment status updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TaskRead:
+      type: object
+      required:
+        - id
+        - title
+        - status
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+        complaint_id:
+          type: integer
+          nullable: true
+        ward_id:
+          type: integer
+          nullable: true
+        vehicle_id:
+          type: integer
+          nullable: true
+        assigned_by_user_id:
+          type: integer
+          nullable: true
+        assigned_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        worker_ids:
+          type: array
+          items:
+            type: integer
+        equipment_ids:
+          type: array
+          items:
+            type: integer
+
+    TaskCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        complaint_id:
+          type: integer
+          nullable: true
+        ward_id:
+          type: integer
+          nullable: true
+        vehicle_id:
+          type: integer
+          nullable: true
+        worker_ids:
+          type: array
+          items:
+            type: integer
+        equipment_ids:
+          type: array
+          items:
+            type: integer
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        vehicle_id:
+          type: integer
+          nullable: true
+        worker_ids:
+          type: array
+          items:
+            type: integer
+        equipment_ids:
+          type: array
+          items:
+            type: integer
+
+    WorkerRead:
+      type: object
+      required:
+        - id
+        - full_name
+        - status
+        - is_active
+      properties:
+        id:
+          type: integer
+        full_name:
+          type: string
+        employee_code:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        role_title:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/WorkerStatusEnum'
+        ward_id:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+
+    VehicleRead:
+      type: object
+      required:
+        - id
+        - plate_number
+        - model_name
+        - status
+        - is_active
+      properties:
+        id:
+          type: integer
+        plate_number:
+          type: string
+        model_name:
+          type: string
+        vehicle_type:
+          type: string
+          nullable: true
+        capacity_tons:
+          type: number
+          nullable: true
+        status:
+          $ref: '#/components/schemas/VehicleStatusEnum'
+        ward_id:
+          type: integer
+          nullable: true
+        driver_name:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+
+    EquipmentRead:
+      type: object
+      required:
+        - id
+        - name
+        - total_quantity
+        - available_quantity
+        - status
+        - is_active
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        asset_tag:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        total_quantity:
+          type: integer
+        available_quantity:
+          type: integer
+        status:
+          $ref: '#/components/schemas/EquipmentStatusEnum'
+        ward_id:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+
+    WorkerStatusEnum:
+      type: string
+      enum:
+        - available
+        - assigned
+        - off_duty
+        - unavailable
+
+    VehicleStatusEnum:
+      type: string
+      enum:
+        - available
+        - en_route
+        - on_site
+        - maintenance
+
+    EquipmentStatusEnum:
+      type: string
+      enum:
+        - available
+        - in_use
+        - maintenance
+        - retired
+
+    ErrorEnvelope:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+            request_id:
+              type: string
+              nullable: true
+
+  responses:
+    400BadRequest:
+      description: Bad request / Invalid input.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    401Unauthorized:
+      description: Unauthenticated request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    403Forbidden:
+      description: Permission denied for current user role.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    404NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    409Conflict:
+      description: Conflict with current resource state (e.g. resource unavailable).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    422ValidationError:
+      description: Request body or parameter validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
