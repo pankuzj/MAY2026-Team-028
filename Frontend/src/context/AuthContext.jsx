@@ -1,10 +1,11 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import {
   clearStoredTokenPair,
   getMeApi,
   getStoredTokenPair,
   loginApi,
   registerApi,
+  setUnauthorizedHandler,
 } from "../utils/api";
 
 const AuthContext = createContext(null);
@@ -21,6 +22,17 @@ const getStoredUser = () => {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(getStoredUser);
   const [loading, setLoading] = useState(true);
+
+  const logout = useCallback(() => {
+    clearStoredTokenPair();
+    setUser(null);
+    localStorage.removeItem("smartsweep-user");
+  }, []);
+
+  useEffect(() => {
+    setUnauthorizedHandler(logout);
+    return () => setUnauthorizedHandler(null);
+  }, [logout]);
 
   // Validate stored JWT token on mount
   useEffect(() => {
@@ -41,15 +53,16 @@ export function AuthProvider({ children }) {
           setUser(userObj);
           localStorage.setItem("smartsweep-user", JSON.stringify(userObj));
         } else {
-          clearStoredTokenPair();
-          setUser(null);
-          localStorage.removeItem("smartsweep-user");
+          logout();
         }
+      } else {
+        setUser(null);
+        localStorage.removeItem("smartsweep-user");
       }
       setLoading(false);
     }
     restoreSession();
-  }, []);
+  }, [logout]);
 
   useEffect(() => {
     if (user) {
@@ -59,8 +72,8 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  const login = async (username, password) => {
-    const loginRes = await loginApi(username, password);
+  const login = async (email, password) => {
+    const loginRes = await loginApi(email, password);
 
     if (!loginRes.success) {
       return { success: false, error: loginRes.error };
@@ -116,11 +129,6 @@ export function AuthProvider({ children }) {
 
     setUser(userObj);
     return { success: true, role: profile.role, name: profile.full_name };
-  };
-
-  const logout = () => {
-    clearStoredTokenPair();
-    setUser(null);
   };
 
   return (

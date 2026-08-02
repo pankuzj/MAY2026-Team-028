@@ -51,6 +51,12 @@ async function rawFetch(endpoint, config) {
   throw lastError || new Error("Failed to connect to backend server. Make sure backend is running on port 8000.");
 }
 
+let onUnauthorizedHandler = null;
+
+export const setUnauthorizedHandler = (handler) => {
+  onUnauthorizedHandler = handler;
+};
+
 export async function apiFetch(endpoint, options = {}) {
   const { access } = getStoredTokenPair();
   const headers = {
@@ -88,12 +94,22 @@ export async function apiFetch(endpoint, options = {}) {
         headers["Authorization"] = `Bearer ${refreshed.access_token}`;
         try {
           response = await rawFetch(endpoint, { ...config, headers });
+          if (response.status === 401) {
+            // Second failure on retry -> clear tokens and trigger logout
+            clearStoredTokenPair();
+            if (onUnauthorizedHandler) onUnauthorizedHandler();
+          }
         } catch {
-          // ignore
+          clearStoredTokenPair();
+          if (onUnauthorizedHandler) onUnauthorizedHandler();
         }
       } else {
         clearStoredTokenPair();
+        if (onUnauthorizedHandler) onUnauthorizedHandler();
       }
+    } else {
+      clearStoredTokenPair();
+      if (onUnauthorizedHandler) onUnauthorizedHandler();
     }
   }
 

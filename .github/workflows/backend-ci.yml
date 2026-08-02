@@ -2,10 +2,10 @@ name: Backend CI
 
 on:
   pull_request:
-    paths: ["Backend/**", ".github/workflows/backend-ci.yml"]
+    paths: ["Backend/**", "docs/**", ".github/workflows/backend-ci.yml", ".spectral.yaml"]
   push:
     branches: [main]
-    paths: ["Backend/**"]
+    paths: ["Backend/**", "docs/**"]
 
 defaults:
   run:
@@ -37,3 +37,18 @@ jobs:
         run: uv run black --check .
       - name: Test (pytest + coverage)
         run: uv run pytest --cov=app --cov-report=term-missing --cov-report=xml
+
+  openapi-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run Spectral OpenAPI Linter
+        run: npx -y @stoplight/spectral-cli lint docs/sprint-1/openapi.yaml --ruleset .spectral.yaml
+

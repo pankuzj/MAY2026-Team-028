@@ -1,6 +1,6 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { createComplaintApi } from "../utils/api";
+import { apiFetch, createComplaintApi } from "../utils/api";
 
 const ComplaintsContext = createContext(null);
 
@@ -27,9 +27,6 @@ const initialComplaints = [
     status: "In Progress",
     createdAt: "2026-06-18",
   },
-  // The rest below only exist to give the Reports & Trends dashboard (#16)
-  // something real to aggregate — a spread of statuses, hazard types and
-  // dates instead of just the two rows above.
   {
     id: 3,
     location: "80 Feet Road, Koramangala",
@@ -105,101 +102,133 @@ export function ComplaintsProvider({ children }) {
   const [complaints, setComplaints] = useState(initialComplaints);
   const { user } = useAuth();
 
-  // All mutators are Promise-returning even though today they just touch
-  // local state. That keeps every call site already using `await`, so
-  // swapping the body for a `fetch()` to a FastAPI backend later won't
-  // require touching any component.
-
-  const toLocalComplaint = (apiComplaint, fallbackData) => ({
+  const toLocalComplaint = (apiComplaint, fallbackData = {}) => ({
     id: apiComplaint.id,
-    location: apiComplaint.title || apiComplaint.address || fallbackData.location,
-    description: apiComplaint.description || fallbackData.description,
+    location: apiComplaint.title || apiComplaint.address || fallbackData.location || "Unknown Location",
+    description: apiComplaint.description || fallbackData.description || "",
     hazard: apiComplaint.category || fallbackData.hazard || "None",
     photo: apiComplaint.photo_url || fallbackData.photo || null,
     coords:
       apiComplaint.latitude != null && apiComplaint.longitude != null
         ? { lat: apiComplaint.latitude, lng: apiComplaint.longitude }
         : fallbackData.coords || null,
-    reportedBy: user?.name || fallbackData.reportedBy || "Citizen",
-    status:
-      apiComplaint.status?.replace(/_/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase()) ||
-      "Pending",
+    reportedBy:
+      fallbackData.reportedBy ||
+      (apiComplaint.reported_by_user_id === user?.id
+        ? user?.name
+        : `User #${apiComplaint.reported_by_user_id}`),
+    status: apiComplaint.status
+      ? apiComplaint.status.replace(/_/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase())
+      : "Pending",
     createdAt: (apiComplaint.created_at || new Date().toISOString()).slice(0, 10),
     resolvedAt: apiComplaint.resolved_at ? apiComplaint.resolved_at.slice(0, 10) : undefined,
     cancelledAt: apiComplaint.cancelled_at ? apiComplaint.cancelled_at.slice(0, 10) : undefined,
   });
 
-  const addComplaint = (data) =>
-    new Promise(async (resolve) => {
-      const result = await createComplaintApi({
-        location: data.location,
-        description: data.description,
-        hazard: data.hazard,
-        photo: data.photo,
-        coords: data.coords,
-        ward_id: user?.ward_id ?? null,
-      });
-
-      if (!result.success) {
-        resolve({ success: false, error: result.error });
+  useEffect(() => {
+    async function loadComplaints() {
+      if (!user) {
+        setComplaints(initialComplaints);
         return;
       }
+      const res = await apiFetch("/complaints?page=1&page_size=100");
+      if (res.success && res.data) {
+        const rawList = Array.isArray(res.data) ? res.data : res.data.items || [];
+        const formatted = rawList.map((item) => toLocalComplaint(item));
+        setComplaints(formatted);
+      }
+    }
+    loadComplaints();
+  }, [user]);
 
-      setComplaints((prev) => {
-        const newComplaint = toLocalComplaint(result.data, data);
-        resolve({ success: true, complaint: newComplaint });
-        return [newComplaint, ...prev];
+  const addComplaint = async (data) => {
+    const payload = {
+      location: data.location,
+      description: data.description,
+      hazard: data.hazard,
+      photo: data.photo,
+      coords: data.coords,
+      ward_id: user?.ward_id ?? null,
+    };
+
+    const result = await createComplaintApi(payload);
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    const newComplaint = toLocalComplaint(result.data, {
+      ...data,
+      reportedBy: user?.name || "Citizen",
+    });
+    setComplaints((prev) => [newComplaint, ...prev.filter((c) => c.id !== newComplaint.id)]);
+    return { success: true, complaint: newComplaint };
+  };
+
+  const updateComplaint = async (id, updates) => {
+    const patchBody = {};
+    if (updates.location !== undefined) {
+      patchBody.title = updates.location;
+      patchBody.address = updates.location;
+    }
+    if (updates.description !== undefined) patchBody.description = updates.description;
+    if (updates.hazard !== undefined) patchBody.category = updates.hazard;
+    if (updates.photo !== undefined) patchBody.photo_url = updates.photo;
+    if (updates.coords !== undefined) {
+      patchBody.latitude = updates.coords?.lat ?? null;
+      patchBody.longitude = updates.coords?.lng ?? null;
+    }
+    if (updates.status !== undefined) {
+      patchBody.status = updates.status.toLowerCase().replace(/ /g, "_");
+    }
+
+    const result = await apiFetch(`/complaints/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(patchBody),
+    });
+
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    const updated = toLocalComplaint(result.data, updates);
+    setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated, ...updates } : c)));
+    return { success: true };
+  };
+
+  const cancelComplaint = async (id) => {
+    const result = await apiFetch(`/complaints/${id}/cancel`, {
+      method: "POST",
+    });
+
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    const updated = toLocalComplaint(result.data);
+    setComplaints((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, ...updated, status: "Cancelled" } : c))
+    );
+    return { success: true };
+  };
+
+  const updateStatus = async (id, status) => {
+    const backendStatus = status.toLowerCase().replace(/ /g, "_");
+    const result = await apiFetch(`/complaints/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status_value: backendStatus }),
+    });
+
+    if (!result.success) {
+      return await updateComplaint(id, {
+        status,
+        ...(status === "Resolved" ? { resolvedAt: new Date().toISOString().slice(0, 10) } : {}),
       });
-    });
+    }
 
-  // Generic partial update — merges `updates` into the matching complaint.
-  // Every other mutator (status changes, feedback, assignment, hazard
-  // flags, edits, etc.) should be built on top of this one function.
-  const updateComplaint = (id, updates) =>
-    new Promise((resolve) => {
-      setComplaints((prev) => {
-        const exists = prev.some((c) => c.id === id);
-        if (!exists) {
-          resolve({ success: false, error: "Complaint not found." });
-          return prev;
-        }
-        resolve({ success: true });
-        return prev.map((c) => (c.id === id ? { ...c, ...updates } : c));
-      });
-    });
-
-  // A citizen may only withdraw a complaint while it's still Pending —
-  // once a crew is assigned or it's resolved, cancelling stops making sense.
-  const cancelComplaint = (id) =>
-    new Promise((resolve) => {
-      setComplaints((prev) => {
-        const target = prev.find((c) => c.id === id);
-        if (!target) {
-          resolve({ success: false, error: "Complaint not found." });
-          return prev;
-        }
-        if (target.status !== "Pending") {
-          resolve({
-            success: false,
-            error: "Only pending complaints can be withdrawn.",
-          });
-          return prev;
-        }
-        resolve({ success: true });
-        return prev.map((c) => (c.id === id ? { ...c, status: "Cancelled" } : c));
-      });
-    });
-
-  // Kept for existing call sites (assign / mark complete); now a thin
-  // wrapper around updateComplaint so there's one source of truth.
-  // Stamps resolvedAt alongside the status flip to "Resolved" so the
-  // Reports & Trends dashboard (#16) can compute resolution time without
-  // every call site having to remember to pass it explicitly.
-  const updateStatus = (id, status) =>
-    updateComplaint(id, {
-      status,
-      ...(status === "Resolved" ? { resolvedAt: new Date().toISOString().slice(0, 10) } : {}),
-    });
+    const updated = toLocalComplaint(result.data);
+    setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
+    return { success: true };
+  };
 
   return (
     <ComplaintsContext.Provider
