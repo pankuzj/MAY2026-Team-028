@@ -23,7 +23,16 @@ class AuthService:
 
     @staticmethod
     def register_user(db: Session, user_in: UserCreate) -> User:
-        """Register a new user account after checking email uniqueness."""
+        """Create a new user account with the role given in `user_in`.
+
+        This is a generic account-creation helper — it honours whatever
+        role is passed in. It is NOT safe to call directly from a public,
+        unauthenticated endpoint with a client-supplied role; the public
+        self-registration route (POST /auth/register) is responsible for
+        restricting the role to citizen/crew and forcing anything else
+        (e.g. admin) down to citizen before it reaches this method. See
+        app/api/v1/routes/auth.py.
+        """
         existing = UserRepository.get_by_email(db, user_in.email)
         if existing:
             raise ConflictError("User with this email already exists.")

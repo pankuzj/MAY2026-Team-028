@@ -1,8 +1,8 @@
 # SmartSweep — Frontend
 
-**SmartSweep** is a civic services platform for reporting and tracking garbage/waste-collection issues. This repository contains the **frontend-only** build (Milestone 2 deliverable) — a React + Vite web app with dedicated, role-based views for **Citizens**, **Cleanup Crew**, and **Ward Supervisors / Admins**.
+**SmartSweep** is a civic services platform for reporting and tracking garbage/waste-collection issues. This repository contains the React + Vite web app, with dedicated, role-based views for **Citizens**, **Cleanup Crew**, and **Ward Supervisors / Admins**.
 
-> This is the frontend layer only. It is not yet wired up to a backend/database — complaint data lives in-memory (React Context) and resets on page reload. Backend API integration begins in Sprint 1 (Milestone 3).
+> The app talks to the FastAPI backend in `../Backend` over JWT-authenticated REST calls (see `src/utils/api.js`). Complaint/task data that the backend doesn't yet own may still live in-memory (React Context) and reset on reload; auth (login/register/session) is fully backed by the real API and a database. Run the backend first (see `../Backend/README.md`) or auth calls will fail with a network error.
 
 ---
 
@@ -106,17 +106,23 @@ npm run preview    # preview the production build locally
 
 ---
 
-## Demo Login Credentials
+## Logging In
 
-The app currently uses hardcoded demo accounts (no backend yet):
+Auth is backed by the real FastAPI backend (`../Backend`) — make sure it's running (`http://localhost:8000` by default) before signing in.
 
-| Role | Username | Password |
+**Seeded demo accounts** (created automatically the first time the backend starts):
+
+| Role | Email | Password |
 |---|---|---|
-| Citizen 1 (Sagnik) | `citizen` | `citizen123` |
-| Citizen 2 (Anita) | `anita` | `anita123` |
-| Citizen 3 (Mohammed) | `mohammed` | `mohammed123` |
-| Cleanup Crew | `crew` | `crew123` |
-| Ward Supervisor / Admin | `admin` | `admin123` |
+| Citizen 1 (Sagnik) | `citizen@smartsweep.gov` | `citizen123` |
+| Citizen 2 (Anita) | `anita@smartsweep.gov` | `anita123` |
+| Citizen 3 (Mohammed) | `mohammed@smartsweep.gov` | `mohammed123` |
+| Cleanup Crew | `crew@smartsweep.gov` | `crew123` |
+| Ward Supervisor / Admin | `admin@smartsweep.gov` | `admin123` |
+
+Sign in with the **email**, not a username — the login form takes an email address and password.
+
+**Creating your own account:** the Register page (`/register`) lets you sign up as either a **Citizen** or a **Crew Member** — pick the account type at the top of the form. Admin accounts aren't available through sign-up; use the seeded `admin@smartsweep.gov` account above, or have an existing admin provision one.
 
 ---
 
@@ -132,6 +138,7 @@ The app currently uses hardcoded demo accounts (no backend yet):
 ## Troubleshooting
 
 * **`Failed to resolve import "react-router-dom"`** → Run `npm install` inside the `Frontend` folder to make sure all dependencies are installed.
+* **Login/register fails with a network error** → The backend isn't running (or isn't reachable at `http://localhost:8000`). Start it per `../Backend/README.md`, and check its CORS_ORIGINS includes your Vite dev server URL.
 * **Blank page on load** → Open the browser console (F12) to check for errors; this usually means a missing export or import somewhere in `src/`.
 * **Port already in use** → Vite automatically tries the next available port; check the terminal output for the actual URL.
 * **Clean reinstall** (if things get stuck):
@@ -144,4 +151,4 @@ The app currently uses hardcoded demo accounts (no backend yet):
 
 ## Notes
 
-This project is in early development. Complaint data is currently stored in-memory (via React Context) and resets on page reload — there is no backend/database integration yet. Backend API work (Complaint, Task Assignment, Verification, Reports, etc.) begins in Sprint 1 / Milestone 3.
+Auth (login, registration, session persistence) is fully integrated with the FastAPI backend and its database — there is no mock/local-only login path. Some other data (complaints, tasks, etc.) may still be backed by in-memory React Context depending on how far backend integration for that area has progressed; check the relevant Context provider in `src/context/` if you're unsure whether a given feature is live or local-only.

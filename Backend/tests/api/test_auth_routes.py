@@ -27,6 +27,42 @@ def test_register_endpoint(client: TestClient):
     assert "id" in data
 
 
+def test_register_endpoint_rejects_client_supplied_admin_role(client: TestClient):
+    """POST /auth/register must not let an anonymous caller self-elevate.
+
+    Regression test for the privilege-escalation bug where the public
+    registration endpoint trusted a client-supplied `role` field, letting
+    anyone create an admin (or crew) account with no authentication at all.
+    """
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "attacker@example.com",
+            "password": "securepassword123",
+            "full_name": "Definitely Not An Admin",
+            "role": "admin",
+        },
+    )
+    assert response.status_code == status.HTTP_201_CREATED
+    data = response.json()
+    assert data["role"] == "citizen"
+
+    # And the token that results from logging into this account should
+    # only ever carry citizen-level access.
+    login_resp = client.post(
+        "/api/v1/auth/login",
+        json={"email": "attacker@example.com", "password": "securepassword123"},
+    )
+    assert login_resp.status_code == status.HTTP_200_OK
+    access_token = login_resp.json()["access_token"]
+
+    admin_check = client.get(
+        "/api/v1/auth/admin-only",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    assert admin_check.status_code == status.HTTP_403_FORBIDDEN
+
+
 def test_login_and_get_me_flow(client: TestClient):
     """Test full login flow and fetching /auth/me profile."""
     # 1. Register

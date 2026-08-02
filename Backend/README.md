@@ -144,8 +144,11 @@ Pickup to the crew, vehicle, and equipment fulfilling it.
 ### Open decisions (assumptions in effect, override anytime)
 
 1. Ward is a first-class entity.
-2. Auth = JWT access + refresh, bcrypt hashing; citizens self-register, crew and
-   admins are provisioned by an admin.
+2. Auth = JWT access + refresh, bcrypt hashing; citizens and crew both
+   self-register via `POST /auth/register` (role is whatever the client
+   requests, restricted to `citizen`/`crew` server-side); admin accounts are
+   provisioned separately (demo seed data today; an admin-only creation
+   endpoint later) and can never be created through the public endpoint.
 3. Feed posts are auto-derived on complaint resolution.
 4. Collection schedule stays static config for now.
 5. Timestamps stored in UTC, ISO-8601 at the API boundary.
@@ -202,8 +205,28 @@ Confirm it's up at `http://localhost:8000/docs`.
 
 ---
 
+## Logging in
+
+The database is seeded automatically on startup (see `app/db/init_db.py`) with one demo account per role, so you don't need to register anything to start testing:
+
+| Role | Email | Password |
+|---|---|---|
+| Citizen | `citizen@smartsweep.gov` | `citizen123` |
+| Citizen | `anita@smartsweep.gov` | `anita123` |
+| Citizen | `mohammed@smartsweep.gov` | `mohammed123` |
+| Cleanup Crew | `crew@smartsweep.gov` | `crew123` |
+| Ward Supervisor / Admin | `admin@smartsweep.gov` | `admin123` |
+
+`POST /auth/login` takes `email` (not username) + `password` and returns an access/refresh token pair.
+
+You can also self-register your own **citizen** or **crew** account via `POST /auth/register` — pass `"role": "citizen"` or `"role": "crew"` in the request body. Any other value (including `"admin"`) is silently forced down to `citizen` server-side; admin accounts are never created through this endpoint. Crew has no elevated data-access permissions beyond its own task views yet — that's tracked as a follow-up (see the `TODO(access-control)` note in `app/api/v1/routes/auth.py`).
+
+---
+
 ## Status
 
-Scaffold only. Package tree and tooling are in place; models, schemas,
-repositories, services, endpoints, migrations, and auth are **not implemented
-yet** — see the `# TODO` markers in each module.
+Auth (register/login/refresh/`me`, JWT + RBAC) is implemented and tested —
+see `app/api/v1/routes/auth.py` and `tests/`. Other areas (complaints, tasks,
+resources, wards, etc.) have route/service/repository modules in place too;
+check each module's own docstrings and the `# TODO` markers for what's still
+outstanding rather than treating this file as scaffold-only.

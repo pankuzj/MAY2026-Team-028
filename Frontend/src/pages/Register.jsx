@@ -33,6 +33,10 @@ export default function Register() {
     }
 
     try {
+      // Public sign-up can create a citizen or crew account (chosen below).
+      // The backend enforces this server-side too — it accepts citizen/crew
+      // but always forces anything else (e.g. admin) down to citizen — so
+      // this is a UX convenience, not the actual security guarantee.
       const regRes = await register({
         email: email.trim().toLowerCase(),
         password,
@@ -73,9 +77,31 @@ export default function Register() {
       </span>
       <span className="eyebrow">Create Account</span>
       <h1>SmartSweep</h1>
-      <p className="login-sub">Register to report and track waste issues</p>
+      <p className="login-sub">Register as a citizen or crew member</p>
 
       <form className="login-form" onSubmit={handleSubmit}>
+        <label>
+          Account Type
+          <div className="role-select">
+            <button
+              type="button"
+              className={role === "citizen" ? "active" : ""}
+              onClick={() => setRole("citizen")}
+              disabled={isSubmitting}
+            >
+              Citizen
+            </button>
+            <button
+              type="button"
+              className={role === "crew" ? "active" : ""}
+              onClick={() => setRole("crew")}
+              disabled={isSubmitting}
+            >
+              Crew Member
+            </button>
+          </div>
+        </label>
+
         <label>
           Full Name
           <input
@@ -112,28 +138,6 @@ export default function Register() {
         </label>
 
         <label>
-          Account Role
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            disabled={isSubmitting}
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              borderRadius: "8px",
-              background: "var(--color-bg-secondary, #1a1a2e)",
-              color: "#fff",
-              border: "1px solid rgba(255,255,255,0.1)",
-              marginTop: "0.25rem",
-            }}
-          >
-            <option value="citizen">Citizen (Report complaints & bulk pickup)</option>
-            <option value="crew">Cleanup Crew (Task completion)</option>
-            <option value="admin">Ward Supervisor / Admin</option>
-          </select>
-        </label>
-
-        <label>
           Password
           <input
             type="password"
@@ -150,6 +154,12 @@ export default function Register() {
             <IconAlertCircle /> {error}
           </p>
         )}
+
+        <p style={{ color: "#888", fontSize: "0.85rem", marginTop: "-0.5rem" }}>
+          Choose Citizen to report issues, or Crew Member to access cleanup
+          task tools. Admin accounts are provisioned separately and aren't
+          available through sign-up.
+        </p>
 
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Creating Account..." : "Create Account"}

@@ -117,6 +117,10 @@ uv run uvicorn app.main:app --reload
 
 Once running, interactive API documentation is available at `http://localhost:8000/docs`.
 
+### Logging in
+
+The backend seeds one demo account per role on first startup (citizen/crew/admin — see `Backend/README.md` for the exact credentials). You can also self-register a **citizen** or **crew** account from the frontend's Register page; admin accounts are seed-provisioned only, never through public sign-up.
+
 ### Running Tests
 
 ```bash
@@ -131,7 +135,7 @@ npm run lint
 
 ## Status
 
-The frontend is a fully working React application with role-based routing, mock authentication, and local persistence for most data. The backend currently provides the architectural scaffold — folder structure, environment configuration, database service, and CI pipeline — with the API implementation itself in progress. The frontend's Context layer is designed so its data-fetching functions can be swapped from local state to real API calls with minimal changes to the UI components that consume them.
+Both layers are wired together for authentication: the frontend's `AuthContext` calls the real backend (`/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/me`) over JWT, backed by a Postgres/SQLite database — there is no mock/local-only login path. Citizens and crew can both self-register (see `Frontend/README.md` / `Backend/README.md` for demo accounts and login instructions); admin accounts are seed-provisioned only. Other domain areas (complaints, tasks, resources, etc.) have backend modules in place as well, with some frontend Context providers still holding local/in-memory data for features that haven't finished wiring up to the corresponding endpoint — check the relevant Context provider or route module if you're unsure how far along a given feature is.
 
 ## License
 

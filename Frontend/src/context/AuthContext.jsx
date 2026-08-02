@@ -9,14 +9,6 @@ import {
 
 const AuthContext = createContext(null);
 
-export const DEMO_USERS = [
-  { username: "citizen", password: "citizen123", role: "citizen", name: "Sagnik Halder", label: "Citizen 1 (Sagnik)" },
-  { username: "anita", password: "anita123", role: "citizen", name: "Anita Rao", label: "Citizen 2 (Anita)" },
-  { username: "mohammed", password: "mohammed123", role: "citizen", name: "Mohammed Iqbal", label: "Citizen 3 (Mohammed)" },
-  { username: "crew", password: "crew123", role: "crew", name: "Suresh Patil", label: "Cleanup Crew" },
-  { username: "admin", password: "admin123", role: "admin", name: "Admin", label: "Ward Supervisor / Admin" },
-];
-
 const getStoredUser = () => {
   try {
     const raw = localStorage.getItem("smartsweep-user");

@@ -44,6 +44,16 @@ def test_register_user_success(db_session: Session):
     assert user.role == "citizen"
 
 
+# NOTE: AuthService.register_user is intentionally a generic, role-aware
+# helper (see test_rbac_role_permissions in test_auth_routes.py, which
+# relies on it to seed an admin fixture directly). The guarantee that public
+# self-registration can't grant elevated roles is enforced at the route
+# layer (POST /auth/register forces role=citizen before calling this
+# service) and is covered by
+# test_register_endpoint_rejects_client_supplied_admin_role in
+# tests/api/test_auth_routes.py — not here.
+
+
 def test_register_duplicate_email_raises_conflict(db_session: Session):
     """Verify registering duplicate email raises ConflictError."""
     user_in = UserCreate(

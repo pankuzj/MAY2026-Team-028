@@ -16,11 +16,26 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     "/register",
     response_model=UserRead,
     status_code=status.HTTP_201_CREATED,
-    summary="Register a new citizen account",
+    summary="Register a new citizen or crew account",
 )
 def register(user_in: UserCreate, db: Session = Depends(get_db)) -> User:
-    """Register a new citizen account."""
-    return AuthService.register_user(db, user_in)
+    """Register a new citizen or crew account.
+
+    This is public and unauthenticated, so it must never trust a
+    client-supplied ADMIN role — otherwise anyone could self-register as
+    admin. Citizen and crew are both safe to self-serve today (crew has no
+    elevated data-access permissions yet beyond its own task views), so the
+    requested role is honoured when it is one of those two. Anything else
+    (currently only `admin`) is forced down to CITIZEN.
+
+    TODO(access-control): once crew accounts carry real elevated
+    permissions, replace this open self-serve path with an invite-code or
+    admin-approval flow before crew signup goes to production.
+    """
+    safe_roles = {UserRole.CITIZEN, UserRole.CREW}
+    role = user_in.role if user_in.role in safe_roles else UserRole.CITIZEN
+    safe_user = user_in.model_copy(update={"role": role})
+    return AuthService.register_user(db, safe_user)
 
 
 @router.post(
