@@ -192,10 +192,6 @@ export default function BulkPickupManagement() {
                     <span className="value">{p.notes}</span>
                   </div>
                 )}
-                <div className="op-detail-row">
-                  <span className="label">Fee</span>
-                  <span className="value font-bold">₹{p.fee}</span>
-                </div>
               </div>
 
               <div className="op-card-footer">
