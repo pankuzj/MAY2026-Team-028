@@ -126,13 +126,9 @@ class TaskService:
             added_w_ids = new_w_ids - old_w_ids
             TaskRepository.set_worker_ids(db, updated.id, worker_ids)
             for w_id in removed_w_ids:
-                ResourceService.update_worker_status(
-                    db, w_id, status=WorkerStatus.AVAILABLE.value
-                )
+                ResourceService.update_worker_status(db, w_id, status=WorkerStatus.AVAILABLE.value)
             for w_id in added_w_ids:
-                ResourceService.update_worker_status(
-                    db, w_id, status=WorkerStatus.ASSIGNED.value
-                )
+                ResourceService.update_worker_status(db, w_id, status=WorkerStatus.ASSIGNED.value)
 
         if equipment_ids is not None:
             old_e_ids = set(TaskRepository.get_equipment_ids(db, task_id))
