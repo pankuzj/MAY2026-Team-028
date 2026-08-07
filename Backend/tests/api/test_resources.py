@@ -143,7 +143,9 @@ def test_update_worker_status_validation_failure(client: TestClient, db_session:
 
 def test_update_worker_status_rbac_failure(client: TestClient, db_session: Session):
     """Auth/RBAC Failure: Citizen role is forbidden from updating worker status."""
-    token = _register_and_login(db_session, client, "res_w_status_rbac@example.com", UserRole.CITIZEN)
+    token = _register_and_login(
+        db_session, client, "res_w_status_rbac@example.com", UserRole.CITIZEN
+    )
     worker = _create_worker(db_session, "Worker RBAC Test")
 
     resp = client.patch(
@@ -183,7 +185,9 @@ def test_list_vehicles_happy_path(client: TestClient, db_session: Session):
 
 def test_list_vehicles_validation_failure(client: TestClient):
     """Validation Failure: Missing or invalid token header returns 401."""
-    resp = client.get("/api/v1/resources/vehicles", headers={"Authorization": "Bearer bad_veh_token"})
+    resp = client.get(
+        "/api/v1/resources/vehicles", headers={"Authorization": "Bearer bad_veh_token"}
+    )
     assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
 
@@ -234,7 +238,9 @@ def test_update_vehicle_status_validation_failure(client: TestClient, db_session
 
 def test_update_vehicle_status_rbac_failure(client: TestClient, db_session: Session):
     """Auth/RBAC Failure: Citizen role is forbidden from updating vehicle status."""
-    token = _register_and_login(db_session, client, "res_v_status_rbac@example.com", UserRole.CITIZEN)
+    token = _register_and_login(
+        db_session, client, "res_v_status_rbac@example.com", UserRole.CITIZEN
+    )
     vehicle = _create_vehicle(db_session, "KA-04-AA-4444")
 
     resp = client.patch(
@@ -274,7 +280,9 @@ def test_list_equipment_happy_path(client: TestClient, db_session: Session):
 
 def test_list_equipment_validation_failure(client: TestClient):
     """Validation Failure: Invalid authorization token format returns 401."""
-    resp = client.get("/api/v1/resources/equipment", headers={"Authorization": "Bearer bad_eq_token"})
+    resp = client.get(
+        "/api/v1/resources/equipment", headers={"Authorization": "Bearer bad_eq_token"}
+    )
     assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
 
@@ -325,7 +333,9 @@ def test_update_equipment_status_validation_failure(client: TestClient, db_sessi
 
 def test_update_equipment_status_rbac_failure(client: TestClient, db_session: Session):
     """Auth/RBAC Failure: Citizen role is forbidden from updating equipment status."""
-    token = _register_and_login(db_session, client, "res_e_status_rbac@example.com", UserRole.CITIZEN)
+    token = _register_and_login(
+        db_session, client, "res_e_status_rbac@example.com", UserRole.CITIZEN
+    )
     equipment = _create_equipment(db_session, "Pressure Washer")
 
     resp = client.patch(
