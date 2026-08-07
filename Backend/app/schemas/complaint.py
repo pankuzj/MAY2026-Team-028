@@ -46,6 +46,15 @@ class ComplaintSubmit(BaseModel):
     ward_id: int | None = None
 
 
+class DuplicateCheckRequest(BaseModel):
+    """Draft complaint fields used for an advisory duplicate scan."""
+
+    location: str = Field(min_length=1, max_length=255)
+    description: str = Field(min_length=1)
+    coords: dict[str, float] | None = None
+    ward_id: int | None = None
+
+
 class ComplaintUpdate(BaseModel):
     """Payload for updating a complaint."""
 

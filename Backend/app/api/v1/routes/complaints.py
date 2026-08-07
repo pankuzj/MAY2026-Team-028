@@ -15,6 +15,7 @@ from app.schemas.complaint import (
     ComplaintStatusHistoryRead,
     ComplaintSubmit,
     ComplaintUpdate,
+    DuplicateCheckRequest,
 )
 from app.services.complaint_service import ComplaintService
 from app.services.duplicate_detection_service import DuplicateDetectionService
@@ -122,6 +123,52 @@ async def upload_complaint_photo(
         "content_type": content_type,
         "size_bytes": len(contents),
     }
+
+
+@router.post("/{complaint_id}/photo", response_model=ComplaintRead)
+async def attach_complaint_photo(
+    complaint_id: int,
+    photo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ComplaintRead:
+    """Validate and attach an evidence photo to an existing complaint."""
+    complaint = ComplaintService.get_complaint(db, complaint_id)
+    ComplaintService.assert_can_read(complaint, current_user)
+    content_type = (photo.content_type or "").lower()
+    if content_type not in settings.upload_allowed_mime_type_set:
+        raise HTTPException(status_code=415, detail="Unsupported image type.")
+    contents = await photo.read()
+    if len(contents) > settings.upload_max_bytes:
+        raise HTTPException(status_code=413, detail="Image too large.")
+    complaint = ComplaintRepository.update(
+        db, complaint, {"photo_url": photo.filename or "evidence-image"}
+    )
+    return _to_read_model(complaint)
+
+
+@router.post("/duplicate-check")
+def duplicate_check(
+    request: DuplicateCheckRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[dict]:
+    """Return advisory matches for a complaint draft before submission."""
+    draft = Complaint(
+        id=0,
+        title=request.location,
+        description=request.description,
+        latitude=(request.coords or {}).get("lat") if request.coords else None,
+        longitude=(request.coords or {}).get("lng") if request.coords else None,
+        ward_id=request.ward_id or current_user.ward_id,
+        reported_by_user_id=current_user.id,
+        status="pending",
+    )
+    matches = DuplicateDetectionService.find_possible_duplicates(db, draft)
+    return [
+        {**match, "complaint": _to_read_model(match["complaint"]).model_dump(mode="json")}
+        for match in matches
+    ]
 
 
 @router.get("/{complaint_id}", response_model=ComplaintRead)
