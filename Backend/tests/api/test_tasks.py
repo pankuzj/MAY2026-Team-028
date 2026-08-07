@@ -210,9 +210,12 @@ def test_get_task_happy_path(client: TestClient, db_session: Session):
     assert resp.json()["title"] == "Get Target Task"
 
 
-def test_get_task_validation_failure(client: TestClient):
+def test_get_task_validation_failure(client: TestClient, db_session: Session):
     """Validation Failure: Passing non-integer task ID returns 422 Unprocessable Entity."""
-    resp = client.get("/api/v1/tasks/not-an-integer")
+    token = _register_and_login(
+        db_session, client, "task_get_invalid_id@example.com", UserRole.CREW
+    )
+    resp = client.get("/api/v1/tasks/not-an-integer", headers=_auth(token))
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
