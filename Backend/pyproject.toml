@@ -55,6 +55,7 @@ extend-exclude = ["app/db/migrations/versions"] # generated code
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
 
 [tool.ruff.lint.flake8-bugbear]
 # B008 forbids function calls in argument defaults, which is right in general and

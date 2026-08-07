@@ -77,8 +77,10 @@ def _create_sample_equipment(db: Session, name: str = "Shovel") -> Equipment:
 
 def test_list_tasks_happy_path(client: TestClient, db_session: Session):
     """Happy Path: Admin or Crew can list tasks and get a 200 response."""
-    admin_token = _register_and_login(db_session, client, "task_admin_list@example.com", UserRole.ADMIN)
-    
+    admin_token = _register_and_login(
+        db_session, client, "task_admin_list@example.com", UserRole.ADMIN
+    )
+
     # Create a task first
     client.post(
         "/api/v1/tasks",
@@ -103,7 +105,9 @@ def test_list_tasks_validation_failure(client: TestClient):
 
 def test_list_tasks_rbac_failure(client: TestClient, db_session: Session):
     """Auth/RBAC Failure: Citizen role is forbidden from listing internal tasks."""
-    citizen_token = _register_and_login(db_session, client, "task_citizen_list@example.com", UserRole.CITIZEN)
+    citizen_token = _register_and_login(
+        db_session, client, "task_citizen_list@example.com", UserRole.CITIZEN
+    )
     resp = client.get("/api/v1/tasks", headers=_auth(citizen_token))
     assert resp.status_code == status.HTTP_403_FORBIDDEN
     assert resp.json()["error"]["code"] == "PERMISSION_DENIED"
@@ -111,7 +115,9 @@ def test_list_tasks_rbac_failure(client: TestClient, db_session: Session):
 
 def test_list_tasks_edge_case_empty(client: TestClient, db_session: Session):
     """Edge Case: Listing tasks when zero tasks exist returns an empty list."""
-    admin_token = _register_and_login(db_session, client, "task_admin_empty@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_admin_empty@example.com", UserRole.ADMIN
+    )
     resp = client.get("/api/v1/tasks", headers=_auth(admin_token))
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == []
@@ -124,7 +130,9 @@ def test_list_tasks_edge_case_empty(client: TestClient, db_session: Session):
 
 def test_create_task_happy_path(client: TestClient, db_session: Session):
     """Happy Path: Admin creates a task with valid payload and available resources."""
-    admin_token = _register_and_login(db_session, client, "task_admin_create@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_admin_create@example.com", UserRole.ADMIN
+    )
     worker = _create_sample_worker(db_session, "Worker Create 1")
     vehicle = _create_sample_vehicle(db_session, "KA-02-CD-5678")
 
@@ -144,7 +152,9 @@ def test_create_task_happy_path(client: TestClient, db_session: Session):
 
 def test_create_task_validation_failure(client: TestClient, db_session: Session):
     """Validation Failure: Omission of required field `title` yields 422."""
-    admin_token = _register_and_login(db_session, client, "task_admin_create_val@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_admin_create_val@example.com", UserRole.ADMIN
+    )
     payload = {"description": "Task without title"}
     resp = client.post("/api/v1/tasks", json=payload, headers=_auth(admin_token))
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -153,7 +163,9 @@ def test_create_task_validation_failure(client: TestClient, db_session: Session)
 
 def test_create_task_rbac_failure(client: TestClient, db_session: Session):
     """Auth/RBAC Failure: Crew role cannot create new tasks (Admin only)."""
-    crew_token = _register_and_login(db_session, client, "task_crew_create@example.com", UserRole.CREW)
+    crew_token = _register_and_login(
+        db_session, client, "task_crew_create@example.com", UserRole.CREW
+    )
     payload = {"title": "Unauthorized Task Creation"}
     resp = client.post("/api/v1/tasks", json=payload, headers=_auth(crew_token))
     assert resp.status_code == status.HTTP_403_FORBIDDEN
@@ -161,7 +173,9 @@ def test_create_task_rbac_failure(client: TestClient, db_session: Session):
 
 def test_create_task_edge_case_unavailable_resource(client: TestClient, db_session: Session):
     """Edge Case: Creating a task with an unavailable worker returns 409 Conflict."""
-    admin_token = _register_and_login(db_session, client, "task_admin_unavail@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_admin_unavail@example.com", UserRole.ADMIN
+    )
     worker = _create_sample_worker(db_session, "Busy Worker")
     # Mark worker as assigned
     worker.status = WorkerStatus.ASSIGNED.value
@@ -180,7 +194,9 @@ def test_create_task_edge_case_unavailable_resource(client: TestClient, db_sessi
 
 def test_get_task_happy_path(client: TestClient, db_session: Session):
     """Happy Path: Fetching an existing task by ID returns 200 OK."""
-    admin_token = _register_and_login(db_session, client, "task_admin_get@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_admin_get@example.com", UserRole.ADMIN
+    )
     create_resp = client.post(
         "/api/v1/tasks",
         json={"title": "Get Target Task"},
@@ -206,12 +222,18 @@ def test_get_task_rbac_failure(client: TestClient):
     # Depends on auth requirement or route security wrapper
     resp = client.get("/api/v1/tasks/1")
     # Note: If GET /{task_id} is open or protected, verify status is 200/401/403 appropriately
-    assert resp.status_code in (status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED, status.HTTP_404_NOT_FOUND)
+    assert resp.status_code in (
+        status.HTTP_200_OK,
+        status.HTTP_401_UNAUTHORIZED,
+        status.HTTP_404_NOT_FOUND,
+    )
 
 
 def test_get_task_edge_case_not_found(client: TestClient, db_session: Session):
     """Edge Case: Requesting non-existent task ID returns 404 Not Found."""
-    admin_token = _register_and_login(db_session, client, "task_admin_404@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_admin_404@example.com", UserRole.ADMIN
+    )
     resp = client.get("/api/v1/tasks/999999", headers=_auth(admin_token))
     assert resp.status_code == status.HTTP_404_NOT_FOUND
     assert resp.json()["error"]["code"] == "NOT_FOUND"
@@ -224,7 +246,9 @@ def test_get_task_edge_case_not_found(client: TestClient, db_session: Session):
 
 def test_update_task_happy_path(client: TestClient, db_session: Session):
     """Happy Path: Admin or Crew updates task fields successfully."""
-    admin_token = _register_and_login(db_session, client, "task_admin_patch@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_admin_patch@example.com", UserRole.ADMIN
+    )
     create_resp = client.post(
         "/api/v1/tasks",
         json={"title": "Original Title"},
@@ -245,7 +269,9 @@ def test_update_task_happy_path(client: TestClient, db_session: Session):
 
 def test_update_task_validation_failure(client: TestClient, db_session: Session):
     """Validation Failure: Sending invalid status enum value returns 422."""
-    admin_token = _register_and_login(db_session, client, "task_admin_patch_val@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_admin_patch_val@example.com", UserRole.ADMIN
+    )
     create_resp = client.post(
         "/api/v1/tasks",
         json={"title": "Task for invalid patch"},
@@ -263,8 +289,12 @@ def test_update_task_validation_failure(client: TestClient, db_session: Session)
 
 def test_update_task_rbac_failure(client: TestClient, db_session: Session):
     """Auth/RBAC Failure: Citizen role is forbidden from updating tasks."""
-    admin_token = _register_and_login(db_session, client, "task_patch_owner@example.com", UserRole.ADMIN)
-    citizen_token = _register_and_login(db_session, client, "task_patch_citizen@example.com", UserRole.CITIZEN)
+    admin_token = _register_and_login(
+        db_session, client, "task_patch_owner@example.com", UserRole.ADMIN
+    )
+    citizen_token = _register_and_login(
+        db_session, client, "task_patch_citizen@example.com", UserRole.CITIZEN
+    )
 
     create_resp = client.post(
         "/api/v1/tasks",
@@ -283,7 +313,9 @@ def test_update_task_rbac_failure(client: TestClient, db_session: Session):
 
 def test_update_task_edge_case_not_found(client: TestClient, db_session: Session):
     """Edge Case: Updating non-existent task returns 404 Not Found."""
-    admin_token = _register_and_login(db_session, client, "task_patch_404@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_patch_404@example.com", UserRole.ADMIN
+    )
     resp = client.patch(
         "/api/v1/tasks/999999",
         json={"title": "Non-existent task"},
@@ -299,8 +331,12 @@ def test_update_task_edge_case_not_found(client: TestClient, db_session: Session
 
 def test_complete_task_happy_path(client: TestClient, db_session: Session):
     """Happy Path: Crew or Admin completes a task successfully."""
-    admin_token = _register_and_login(db_session, client, "task_admin_cmpl@example.com", UserRole.ADMIN)
-    crew_token = _register_and_login(db_session, client, "task_crew_cmpl@example.com", UserRole.CREW)
+    admin_token = _register_and_login(
+        db_session, client, "task_admin_cmpl@example.com", UserRole.ADMIN
+    )
+    crew_token = _register_and_login(
+        db_session, client, "task_crew_cmpl@example.com", UserRole.CREW
+    )
 
     create_resp = client.post(
         "/api/v1/tasks",
@@ -323,8 +359,12 @@ def test_complete_task_validation_failure(client: TestClient, db_session: Sessio
 
 def test_complete_task_rbac_failure(client: TestClient, db_session: Session):
     """Auth/RBAC Failure: Citizen role cannot complete a task."""
-    admin_token = _register_and_login(db_session, client, "task_cmpl_admin@example.com", UserRole.ADMIN)
-    citizen_token = _register_and_login(db_session, client, "task_cmpl_cit@example.com", UserRole.CITIZEN)
+    admin_token = _register_and_login(
+        db_session, client, "task_cmpl_admin@example.com", UserRole.ADMIN
+    )
+    citizen_token = _register_and_login(
+        db_session, client, "task_cmpl_cit@example.com", UserRole.CITIZEN
+    )
 
     create_resp = client.post(
         "/api/v1/tasks",
@@ -339,8 +379,12 @@ def test_complete_task_rbac_failure(client: TestClient, db_session: Session):
 
 def test_complete_task_edge_case_idempotent(client: TestClient, db_session: Session):
     """Edge Case: Completing an already completed task returns 200 OK idempotently."""
-    crew_token = _register_and_login(db_session, client, "task_cmpl_idem@example.com", UserRole.CREW)
-    admin_token = _register_and_login(db_session, client, "task_adm_idem@example.com", UserRole.ADMIN)
+    crew_token = _register_and_login(
+        db_session, client, "task_cmpl_idem@example.com", UserRole.CREW
+    )
+    admin_token = _register_and_login(
+        db_session, client, "task_adm_idem@example.com", UserRole.ADMIN
+    )
 
     create_resp = client.post(
         "/api/v1/tasks",
@@ -364,7 +408,9 @@ def test_complete_task_edge_case_idempotent(client: TestClient, db_session: Sess
 
 def test_cancel_task_happy_path(client: TestClient, db_session: Session):
     """Happy Path: Admin cancels a task successfully."""
-    admin_token = _register_and_login(db_session, client, "task_cancel_adm@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_cancel_adm@example.com", UserRole.ADMIN
+    )
 
     create_resp = client.post(
         "/api/v1/tasks",
@@ -380,15 +426,21 @@ def test_cancel_task_happy_path(client: TestClient, db_session: Session):
 
 def test_cancel_task_validation_failure(client: TestClient, db_session: Session):
     """Validation Failure: Non-integer task_id yields 422."""
-    admin_token = _register_and_login(db_session, client, "task_cancel_val@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_cancel_val@example.com", UserRole.ADMIN
+    )
     resp = client.post("/api/v1/tasks/invalid_id/cancel", headers=_auth(admin_token))
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 def test_cancel_task_rbac_failure(client: TestClient, db_session: Session):
     """Auth/RBAC Failure: Crew role cannot cancel a task (Admin only)."""
-    admin_token = _register_and_login(db_session, client, "task_cncl_owner@example.com", UserRole.ADMIN)
-    crew_token = _register_and_login(db_session, client, "task_cncl_crew@example.com", UserRole.CREW)
+    admin_token = _register_and_login(
+        db_session, client, "task_cncl_owner@example.com", UserRole.ADMIN
+    )
+    crew_token = _register_and_login(
+        db_session, client, "task_cncl_crew@example.com", UserRole.CREW
+    )
 
     create_resp = client.post(
         "/api/v1/tasks",
@@ -403,6 +455,8 @@ def test_cancel_task_rbac_failure(client: TestClient, db_session: Session):
 
 def test_cancel_task_edge_case_not_found(client: TestClient, db_session: Session):
     """Edge Case: Cancelling non-existent task returns 404 Not Found."""
-    admin_token = _register_and_login(db_session, client, "task_cancel_404@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "task_cancel_404@example.com", UserRole.ADMIN
+    )
     resp = client.post("/api/v1/tasks/999999/cancel", headers=_auth(admin_token))
     assert resp.status_code == status.HTTP_404_NOT_FOUND

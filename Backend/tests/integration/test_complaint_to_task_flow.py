@@ -52,13 +52,25 @@ def test_complaint_to_task_end_to_end_flow(client: TestClient, db_session: Sessi
     """End-to-end lifecycle test from complaint submission to task completion."""
 
     # 1. Setup Users & Resources
-    citizen_token = _register_and_login(db_session, client, "flow_citizen@example.com", UserRole.CITIZEN)
+    citizen_token = _register_and_login(
+        db_session, client, "flow_citizen@example.com", UserRole.CITIZEN
+    )
     admin_token = _register_and_login(db_session, client, "flow_admin@example.com", UserRole.ADMIN)
     crew_token = _register_and_login(db_session, client, "flow_crew@example.com", UserRole.CREW)
 
     worker = Worker(full_name="Flow Worker", status=WorkerStatus.AVAILABLE.value, is_active=True)
-    vehicle = Vehicle(plate_number="KA-09-FLOW-1", model_name="Flow Truck", status=VehicleStatus.AVAILABLE.value, is_active=True)
-    equipment = Equipment(name="Flow Shovel", status=EquipmentStatus.AVAILABLE.value, available_quantity=5, is_active=True)
+    vehicle = Vehicle(
+        plate_number="KA-09-FLOW-1",
+        model_name="Flow Truck",
+        status=VehicleStatus.AVAILABLE.value,
+        is_active=True,
+    )
+    equipment = Equipment(
+        name="Flow Shovel",
+        status=EquipmentStatus.AVAILABLE.value,
+        available_quantity=5,
+        is_active=True,
+    )
     db_session.add_all([worker, vehicle, equipment])
     db_session.commit()
     db_session.refresh(worker)
@@ -81,7 +93,9 @@ def test_complaint_to_task_end_to_end_flow(client: TestClient, db_session: Sessi
     assert complaint_data["status"] == "pending"
 
     # Verify initial history
-    hist_resp = client.get(f"/api/v1/complaints/{complaint_id}/history", headers=_auth(citizen_token))
+    hist_resp = client.get(
+        f"/api/v1/complaints/{complaint_id}/history", headers=_auth(citizen_token)
+    )
     assert hist_resp.status_code == status.HTTP_200_OK
     assert len(hist_resp.json()) == 1
     assert hist_resp.json()[0]["to_status"] == "pending"
@@ -136,7 +150,9 @@ def test_complaint_to_task_end_to_end_flow(client: TestClient, db_session: Sessi
     assert freed_v["status"] == "available"
 
     # 5. Step 4: Verify complete history trail
-    final_hist = client.get(f"/api/v1/complaints/{complaint_id}/history", headers=_auth(citizen_token))
+    final_hist = client.get(
+        f"/api/v1/complaints/{complaint_id}/history", headers=_auth(citizen_token)
+    )
     assert final_hist.status_code == status.HTTP_200_OK
     history_entries = final_hist.json()
     assert len(history_entries) == 3
