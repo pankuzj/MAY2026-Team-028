@@ -85,4 +85,3 @@ class ResourceService:
         if status is not None:
             payload["status"] = status
         return EquipmentRepository.update(db, equipment, payload)
-
