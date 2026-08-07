@@ -51,9 +51,7 @@ def test_duplicate_check_requires_authentication(client: TestClient):
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_complaint_photo_is_attached_to_existing_complaint(
-    client: TestClient, db_session: Session
-):
+def test_complaint_photo_is_attached_to_existing_complaint(client: TestClient, db_session: Session):
     token = _token(db_session, "gap_photo@example.com", UserRole.CITIZEN)
     complaint = client.post(
         "/api/v1/complaints",
