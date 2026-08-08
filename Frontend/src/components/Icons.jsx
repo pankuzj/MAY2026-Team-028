@@ -87,6 +87,14 @@ export const IconCamera = (props) => (
   </svg>
 );
 
+export const IconUpload = (props) => (
+  <svg {...base} {...props}>
+    <path d="M12 16V4" />
+    <path d="M7 8.5 12 4l5 4.5" />
+    <path d="M4.5 15v3.5A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5V15" />
+  </svg>
+);
+
 export const IconCheckCircle = (props) => (
   <svg {...base} {...props}>
     <circle cx="12" cy="12" r="8.5" />
