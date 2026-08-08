@@ -30,7 +30,6 @@ export default function PublicTransparencyFeed() {
 
   // Calculate Metrics
   const totalApplauds = feed.reduce((acc, curr) => acc + curr.applauds, 0);
-  const totalComments = feed.reduce((acc, curr) => acc + curr.comments.length, 0);
 
   const filteredFeed = feed.filter((post) => {
     const q = search.trim().toLowerCase();

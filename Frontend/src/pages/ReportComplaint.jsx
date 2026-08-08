@@ -156,7 +156,7 @@ export default function ReportComplaint() {
 
   return (
     <div className="page page-narrow">
-      <div className="page-header text-center">
+      <div className="page-header">
         <div>
           <span className="eyebrow">New Incident Report</span>
           <h1>Report a Garbage Issue</h1>

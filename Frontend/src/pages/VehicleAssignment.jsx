@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useOperational } from "../context/OperationalContext";
 import { useComplaints } from "../context/ComplaintsContext";
 import { useToast } from "../context/ToastContext";
-import { IconTruck, IconUsers, IconSearch, IconPlus, IconRadar, IconX, IconCheckCircle, IconAlertTriangle } from "../components/Icons";
+import { IconTruck, IconSearch, IconPlus, IconRadar, IconX, IconCheckCircle, IconAlertTriangle } from "../components/Icons";
 
 export default function VehicleAssignment() {
   const { vehicles, updateVehicleStatus, addVehicle } = useOperational();
