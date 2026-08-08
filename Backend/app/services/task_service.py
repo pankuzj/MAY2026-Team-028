@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import InvalidStateTransitionError, NotFoundError
 from app.models.equipment import EquipmentStatus
 from app.models.task import Task, TaskStatus
 from app.models.user import User
@@ -19,6 +19,13 @@ __all__ = ["TaskService"]
 
 
 class TaskService:
+    _ALLOWED_STATUS_TRANSITIONS = {
+        TaskStatus.ASSIGNED.value: {TaskStatus.IN_PROGRESS.value, TaskStatus.CANCELLED.value},
+        TaskStatus.IN_PROGRESS.value: {TaskStatus.COMPLETED.value, TaskStatus.CANCELLED.value},
+        TaskStatus.COMPLETED.value: set(),
+        TaskStatus.CANCELLED.value: set(),
+    }
+
     @staticmethod
     def create_task(db: Session, current_user: User, task_in: TaskCreate) -> Task:
         if task_in.vehicle_id:
@@ -170,6 +177,36 @@ class TaskService:
                 db, updated.complaint_id, "resolved", changed_by_user_id=completed_by_user_id
             )
         return updated
+
+    @staticmethod
+    def update_status(db: Session, task_id: int, status: TaskStatus, *, user_id: int) -> Task:
+        """Advance a task through its lifecycle without bypassing state rules."""
+        task = TaskService.get_task(db, task_id)
+        target = status.value
+        if target == task.status:
+            return task
+        if target not in TaskService._ALLOWED_STATUS_TRANSITIONS.get(task.status, set()):
+            raise InvalidStateTransitionError(
+                f"Cannot move task from '{task.status}' to '{target}'."
+            )
+        if target == TaskStatus.COMPLETED.value:
+            return TaskService.complete_task(db, task_id, completed_by_user_id=user_id)
+        updates = {"status": target}
+        if target == TaskStatus.IN_PROGRESS.value:
+            updates["started_at"] = datetime.now(UTC)
+        return TaskRepository.update(db, task, updates)
+
+    @staticmethod
+    def request_assistance(db: Session, task_id: int, notes: str) -> Task:
+        """Persist the latest assistance request for an assignment."""
+        task = TaskService.get_task(db, task_id)
+        if task.status in {TaskStatus.COMPLETED.value, TaskStatus.CANCELLED.value}:
+            raise InvalidStateTransitionError("Closed tasks cannot request assistance.")
+        return TaskRepository.update(
+            db,
+            task,
+            {"assistance_requested": True, "assistance_notes": notes},
+        )
 
     @staticmethod
     def cancel_task(db: Session, task_id: int) -> Task:

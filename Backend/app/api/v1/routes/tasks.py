@@ -7,7 +7,13 @@ from app.api.deps import get_current_user, get_db, require_role
 from app.models.task import Task
 from app.models.user import User, UserRole
 from app.repositories.task_repository import TaskRepository
-from app.schemas.task import TaskCreate, TaskRead, TaskUpdate
+from app.schemas.task import (
+    AssistanceRequest,
+    TaskCreate,
+    TaskRead,
+    TaskStatusUpdate,
+    TaskUpdate,
+)
 from app.services.task_service import TaskService
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
@@ -54,6 +60,37 @@ def create_task(
 )
 def get_task(task_id: int, db: Session = Depends(get_db)) -> TaskRead:
     return _to_read_model(TaskService.get_task(db, task_id), db)
+
+
+@router.patch(
+    "/{task_id}/status",
+    response_model=TaskRead,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_role(UserRole.CREW, UserRole.ADMIN))],
+)
+def update_task_status(
+    task_id: int,
+    status_in: TaskStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> TaskRead:
+    return _to_read_model(
+        TaskService.update_status(db, task_id, status_in.status, user_id=current_user.id), db
+    )
+
+
+@router.post(
+    "/{task_id}/assistance",
+    response_model=TaskRead,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_role(UserRole.CREW, UserRole.ADMIN))],
+)
+def request_task_assistance(
+    task_id: int,
+    request: AssistanceRequest,
+    db: Session = Depends(get_db),
+) -> TaskRead:
+    return _to_read_model(TaskService.request_assistance(db, task_id, request.notes), db)
 
 
 @router.patch(

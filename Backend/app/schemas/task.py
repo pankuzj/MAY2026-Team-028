@@ -48,6 +48,18 @@ class TaskUpdate(BaseModel):
     resolution_notes: str | None = None
 
 
+class TaskStatusUpdate(BaseModel):
+    """Payload for the task status state-machine endpoint."""
+
+    status: TaskStatus
+
+
+class AssistanceRequest(BaseModel):
+    """Payload submitted by crew when an assignment needs more resources."""
+
+    notes: str = Field(min_length=1, max_length=1000)
+
+
 class TaskRead(TaskBase):
     """Task response schema."""
 
@@ -63,3 +75,5 @@ class TaskRead(TaskBase):
     equipment_ids: list[int] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
+    assistance_requested: bool = False
+    assistance_notes: str | None = None
