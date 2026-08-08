@@ -56,7 +56,7 @@ def create_task(
     "/{task_id}",
     response_model=TaskRead,
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(require_role(UserRole.CREW, UserRole.ADMIN))],
+    dependencies=[Depends(get_current_user)],
 )
 def get_task(task_id: int, db: Session = Depends(get_db)) -> TaskRead:
     return _to_read_model(TaskService.get_task(db, task_id), db)
