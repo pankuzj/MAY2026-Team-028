@@ -210,15 +210,26 @@ def test_get_task_happy_path(client: TestClient, db_session: Session):
     assert resp.json()["title"] == "Get Target Task"
 
 
-def test_get_task_validation_failure(client: TestClient):
+def test_get_task_validation_failure(client: TestClient, db_session: Session):
     """Validation Failure: Passing non-integer task ID returns 422 Unprocessable Entity."""
-    resp = client.get("/api/v1/tasks/not-an-integer")
+    admin_token = _register_and_login(
+        db_session,
+        client,
+        "task_admin_get_validation@example.com",
+        UserRole.ADMIN,
+    )
+
+    resp = client.get(
+        "/api/v1/tasks/not-an-integer",
+        headers=_auth(admin_token),
+    )
+
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert resp.json()["error"]["code"] == "VALIDATION_ERROR"
 
 
 def test_get_task_rbac_failure(client: TestClient):
     """Auth/RBAC Failure: Request without authentication header returns 401."""
-    # Depends on auth requirement or route security wrapper
     resp = client.get("/api/v1/tasks/1")
     # Note: If GET /{task_id} is open or protected, verify status is 200/401/403 appropriately
     assert resp.status_code in (
