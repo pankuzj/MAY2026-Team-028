@@ -188,6 +188,11 @@
 .page-header.text-center {
   align-items: center;
 }
+.page-header.text-center .eyebrow {
+  /* .eyebrow is itself a flex row (dot + text), so ancestor text-align
+     alone won't center it — it needs its own justify-content. */
+  justify-content: center;
+}
 
 /* ===== Complaint form ===== */
 .complaint-form {

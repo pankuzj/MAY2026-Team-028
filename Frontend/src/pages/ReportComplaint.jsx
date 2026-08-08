@@ -157,11 +157,13 @@ export default function ReportComplaint() {
   return (
     <div className="page page-narrow">
       <div className="page-header text-center">
-        <span className="eyebrow">New Incident Report</span>
-        <h1>Report a Garbage Issue</h1>
-        <p className="page-lead">
-          Provide location details and photos to dispatch municipal crews quickly.
-        </p>
+        <div>
+          <span className="eyebrow">New Incident Report</span>
+          <h1>Report a Garbage Issue</h1>
+          <p className="page-lead">
+            Provide location details and photos to dispatch municipal crews quickly.
+          </p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="complaint-form">
@@ -171,6 +173,7 @@ export default function ReportComplaint() {
             <input
               id="location"
               name="location"
+              type="text"
               value={form.location}
               onChange={handleChange}
               placeholder="e.g. MG Road, Near Bus Stop"
