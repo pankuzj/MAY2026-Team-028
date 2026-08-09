@@ -89,7 +89,9 @@ def save_upload(content: bytes, *, declared_content_type: str) -> str:
     # Defence in depth: confirm the resolved path is still inside upload_dir
     # before writing, in case upload_dir itself is ever misconfigured.
     if upload_dir.resolve() not in destination.parents:
-        raise UploadRejectedError("Resolved upload path escaped the upload directory.", status_code=500)
+        raise UploadRejectedError(
+            "Resolved upload path escaped the upload directory.", status_code=500
+        )
 
     destination.write_bytes(content)
     return f"/uploads/{safe_name}"
