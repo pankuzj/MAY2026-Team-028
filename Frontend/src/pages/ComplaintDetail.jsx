@@ -259,6 +259,7 @@ export default function ComplaintDetail() {
             Location
             <input
               name="location"
+              type="text"
               value={form.location}
               onChange={handleChange}
               required

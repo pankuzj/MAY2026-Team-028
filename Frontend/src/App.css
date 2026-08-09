@@ -185,9 +185,6 @@
 .text-center {
   text-align: center;
 }
-.page-header.text-center {
-  align-items: center;
-}
 
 /* ===== Complaint form ===== */
 .complaint-form {
@@ -307,6 +304,18 @@
 }
 .loc-error svg { width: 14px; height: 14px; flex-shrink: 0; }
 
+/* Photo source options: capture from camera or pick from device */
+.photo-source-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+@media (max-width: 560px) {
+  .photo-source-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Custom Photo Upload Dropzone */
 .photo-drop-zone {
   display: flex;
@@ -321,6 +330,11 @@
   cursor: pointer;
   text-align: center;
   transition: border-color 0.2s ease, background 0.2s ease;
+  /* Reset default <button> chrome so it matches the <label> variant. */
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  appearance: none;
 }
 .photo-drop-zone:hover {
   border-color: var(--accent);
@@ -1321,6 +1335,17 @@ span.star-btn { cursor: default; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
 .modal-header h2 { font-size: 1.15rem; font-weight: 700; color: var(--text-h); margin: 0; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem; }
+
+/* Live camera capture modal (Report Issue: Take a photo) */
+.camera-modal-content { max-width: 620px; }
+.camera-preview {
+  width: 100%;
+  max-height: 60vh;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: #000;
+  object-fit: cover;
+}
 .icon-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 0.3rem; border-radius: var(--radius-sm); }
 .icon-btn:hover { color: var(--text-h); background: var(--surface-2); }
 .font-bold { font-weight: 700; }

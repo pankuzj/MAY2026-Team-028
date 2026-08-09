@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useToast } from "../context/ToastContext";
-import { IconBell, IconCalendar, IconClock, IconAlertTriangle } from "../components/Icons";
+import { IconBell, IconClock, IconAlertTriangle } from "../components/Icons";
 import {
   WASTE_TYPES,
   DAYS,
@@ -72,48 +72,10 @@ export default function CollectionSchedule() {
         </select>
       </div>
 
-      {/* Next-pickup KPIs */}
-      <div className="kpi-grid">
-        {WASTE_TYPES.map((wt) => (
-          <div className="kpi-card" key={wt.key}>
-            <div className={`kpi-icon ${wt.key === "wet" ? "green" : wt.key === "dry" ? "blue" : "amber"}`}>
-              <IconCalendar />
-            </div>
-            <div>
-              <span className="kpi-value">{formatDate(nextDates[wt.key])}</span>
-              <span className="kpi-label">
-                Next {wt.label} · {daysFromToday(nextDates[wt.key])}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Weekly calendar strip */}
-      <h2 className="section-heading">This Week</h2>
-      <div className="week-strip">
-        {DAYS.map((day) => {
-          const dayTypes = WASTE_TYPES.filter((wt) =>
-            wt.key === "hazardous" ? false : schedule[wt.key].includes(day)
-          );
-          return (
-            <div className={`week-cell ${dayTypes.length ? "has-pickup" : ""}`} key={day}>
-              <span className="week-cell-day">{day.slice(0, 3)}</span>
-              <div className="week-cell-chips">
-                {dayTypes.length === 0 && <span className="week-cell-empty">—</span>}
-                {dayTypes.map((wt) => (
-                  <span key={wt.key} className={`waste-chip ${wt.key}`}>
-                    {wt.label.split(" ")[0]}
-                  </span>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Reminders */}
-      <h2 className="section-heading">Reminders</h2>
+      {/* Next pickup + reminder toggle, one card per waste type. This is
+          the single source of truth for "when's my next pickup" — the
+          old KPI strip above duplicated the same dates and was removed. */}
+      <h2 className="section-heading">Next Pickup</h2>
       <div className="card-grid">
         {WASTE_TYPES.map((wt) => (
           <div className="op-card reminder-card" key={wt.key}>
@@ -144,25 +106,52 @@ export default function CollectionSchedule() {
         ))}
       </div>
 
-      {/* Service exceptions */}
-      <h2 className="section-heading">Upcoming Schedule Changes</h2>
-      <div className="exceptions-list">
-        {SCHEDULE_EXCEPTIONS.map((ex) => (
-          <div className="exception-row" key={ex.date}>
-            <IconAlertTriangle />
-            <div>
-              <strong>
-                {new Date(ex.date).toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </strong>
-              <p>{ex.note}</p>
+      {/* Weekly calendar strip */}
+      <h2 className="section-heading">This Week</h2>
+      <div className="week-strip">
+        {DAYS.map((day) => {
+          const dayTypes = WASTE_TYPES.filter((wt) =>
+            wt.key === "hazardous" ? false : schedule[wt.key].includes(day)
+          );
+          return (
+            <div className={`week-cell ${dayTypes.length ? "has-pickup" : ""}`} key={day}>
+              <span className="week-cell-day">{day.slice(0, 3)}</span>
+              <div className="week-cell-chips">
+                {dayTypes.length === 0 && <span className="week-cell-empty">—</span>}
+                {dayTypes.map((wt) => (
+                  <span key={wt.key} className={`waste-chip ${wt.key}`}>
+                    {wt.label.split(" ")[0]}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {/* Service exceptions, only rendered when there's something to show */}
+      {SCHEDULE_EXCEPTIONS.length > 0 && (
+        <>
+          <h2 className="section-heading">Schedule Changes</h2>
+          <div className="exceptions-list">
+            {SCHEDULE_EXCEPTIONS.map((ex) => (
+              <div className="exception-row" key={ex.date}>
+                <IconAlertTriangle />
+                <div>
+                  <strong>
+                    {new Date(ex.date).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </strong>
+                  <p>{ex.note}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

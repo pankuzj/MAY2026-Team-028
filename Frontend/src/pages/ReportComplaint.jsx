@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useComplaints } from "../context/ComplaintsContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { findPossibleDuplicates } from "../utils/duplicateDetection";
-import { IconPin, IconAlertCircle, IconAlertTriangle, IconCamera, IconReport, IconArrowRight, IconX, IconCheckCircle } from "../components/Icons";
+import { IconPin, IconAlertCircle, IconAlertTriangle, IconCamera, IconUpload, IconReport, IconArrowRight, IconX, IconCheckCircle } from "../components/Icons";
 
 export default function ReportComplaint() {
   const { complaints, addComplaint } = useComplaints();
@@ -23,6 +23,66 @@ export default function ReportComplaint() {
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState("");
   const [duplicates, setDuplicates] = useState([]);
+
+  // Live in-browser camera capture (works on desktop webcams as well as
+  // mobile device cameras, unlike the `capture` attribute which desktop
+  // browsers ignore).
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const fallbackFileInputRef = useRef(null);
+
+  const stopCameraStream = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  };
+
+  useEffect(() => stopCameraStream, []);
+
+  const handleOpenCamera = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      // No camera API in this browser (e.g. an insecure/non-HTTPS context) —
+      // fall back to the OS file/camera picker instead of a dead end.
+      notify("Live camera isn't available here — opening file picker instead.", "info");
+      fallbackFileInputRef.current?.click();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setCameraOpen(true);
+      // Wait for the modal's <video> element to mount before attaching.
+      requestAnimationFrame(() => {
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      });
+    } catch {
+      // Permission denied, no camera present, or already in use elsewhere —
+      // fall back to the OS picker so the user isn't stuck.
+      notify("Couldn't access the camera — opening file picker instead.", "info");
+      fallbackFileInputRef.current?.click();
+    }
+  };
+
+  const handleCloseCamera = () => {
+    stopCameraStream();
+    setCameraOpen(false);
+  };
+
+  const handleCapturePhoto = () => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+    canvas.toBlob((blob) => {
+      if (blob) setForm((prev) => ({ ...prev, photo: URL.createObjectURL(blob) }));
+    }, "image/jpeg");
+    handleCloseCamera();
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -96,12 +156,14 @@ export default function ReportComplaint() {
 
   return (
     <div className="page page-narrow">
-      <div className="page-header text-center">
-        <span className="eyebrow">New Incident Report</span>
-        <h1>Report a Garbage Issue</h1>
-        <p className="page-lead">
-          Provide location details and photos to dispatch municipal crews quickly.
-        </p>
+      <div className="page-header">
+        <div>
+          <span className="eyebrow">New Incident Report</span>
+          <h1>Report a Garbage Issue</h1>
+          <p className="page-lead">
+            Provide location details and photos to dispatch municipal crews quickly.
+          </p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="complaint-form">
@@ -111,6 +173,7 @@ export default function ReportComplaint() {
             <input
               id="location"
               name="location"
+              type="text"
               value={form.location}
               onChange={handleChange}
               placeholder="e.g. MG Road, Near Bus Stop"
@@ -177,14 +240,32 @@ export default function ReportComplaint() {
               </button>
             </div>
           ) : (
-            <label className="photo-drop-zone">
-              <IconCamera className="upload-icon" />
-              <div className="upload-text">
-                <strong>Click to upload a photo</strong>
-                <small>PNG, JPG, or WEBP up to 10MB</small>
-              </div>
-              <input type="file" accept="image/*" onChange={handlePhoto} className="hidden-file-input" />
-            </label>
+            <div className="photo-source-row">
+              <button type="button" className="photo-drop-zone" onClick={handleOpenCamera}>
+                <IconCamera className="upload-icon" />
+                <div className="upload-text">
+                  <strong>Take a photo</strong>
+                  <small>Use your device camera</small>
+                </div>
+              </button>
+              {/* Hidden fallback: used only if getUserMedia is unavailable or denied. */}
+              <input
+                ref={fallbackFileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handlePhoto}
+                className="hidden-file-input"
+              />
+              <label className="photo-drop-zone">
+                <IconUpload className="upload-icon" />
+                <div className="upload-text">
+                  <strong>Upload from device</strong>
+                  <small>PNG, JPG, or WEBP up to 10MB</small>
+                </div>
+                <input type="file" accept="image/*" onChange={handlePhoto} className="hidden-file-input" />
+              </label>
+            </div>
           )}
         </div>
 
@@ -221,6 +302,28 @@ export default function ReportComplaint() {
           <IconReport /> <span>Submit Incident Report</span>
         </button>
       </form>
+
+      {cameraOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content camera-modal-content">
+            <div className="modal-header">
+              <h2>Take a Photo</h2>
+              <button className="icon-btn" onClick={handleCloseCamera} title="Cancel">
+                <IconX />
+              </button>
+            </div>
+            <video ref={videoRef} autoPlay playsInline muted className="camera-preview" />
+            <div className="modal-actions">
+              <button type="button" className="secondary-btn" onClick={handleCloseCamera}>
+                Cancel
+              </button>
+              <button type="button" className="primary-btn" onClick={handleCapturePhoto}>
+                <IconCamera /> Capture
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
