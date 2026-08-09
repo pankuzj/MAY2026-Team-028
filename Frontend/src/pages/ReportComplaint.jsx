@@ -16,6 +16,7 @@ export default function ReportComplaint() {
     location: "",
     description: "",
     hazard: "None",
+    complaintType: "",
     photo: null,
     coords: null,
   });
@@ -222,6 +223,21 @@ export default function ReportComplaint() {
             <option value="Overflowing Bin">Overflowing Garbage Bin / Container</option>
             <option value="Mosquito Breeding">Mosquito / Pest Breeding Hazard</option>
             <option value="Risk to Children">Biohazard / Risk to Children</option>
+          </select>
+        </div>
+
+        <div className="field-group">
+          <label htmlFor="complaintType">Complaint Type (Optional)</label>
+          <select
+            id="complaintType"
+            name="complaintType"
+            value={form.complaintType}
+            onChange={handleChange}
+          >
+            <option value="">General / Other</option>
+            <option value="overflow">Overflowing Bin / Missed Overflow</option>
+            <option value="delay">Delayed or Missed Pickup</option>
+            <option value="extra_collection">Request Extra Collection</option>
           </select>
         </div>
 

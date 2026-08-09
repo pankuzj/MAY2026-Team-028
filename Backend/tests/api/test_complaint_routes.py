@@ -197,3 +197,147 @@ def test_patch_cannot_set_resolved_at(client: TestClient, db_session: Session):
     assert resp.status_code in (status.HTTP_200_OK, status.HTTP_422_UNPROCESSABLE_ENTITY)
     if resp.status_code == status.HTTP_200_OK:
         assert resp.json()["resolved_at"] is None
+
+
+# ---------------------------------------------------------------------------
+# S2-A18: complaint_type enum
+# ---------------------------------------------------------------------------
+
+
+def test_create_complaint_with_valid_complaint_type(client: TestClient, db_session: Session):
+    """A valid complaint_type is accepted and echoed back on the created complaint."""
+    token = _register_and_login(db_session, client, "ctype_valid@example.com", UserRole.CITIZEN)
+    resp = client.post(
+        "/api/v1/complaints",
+        json={
+            "location": "Test Street",
+            "description": "Bin has not been collected in a week.",
+            "hazard": "None",
+            "complaint_type": "delay",
+        },
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_201_CREATED, resp.text
+    assert resp.json()["complaint_type"] == "delay"
+
+
+def test_create_complaint_without_complaint_type_defaults_to_none(
+    client: TestClient, db_session: Session
+):
+    """Omitting complaint_type is fine (optional field, backward compatible)."""
+    token = _register_and_login(db_session, client, "ctype_none@example.com", UserRole.CITIZEN)
+    complaint_id = _create_complaint(db_session, token, client)
+    resp = client.get(f"/api/v1/complaints/{complaint_id}", headers=_auth(token))
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["complaint_type"] is None
+
+
+def test_create_complaint_rejects_invalid_complaint_type(client: TestClient, db_session: Session):
+    """A complaint_type outside the enum must be rejected with 422, not silently stored."""
+    token = _register_and_login(db_session, client, "ctype_bad@example.com", UserRole.CITIZEN)
+    resp = client.post(
+        "/api/v1/complaints",
+        json={
+            "location": "Test Street",
+            "description": "Trying to sneak in a bogus category.",
+            "complaint_type": "not_a_real_category",
+        },
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+# ---------------------------------------------------------------------------
+# S2-F05: upload hardening
+# ---------------------------------------------------------------------------
+
+
+def _register_citizen_token(db_session: Session, client: TestClient, email: str) -> str:
+    return _register_and_login(db_session, client, email, UserRole.CITIZEN)
+
+
+def test_upload_photo_succeeds_with_real_png(client: TestClient, db_session: Session):
+    """A genuine PNG (correct magic bytes + matching declared type) is accepted and saved."""
+    token = _register_citizen_token(db_session, client, "upload_ok@example.com")
+    fake_png = io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 200)
+    resp = client.post(
+        "/api/v1/complaints/upload-photo",
+        files={"photo": ("evidence.png", fake_png, "image/png")},
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    body = resp.json()
+    assert body["url"].startswith("/uploads/")
+    assert body["url"].endswith(".png")
+
+
+def test_upload_photo_rejects_spoofed_content_type(client: TestClient, db_session: Session):
+    """Declaring image/png while sending non-image bytes must be rejected, not trusted."""
+    token = _register_citizen_token(db_session, client, "upload_spoof@example.com")
+    fake_html = io.BytesIO(b"<html><body>not an image</body></html>")
+    resp = client.post(
+        "/api/v1/complaints/upload-photo",
+        files={"photo": ("evidence.png", fake_html, "image/png")},
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+
+
+def test_upload_photo_rejects_mismatched_signature(client: TestClient, db_session: Session):
+    """Real JPEG bytes declared as image/png must be rejected (sniffed type disagrees)."""
+    token = _register_citizen_token(db_session, client, "upload_mismatch@example.com")
+    fake_jpeg_bytes_declared_png = io.BytesIO(b"\xff\xd8\xff" + b"\x00" * 200)
+    resp = client.post(
+        "/api/v1/complaints/upload-photo",
+        files={"photo": ("evidence.png", fake_jpeg_bytes_declared_png, "image/png")},
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+
+
+def test_upload_photo_rejects_path_traversal_filename(client: TestClient, db_session: Session):
+    """A malicious filename must not influence where the file is written.
+
+    save_upload() never derives the on-disk name from client input, so even a
+    ../ filename should just succeed with a safe generated name (not error,
+    not escape the upload dir).
+    """
+    token = _register_citizen_token(db_session, client, "upload_traversal@example.com")
+    fake_png = io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 200)
+    resp = client.post(
+        "/api/v1/complaints/upload-photo",
+        files={"photo": ("../../../../etc/passwd.png", fake_png, "image/png")},
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_200_OK
+    url = resp.json()["url"]
+    assert ".." not in url
+    assert url.startswith("/uploads/")
+
+
+def test_attach_complaint_photo_persists_url(client: TestClient, db_session: Session):
+    """POST /complaints/{id}/photo saves the file and persists its URL as photo_url."""
+    token = _register_citizen_token(db_session, client, "upload_attach@example.com")
+    complaint_id = _create_complaint(db_session, token, client)
+    fake_png = io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 200)
+    resp = client.post(
+        f"/api/v1/complaints/{complaint_id}/photo",
+        files={"photo": ("evidence.png", fake_png, "image/png")},
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    assert resp.json()["photo_url"].startswith("/uploads/")
+
+
+def test_upload_photo_rejects_oversized_file(client: TestClient, db_session: Session):
+    """A file over the configured size cap must return 413, never be written."""
+    from app.core.config import settings
+
+    token = _register_citizen_token(db_session, client, "upload_oversize@example.com")
+    too_big = io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * (settings.upload_max_bytes + 1))
+    resp = client.post(
+        "/api/v1/complaints/upload-photo",
+        files={"photo": ("big.png", too_big, "image/png")},
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE

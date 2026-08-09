@@ -18,6 +18,21 @@ class ComplaintStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class ComplaintType(str, Enum):
+    """Community-facing complaint category (S2-A18).
+
+    Distinct from ``category``, which historically carries the hazard
+    classification chosen on the report form (e.g. "Foul Smell",
+    "Risk to Children") and feeds ``GET /complaints/high-risk``. This is a
+    separate, optional axis describing what kind of service request the
+    complaint actually is.
+    """
+
+    OVERFLOW = "overflow"
+    DELAY = "delay"
+    EXTRA_COLLECTION = "extra_collection"
+
+
 class Complaint(Base, TimestampMixin):
     """Citizen-reported waste or sanitation issue."""
 
@@ -27,6 +42,7 @@ class Complaint(Base, TimestampMixin):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    complaint_type: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     priority: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(
         String(50), default=ComplaintStatus.PENDING.value, nullable=False, index=True
