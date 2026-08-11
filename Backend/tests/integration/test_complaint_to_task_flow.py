@@ -83,7 +83,7 @@ def test_complaint_to_task_end_to_end_flow(client: TestClient, db_session: Sessi
         json={
             "location": "Flow Street 42",
             "description": "Heavy garbage overflow near park",
-            "hazard": "overflow",
+            "hazard": "Overflowing Bin",
         },
         headers=_auth(citizen_token),
     )

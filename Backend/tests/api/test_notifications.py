@@ -33,7 +33,7 @@ def _create_complaint(client: TestClient, token: str) -> int:
         json={
             "location": "Test Street",
             "description": "Garbage left on road.",
-            "hazard": "biohazard",
+            "hazard": "Risk to Children",
         },
         headers=_auth(token),
     )

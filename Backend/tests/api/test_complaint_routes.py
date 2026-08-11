@@ -42,7 +42,7 @@ def _create_complaint(db: Session, token: str, client: TestClient) -> int:
         json={
             "location": "Test Street",
             "description": "Garbage left on road.",
-            "hazard": "biohazard",
+            "hazard": "Risk to Children",
         },
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -242,6 +242,98 @@ def test_create_complaint_rejects_invalid_complaint_type(client: TestClient, db_
             "description": "Trying to sneak in a bogus category.",
             "complaint_type": "not_a_real_category",
         },
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+# ---------------------------------------------------------------------------
+# US-28/29/30: category enum, validation, and filter support
+# ---------------------------------------------------------------------------
+
+
+def test_create_complaint_with_valid_category(client: TestClient, db_session: Session):
+    """A valid hazard/category is accepted and echoed back on the created complaint."""
+    token = _register_and_login(db_session, client, "cat_valid@example.com", UserRole.CITIZEN)
+    resp = client.post(
+        "/api/v1/complaints",
+        json={
+            "location": "Test Street",
+            "description": "Standing water attracting mosquitoes.",
+            "hazard": "Mosquito Breeding",
+        },
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_201_CREATED, resp.text
+    assert resp.json()["category"] == "Mosquito Breeding"
+
+
+def test_create_complaint_without_category_defaults_to_none(
+    client: TestClient, db_session: Session
+):
+    """Omitting the hazard field defaults the category to 'None'."""
+    token = _register_and_login(db_session, client, "cat_default@example.com", UserRole.CITIZEN)
+    resp = client.post(
+        "/api/v1/complaints",
+        json={"location": "Test Street", "description": "General litter, no hazard."},
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_201_CREATED, resp.text
+    assert resp.json()["category"] == "None"
+
+
+def test_create_complaint_rejects_invalid_category(client: TestClient, db_session: Session):
+    """A hazard value outside the fixed enum must be rejected with 422."""
+    token = _register_and_login(db_session, client, "cat_bad@example.com", UserRole.CITIZEN)
+    resp = client.post(
+        "/api/v1/complaints",
+        json={
+            "location": "Test Street",
+            "description": "Trying to sneak in a bogus hazard.",
+            "hazard": "biohazard",
+        },
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_list_complaints_filters_by_category(client: TestClient, db_session: Session):
+    """GET /complaints?category=... only returns complaints matching that category."""
+    token = _register_and_login(db_session, client, "cat_filter@example.com", UserRole.CITIZEN)
+    client.post(
+        "/api/v1/complaints",
+        json={
+            "location": "Street A",
+            "description": "Risk to nearby school",
+            "hazard": "Risk to Children",
+        },
+        headers=_auth(token),
+    )
+    client.post(
+        "/api/v1/complaints",
+        json={"location": "Street B", "description": "Just litter"},
+        headers=_auth(token),
+    )
+
+    resp = client.get(
+        "/api/v1/complaints",
+        params={"category": "Risk to Children"},
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    data = resp.json()
+    assert data["meta"]["total"] == 1
+    assert data["items"][0]["category"] == "Risk to Children"
+
+
+def test_list_complaints_rejects_invalid_category_filter(
+    client: TestClient, db_session: Session
+):
+    """Filtering by a category outside the enum returns 422, not a silent no-op."""
+    token = _register_and_login(db_session, client, "cat_filter_bad@example.com", UserRole.CITIZEN)
+    resp = client.get(
+        "/api/v1/complaints",
+        params={"category": "not_a_real_hazard"},
         headers=_auth(token),
     )
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

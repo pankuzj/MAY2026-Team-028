@@ -50,7 +50,7 @@ class ComplaintService:
         complaint = Complaint(
             title=complaint_in.location,
             description=complaint_in.description,
-            category=complaint_in.hazard,
+            category=complaint_in.hazard.value if complaint_in.hazard else None,
             complaint_type=(
                 complaint_in.complaint_type.value if complaint_in.complaint_type else None
             ),

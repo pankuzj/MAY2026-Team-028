@@ -29,13 +29,23 @@ class ComplaintType(str, Enum):
     EXTRA_COLLECTION = "extra_collection"
 
 
+class ComplaintCategory(str, Enum):
+    """Hazard classification. Mirrors the ORM enum (US-28/29/30)."""
+
+    NONE = "None"
+    FOUL_SMELL = "Foul Smell"
+    OVERFLOWING_BIN = "Overflowing Bin"
+    MOSQUITO_BREEDING = "Mosquito Breeding"
+    RISK_TO_CHILDREN = "Risk to Children"
+
+
 class ComplaintBase(BaseModel):
     """Shared complaint fields."""
 
     title: str = Field(min_length=1, max_length=255)
     description: str = Field(min_length=1)
     ward_id: int | None = None
-    category: str | None = Field(default=None, max_length=100)
+    category: ComplaintCategory | None = None
     complaint_type: ComplaintType | None = None
     priority: str | None = Field(default=None, max_length=50)
     address: str | None = Field(default=None, max_length=255)
@@ -55,7 +65,7 @@ class ComplaintSubmit(BaseModel):
 
     location: str = Field(min_length=1, max_length=255)
     description: str = Field(min_length=1)
-    hazard: str | None = Field(default=None, max_length=100)
+    hazard: ComplaintCategory | None = None
     complaint_type: ComplaintType | None = None
     photo: str | None = Field(default=None, max_length=2048)
     coords: dict[str, float] | None = None
@@ -77,7 +87,7 @@ class ComplaintUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = Field(default=None, min_length=1)
     ward_id: int | None = None
-    category: str | None = Field(default=None, max_length=100)
+    category: ComplaintCategory | None = None
     complaint_type: ComplaintType | None = None
     priority: str | None = Field(default=None, max_length=50)
     status: ComplaintStatus | None = None
@@ -121,6 +131,7 @@ class ComplaintFilter(BaseModel):
     status: ComplaintStatus | None = None
     ward_id: int | None = None
     complaint_type: ComplaintType | None = None
+    category: ComplaintCategory | None = None
     reported_by_user_id: int | None = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=100)
