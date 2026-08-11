@@ -235,4 +235,12 @@ class ComplaintService:
             ),
         )
         NotificationService.notify_complaint_resolved(db, complaint)
+        from app.services.transparency_service import TransparencyService
+
+        TransparencyService.auto_create_post_for_complaint(
+            db,
+            complaint,
+            closed_by_user_id=closed_by_user_id,
+            after_photo_url=after_photo_url,
+        )
         return complaint

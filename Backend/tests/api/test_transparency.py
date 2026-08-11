@@ -1,5 +1,7 @@
 """API integration tests for the public transparency feed (S2-F03, US-25)."""
 
+import io
+
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -365,3 +367,39 @@ def test_list_comments_edge_case_empty(client: TestClient, db_session: Session):
     resp = client.get(f"/api/v1/transparency/{post_id}/comments")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == []
+
+
+def test_auto_generate_transparency_post_on_close(client: TestClient, db_session: Session):
+    """Closing a complaint auto-generates a transparency post with before/after photos."""
+    citizen_token = _register_and_login(
+        db_session, client, "tp_auto_citizen@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "tp_auto_admin@example.com", UserRole.ADMIN
+    )
+    complaint_id = _create_complaint(client, citizen_token)
+
+    # Attach before photo to complaint
+    client.post(
+        f"/api/v1/complaints/{complaint_id}/photo",
+        files={"photo": ("before.png", io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 10), "image/png")},
+        headers=_auth(citizen_token),
+    )
+
+    # Close complaint with after photo URL
+    close_resp = client.patch(
+        f"/api/v1/complaints/{complaint_id}/close",
+        json={"after_photo_url": "/uploads/after_clean.png", "notes": "Supervisor verified"},
+        headers=_auth(admin_token),
+    )
+    assert close_resp.status_code == status.HTTP_200_OK
+
+    # Verify auto-generated TransparencyPost exists for complaint
+    feed_resp = client.get("/api/v1/transparency")
+    assert feed_resp.status_code == status.HTTP_200_OK
+    posts = feed_resp.json()["items"]
+    matched = [p for p in posts if p["complaint_id"] == complaint_id]
+    assert len(matched) == 1
+    auto_post = matched[0]
+    assert auto_post["before_photo_url"].startswith("/uploads/")
+    assert auto_post["after_photo_url"] == "/uploads/after_clean.png"
