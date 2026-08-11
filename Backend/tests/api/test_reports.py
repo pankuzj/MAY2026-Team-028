@@ -59,3 +59,30 @@ def test_get_report_trends_requires_auth(client: TestClient):
     """Auth Failure: GET /reports/trends without token returns 401."""
     resp = client.get("/api/v1/reports/trends")
     assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+# ---------------------------------------------------------------------------
+# GET /reports/performance
+# ---------------------------------------------------------------------------
+
+
+def test_get_report_performance_happy_path(client: TestClient, db_session: Session):
+    """Happy Path: GET /reports/performance returns average resolution days, ward & crew performance."""
+    token = _register_and_login(db_session, client, "rep_perf@example.com", UserRole.ADMIN)
+
+    resp = client.get("/api/v1/reports/performance", headers=_auth(token))
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    data = resp.json()
+    assert "avg_resolution_days" in data
+    assert "total_resolved" in data
+    assert "ward_performance" in data
+    assert "crew_performance" in data
+    assert isinstance(data["ward_performance"], list)
+    assert isinstance(data["crew_performance"], list)
+
+
+def test_get_report_performance_requires_auth(client: TestClient):
+    """Auth Failure: GET /reports/performance without token returns 401."""
+    resp = client.get("/api/v1/reports/performance")
+    assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
