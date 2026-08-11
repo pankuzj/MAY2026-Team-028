@@ -4,6 +4,7 @@ from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, Upload
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db, require_role
+from app.core.exceptions import NotFoundError
 from app.models.complaint import Complaint
 from app.models.user import User, UserRole
 from app.repositories.complaint_repository import ComplaintRepository
@@ -17,8 +18,10 @@ from app.schemas.complaint import (
     ComplaintUpdate,
     DuplicateCheckRequest,
 )
+from app.schemas.feedback import FeedbackCreate, FeedbackRead
 from app.services.complaint_service import ComplaintService
 from app.services.duplicate_detection_service import DuplicateDetectionService
+from app.services.feedback_service import FeedbackService
 from app.services.upload_service import UploadRejectedError, save_upload
 
 router = APIRouter(prefix="/complaints", tags=["Complaints"])
@@ -230,6 +233,34 @@ def complaint_history(
         ComplaintStatusHistoryRead.model_validate(history)
         for history in ComplaintRepository.get_history(db, complaint_id)
     ]
+
+
+@router.post(
+    "/{complaint_id}/feedback", response_model=FeedbackRead, status_code=status.HTTP_201_CREATED
+)
+def submit_complaint_feedback(
+    complaint_id: int,
+    feedback_in: FeedbackCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> FeedbackRead:
+    complaint = ComplaintService.get_complaint(db, complaint_id)
+    feedback = FeedbackService.submit_feedback(db, complaint, current_user, feedback_in)
+    return FeedbackRead.model_validate(feedback)
+
+
+@router.get("/{complaint_id}/feedback", response_model=FeedbackRead)
+def get_complaint_feedback(
+    complaint_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> FeedbackRead:
+    complaint = ComplaintService.get_complaint(db, complaint_id)
+    ComplaintService.assert_can_read(complaint, current_user)
+    feedback = FeedbackService.get_feedback(db, complaint_id)
+    if not feedback:
+        raise NotFoundError("No feedback has been submitted for this complaint.")
+    return FeedbackRead.model_validate(feedback)
 
 
 @router.get(
