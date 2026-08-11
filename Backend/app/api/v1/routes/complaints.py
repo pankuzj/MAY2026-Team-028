@@ -11,6 +11,7 @@ from app.repositories.complaint_repository import ComplaintRepository
 from app.schemas.common import Page
 from app.schemas.complaint import (
     ComplaintCategory,
+    ComplaintClassifyRead,
     ComplaintClose,
     ComplaintRead,
     ComplaintStatus,
@@ -22,6 +23,7 @@ from app.schemas.complaint import (
     DuplicateCheckRequest,
 )
 from app.schemas.feedback import FeedbackCreate, FeedbackRead
+from app.services.complaint_classification_service import ComplaintClassificationService
 from app.services.complaint_service import ComplaintService
 from app.services.duplicate_detection_service import DuplicateDetectionService
 from app.services.feedback_service import FeedbackService
@@ -314,6 +316,27 @@ def get_complaint_feedback(
     if not feedback:
         raise NotFoundError("No feedback has been submitted for this complaint.")
     return FeedbackRead.model_validate(feedback)
+
+
+@router.post(
+    "/{complaint_id}/classify",
+    response_model=ComplaintClassifyRead,
+    dependencies=[Depends(require_role(UserRole.CREW, UserRole.ADMIN))],
+)
+def classify_complaint(
+    complaint_id: int,
+    db: Session = Depends(get_db),
+) -> ComplaintClassifyRead:
+    """Classify a complaint's hazard category via Claude, falling back to keyword matching."""
+    complaint = ComplaintService.get_complaint(db, complaint_id)
+    result = ComplaintClassificationService.classify(db, complaint)
+    return ComplaintClassifyRead(
+        complaint=_to_read_model(complaint),
+        category=result.category,
+        source=result.source,
+        confidence=result.confidence,
+        reasoning=result.reasoning,
+    )
 
 
 @router.get(

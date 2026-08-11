@@ -32,6 +32,9 @@ dependencies = [
     # and python-jose has open CVEs.
     "pyjwt>=2.10,<3",
     "bcrypt>=4.2,<5",
+
+    # --- External integrations (Sprint 2) ---
+    "anthropic>=0.90,<1", # Claude API hazard classification (US-28/29/30)
 ]
 
 [dependency-groups]

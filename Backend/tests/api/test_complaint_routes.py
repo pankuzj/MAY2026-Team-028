@@ -1,11 +1,14 @@
 """API integration tests for complaint route authentication and ownership rules."""
 
 import io
+import json
+from unittest.mock import MagicMock, patch
 
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+import app.services.complaint_classification_service as classification_service_module
 from app.models.user import UserRole
 from app.schemas.auth import LoginRequest
 from app.schemas.user import UserCreate
@@ -337,6 +340,171 @@ def test_list_complaints_rejects_invalid_category_filter(
         headers=_auth(token),
     )
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+# ---------------------------------------------------------------------------
+# POST /complaints/{id}/classify — Claude hazard classification (US-28/29/30)
+# ---------------------------------------------------------------------------
+
+
+def _create_complaint_with_description(
+    db_session: Session, token: str, client: TestClient, description: str
+) -> int:
+    resp = client.post(
+        "/api/v1/complaints",
+        json={"location": "Test Street", "description": description},
+        headers=_auth(token),
+    )
+    assert resp.status_code == status.HTTP_201_CREATED, resp.text
+    return resp.json()["id"]
+
+
+def test_classify_complaint_falls_back_to_heuristic_without_api_key(
+    client: TestClient, db_session: Session
+):
+    """Happy Path: with no Claude API key configured, classification degrades to keyword matching."""
+    citizen_token = _register_and_login(
+        db_session, client, "clsfy_heuristic_citizen@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "clsfy_heuristic_admin@example.com", UserRole.ADMIN
+    )
+    complaint_id = _create_complaint_with_description(
+        db_session, citizen_token, client, "Stagnant water breeding mosquitoes near the drain."
+    )
+
+    resp = client.post(
+        f"/api/v1/complaints/{complaint_id}/classify", headers=_auth(admin_token)
+    )
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    data = resp.json()
+    assert data["source"] == "heuristic"
+    assert data["category"] == "Mosquito Breeding"
+    assert data["complaint"]["category"] == "Mosquito Breeding"
+
+
+def test_classify_complaint_validation_failure(client: TestClient, db_session: Session):
+    """Validation Failure: non-integer complaint id returns 422."""
+    admin_token = _register_and_login(
+        db_session, client, "clsfy_val@example.com", UserRole.ADMIN
+    )
+    resp = client.post(
+        "/api/v1/complaints/not-an-id/classify", headers=_auth(admin_token)
+    )
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_classify_complaint_rbac_failure(client: TestClient, db_session: Session):
+    """Auth/RBAC Failure: a citizen cannot trigger hazard classification."""
+    citizen_token = _register_and_login(
+        db_session, client, "clsfy_rbac@example.com", UserRole.CITIZEN
+    )
+    complaint_id = _create_complaint_with_description(
+        db_session, citizen_token, client, "Garbage left uncollected."
+    )
+    resp = client.post(
+        f"/api/v1/complaints/{complaint_id}/classify", headers=_auth(citizen_token)
+    )
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_classify_complaint_edge_case_not_found(client: TestClient, db_session: Session):
+    """Edge Case: classifying a non-existent complaint returns 404."""
+    admin_token = _register_and_login(
+        db_session, client, "clsfy_404@example.com", UserRole.ADMIN
+    )
+    resp = client.post(
+        "/api/v1/complaints/999999/classify", headers=_auth(admin_token)
+    )
+    assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_classify_complaint_uses_claude_when_configured(
+    client: TestClient, db_session: Session, monkeypatch
+):
+    """When an API key is configured and Claude responds, the LLM result is used and persisted."""
+    citizen_token = _register_and_login(
+        db_session, client, "clsfy_llm_citizen@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "clsfy_llm_admin@example.com", UserRole.ADMIN
+    )
+    complaint_id = _create_complaint_with_description(
+        db_session, citizen_token, client, "A pile of trash with an awful smell."
+    )
+    monkeypatch.setattr(classification_service_module.settings, "anthropic_api_key", "test-key")
+
+    text_block = MagicMock()
+    text_block.type = "text"
+    text_block.text = json.dumps({"category": "Foul Smell", "confidence": 0.92})
+    mock_response = MagicMock(stop_reason="end_turn", content=[text_block])
+
+    with patch("anthropic.Anthropic") as mock_anthropic_cls:
+        mock_anthropic_cls.return_value.messages.create.return_value = mock_response
+        resp = client.post(
+            f"/api/v1/complaints/{complaint_id}/classify", headers=_auth(admin_token)
+        )
+
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    data = resp.json()
+    assert data["source"] == "llm"
+    assert data["category"] == "Foul Smell"
+    assert data["confidence"] == 0.92
+    assert data["complaint"]["category"] == "Foul Smell"
+
+
+def test_classify_complaint_falls_back_when_claude_call_fails(
+    client: TestClient, db_session: Session, monkeypatch
+):
+    """Graceful fallback: an API key is set but the Claude call errors — heuristic still succeeds."""
+    citizen_token = _register_and_login(
+        db_session, client, "clsfy_fail_citizen@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "clsfy_fail_admin@example.com", UserRole.ADMIN
+    )
+    complaint_id = _create_complaint_with_description(
+        db_session, citizen_token, client, "Risk near the school playground."
+    )
+    monkeypatch.setattr(classification_service_module.settings, "anthropic_api_key", "test-key")
+
+    with patch("anthropic.Anthropic", side_effect=RuntimeError("network unreachable")):
+        resp = client.post(
+            f"/api/v1/complaints/{complaint_id}/classify", headers=_auth(admin_token)
+        )
+
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    data = resp.json()
+    assert data["source"] == "heuristic"
+    assert data["category"] == "Risk to Children"
+
+
+def test_classify_complaint_falls_back_when_claude_refuses(
+    client: TestClient, db_session: Session, monkeypatch
+):
+    """Graceful fallback: Claude refuses the request — heuristic classification is used instead."""
+    citizen_token = _register_and_login(
+        db_session, client, "clsfy_refusal_citizen@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "clsfy_refusal_admin@example.com", UserRole.ADMIN
+    )
+    complaint_id = _create_complaint_with_description(
+        db_session, citizen_token, client, "Overflowing bin spilling onto the street."
+    )
+    monkeypatch.setattr(classification_service_module.settings, "anthropic_api_key", "test-key")
+
+    mock_response = MagicMock(stop_reason="refusal", content=[])
+    with patch("anthropic.Anthropic") as mock_anthropic_cls:
+        mock_anthropic_cls.return_value.messages.create.return_value = mock_response
+        resp = client.post(
+            f"/api/v1/complaints/{complaint_id}/classify", headers=_auth(admin_token)
+        )
+
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    data = resp.json()
+    assert data["source"] == "heuristic"
+    assert data["category"] == "Overflowing Bin"
 
 
 # ---------------------------------------------------------------------------

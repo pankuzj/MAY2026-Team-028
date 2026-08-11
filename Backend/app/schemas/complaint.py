@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -137,6 +138,16 @@ class ComplaintFilter(BaseModel):
     page_size: int = Field(default=20, ge=1, le=100)
     created_from: datetime | None = None
     created_to: datetime | None = None
+
+
+class ComplaintClassifyRead(BaseModel):
+    """Response for POST /complaints/{id}/classify (US-28/29/30)."""
+
+    complaint: ComplaintRead
+    category: ComplaintCategory
+    source: Literal["llm", "heuristic"]
+    confidence: float | None = None
+    reasoning: str | None = None
 
 
 class ComplaintStatusHistoryRead(BaseModel):
