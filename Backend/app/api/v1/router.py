@@ -2,7 +2,17 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.routes import auth, complaints, notifications, resources, tasks, transparency, wards
+from app.api.v1.routes import (
+    auth,
+    bulk_pickups,
+    complaints,
+    notifications,
+    resources,
+    schedule,
+    tasks,
+    transparency,
+    wards,
+)
 
 router = APIRouter()
 router.include_router(auth.router)
@@ -12,5 +22,7 @@ router.include_router(tasks.router)
 router.include_router(resources.router)
 router.include_router(notifications.router)
 router.include_router(transparency.router)
+router.include_router(bulk_pickups.router)
+router.include_router(schedule.router)
 
 __all__ = ["router"]
