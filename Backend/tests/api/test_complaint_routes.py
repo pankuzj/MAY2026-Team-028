@@ -341,3 +341,32 @@ def test_upload_photo_rejects_oversized_file(client: TestClient, db_session: Ses
         headers=_auth(token),
     )
     assert resp.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+
+
+def test_verify_complaint_happy_path(client: TestClient, db_session: Session):
+    """Admin review verifies complaint status to 'verified'."""
+    citizen_token = _register_citizen_token(db_session, client, "verify_cit@example.com")
+    admin_token = _register_and_login(db_session, client, "verify_admin@example.com", UserRole.ADMIN)
+    complaint_id = _create_complaint(db_session, citizen_token, client)
+
+    # Admin verifies the complaint
+    resp = client.patch(
+        f"/api/v1/complaints/{complaint_id}/verify",
+        json={"notes": "Inspection passed"},
+        headers=_auth(admin_token),
+    )
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    assert resp.json()["status"] == "verified"
+
+
+def test_verify_complaint_rbac_failure(client: TestClient, db_session: Session):
+    """Citizen role cannot verify complaints (Admin only)."""
+    citizen_token = _register_citizen_token(db_session, client, "verify_rbac_cit@example.com")
+    complaint_id = _create_complaint(db_session, citizen_token, client)
+
+    resp = client.patch(
+        f"/api/v1/complaints/{complaint_id}/verify",
+        json={"notes": "Illegal verify attempt"},
+        headers=_auth(citizen_token),
+    )
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
