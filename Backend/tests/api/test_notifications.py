@@ -119,6 +119,30 @@ def test_list_notifications_edge_case_unread_only(client: TestClient, db_session
     assert resp.json()["meta"]["total"] == 0
 
 
+def test_list_notifications_pagination(client: TestClient, db_session: Session):
+    """Happy Path: GET /notifications supports page and page_size parameters."""
+    citizen_token = _register_and_login(
+        db_session, client, "notif_page@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "notif_admin_page@example.com", UserRole.ADMIN
+    )
+    c1 = _create_complaint(client, citizen_token)
+    c2 = _create_complaint(client, citizen_token)
+    _resolve_complaint(client, admin_token, c1)
+    _resolve_complaint(client, admin_token, c2)
+
+    resp = client.get("/api/v1/notifications?page=1&page_size=1", headers=_auth(citizen_token))
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert len(data["items"]) == 1
+    assert data["meta"]["total"] == 2
+    assert data["meta"]["page"] == 1
+    assert data["meta"]["page_size"] == 1
+    assert data["meta"]["total_pages"] == 2
+
+
+
 # ---------------------------------------------------------------------------
 # PATCH /notifications/{id}/read
 # ---------------------------------------------------------------------------
