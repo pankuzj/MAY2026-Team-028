@@ -84,3 +84,62 @@ def test_get_feed_with_ward_filter(client: TestClient, db_session: Session):
     resp = client.get("/api/v1/feed?ward_id=999")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["meta"]["total"] == 0
+
+
+# ---------------------------------------------------------------------------
+# POST /feed/{id}/applaud & POST /feed/{id}/comments
+# ---------------------------------------------------------------------------
+
+
+def test_applaud_feed_post_happy_path(client: TestClient, db_session: Session):
+    """Happy Path: POST /feed/{id}/applaud increments applaud count."""
+    citizen_token = _register_and_login(db_session, client, "applaud_cit@example.com", UserRole.CITIZEN)
+    admin_token = _register_and_login(db_session, client, "applaud_adm@example.com", UserRole.ADMIN)
+    cid = _create_complaint(client, citizen_token)
+    _resolve_complaint(client, admin_token, cid)
+    post_id = _create_post(client, admin_token, cid)
+
+    first = client.post(f"/api/v1/feed/{post_id}/applaud")
+    assert first.status_code == status.HTTP_200_OK, first.text
+    count1 = first.json()["applause_count"]
+
+    second = client.post(f"/api/v1/feed/{post_id}/applaud")
+    assert second.status_code == status.HTTP_200_OK, second.text
+    assert second.json()["applause_count"] == count1 + 1
+
+
+def test_create_feed_post_comment_happy_path(client: TestClient, db_session: Session):
+    """Happy Path: POST /feed/{id}/comments adds a comment to a feed post."""
+    citizen_token = _register_and_login(db_session, client, "comment_cit@example.com", UserRole.CITIZEN)
+    admin_token = _register_and_login(db_session, client, "comment_adm@example.com", UserRole.ADMIN)
+    cid = _create_complaint(client, citizen_token)
+    _resolve_complaint(client, admin_token, cid)
+    post_id = _create_post(client, admin_token, cid)
+
+    resp = client.post(
+        f"/api/v1/feed/{post_id}/comments",
+        json={"content": "Great work on this cleanup!"},
+        headers=_auth(citizen_token),
+    )
+    assert resp.status_code == status.HTTP_201_CREATED, resp.text
+    data = resp.json()
+    assert data["comment"] == "Great work on this cleanup!"
+    assert data["post_id"] == post_id
+
+    # Verify listing comments
+    comments_resp = client.get(f"/api/v1/feed/{post_id}/comments")
+    assert comments_resp.status_code == status.HTTP_200_OK
+    assert len(comments_resp.json()) >= 1
+
+
+def test_create_feed_post_comment_requires_auth(client: TestClient, db_session: Session):
+    """Auth Failure: POST /feed/{id}/comments without auth returns 401."""
+    citizen_token = _register_and_login(db_session, client, "comment_noauth_cit@example.com", UserRole.CITIZEN)
+    admin_token = _register_and_login(db_session, client, "comment_noauth_adm@example.com", UserRole.ADMIN)
+    cid = _create_complaint(client, citizen_token)
+    _resolve_complaint(client, admin_token, cid)
+    post_id = _create_post(client, admin_token, cid)
+
+    resp = client.post(f"/api/v1/feed/{post_id}/comments", json={"content": "No auth comment"})
+    assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+

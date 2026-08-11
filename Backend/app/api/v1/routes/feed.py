@@ -42,3 +42,33 @@ def list_feed_posts(
 def get_feed_post(post_id: int, db: Session = Depends(get_db)) -> TransparencyPostRead:
     """Return a single feed post by ID."""
     return TransparencyPostRead.model_validate(TransparencyService.get_post(db, post_id))
+
+
+@router.post("/{post_id}/applaud", response_model=TransparencyPostRead)
+def applaud_feed_post(post_id: int, db: Session = Depends(get_db)) -> TransparencyPostRead:
+    """Public endpoint to bump applaud counter on a feed post."""
+    return TransparencyPostRead.model_validate(TransparencyService.applaud(db, post_id))
+
+
+@router.get("/{post_id}/comments", response_model=list[PostCommentRead])
+def list_feed_post_comments(post_id: int, db: Session = Depends(get_db)) -> list[PostCommentRead]:
+    """Return list of comments on a feed post."""
+    return [
+        PostCommentRead.model_validate(comment)
+        for comment in TransparencyService.list_comments(db, post_id)
+    ]
+
+
+@router.post(
+    "/{post_id}/comments", response_model=PostCommentRead, status_code=status.HTTP_201_CREATED
+)
+def create_feed_post_comment(
+    post_id: int,
+    comment_in: PostCommentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> PostCommentRead:
+    """Add a comment to a feed post (requires auth)."""
+    comment = TransparencyService.add_comment(db, post_id, current_user, comment_in)
+    return PostCommentRead.model_validate(comment)
+
