@@ -13,7 +13,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 __all__ = ["Settings", "get_settings", "settings"]
@@ -94,9 +94,23 @@ class Settings(BaseSettings):
 
     # ---------------------------------------------------------------- helpers
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _normalize_database_url(cls, v: str) -> str:
+        if isinstance(v, str):
+            # Neon DB connection strings start with postgres:// or postgresql://
+            # Convert to postgresql+psycopg:// for SQLAlchemy 2.0 + psycopg 3 compatibility
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+psycopg://", 1)
+            if v.startswith("postgresql://") and not v.startswith("postgresql+psycopg://"):
+                return v.replace("postgresql://", "postgresql+psycopg://", 1)
+        return v
+
     @property
     def cors_origin_list(self) -> list[str]:
         """CORS origins as a list, blanks stripped."""
+        if self.cors_origins.strip() == "*":
+            return ["*"]
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
