@@ -9,6 +9,7 @@ from app.models.complaint import Complaint, ComplaintStatus, ComplaintStatusHist
 from app.models.user import User, UserRole
 from app.repositories.complaint_repository import ComplaintRepository
 from app.schemas.complaint import ComplaintSubmit, ComplaintUpdate
+from app.services.duplicate_detection_service import DuplicateDetectionService
 from app.services.notification_service import NotificationService
 
 __all__ = ["ComplaintService"]
@@ -60,6 +61,10 @@ class ComplaintService:
                 created_at=datetime.now(UTC),
             ),
         )
+        # S2-A05: emit a duplicate_detected notification if similar reports exist.
+        duplicates = DuplicateDetectionService.find_possible_duplicates(db, created)
+        if duplicates:
+            NotificationService.notify_duplicate_detected(db, created, len(duplicates))
         return created
 
     @staticmethod

@@ -8,9 +8,9 @@ from app import models as _models
 from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import engine
+from app.models.collection_schedule import CollectionFrequency, CollectionSchedule
 from app.models.user import User, UserRole
 from app.models.ward import Ward
-from app.models.collection_schedule import CollectionSchedule, CollectionFrequency
 from app.repositories.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
@@ -98,6 +98,7 @@ DEMO_EXCEPTIONS_SEED = [
 ]
 
 from datetime import datetime
+
 
 def init_db(db: Session) -> None:
     """Ensure database tables exist and seed initial demo users, wards, and schedules."""
