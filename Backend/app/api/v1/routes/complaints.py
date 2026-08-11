@@ -234,6 +234,29 @@ def verify_complaint(
     )
 
 
+@router.patch(
+    "/{complaint_id}/close",
+    response_model=ComplaintRead,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
+def close_complaint(
+    complaint_id: int,
+    close_in: ComplaintClose | None = Body(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ComplaintRead:
+    return _to_read_model(
+        ComplaintService.close_complaint(
+            db,
+            complaint_id,
+            closed_by_user_id=current_user.id,
+            notes=close_in.notes if close_in else None,
+            after_photo_url=close_in.after_photo_url if close_in else None,
+        )
+    )
+
+
 @router.post("/{complaint_id}/cancel", response_model=ComplaintRead, status_code=status.HTTP_200_OK)
 def cancel_complaint(
     complaint_id: int,

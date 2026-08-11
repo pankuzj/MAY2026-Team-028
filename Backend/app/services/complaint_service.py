@@ -18,11 +18,13 @@ _ALLOWED_TRANSITIONS = {
     ComplaintStatus.PENDING.value: {
         ComplaintStatus.IN_PROGRESS.value,
         ComplaintStatus.VERIFIED.value,
+        ComplaintStatus.CLOSED.value,
         ComplaintStatus.CANCELLED.value,
     },
     ComplaintStatus.IN_PROGRESS.value: {
         ComplaintStatus.RESOLVED.value,
         ComplaintStatus.VERIFIED.value,
+        ComplaintStatus.CLOSED.value,
         ComplaintStatus.CANCELLED.value,
     },
     ComplaintStatus.RESOLVED.value: {
@@ -194,4 +196,43 @@ class ComplaintService:
                 created_at=datetime.now(UTC),
             ),
         )
+        return complaint
+
+    @staticmethod
+    def close_complaint(
+        db: Session,
+        complaint_id: int,
+        *,
+        closed_by_user_id: int,
+        notes: str | None = None,
+        after_photo_url: str | None = None,
+    ) -> Complaint:
+        """Supervisor confirmation to close a complaint and stamp resolved_at."""
+        complaint = ComplaintService.get_complaint(db, complaint_id)
+        current_status = complaint.status
+        new_status = ComplaintStatus.CLOSED.value
+        if current_status == new_status:
+            return complaint
+        if new_status not in _ALLOWED_TRANSITIONS.get(current_status, set()):
+            raise InvalidStateTransitionError(
+                f"Cannot move complaint from '{current_status}' to '{new_status}'."
+            )
+        now = datetime.now(UTC)
+        update_fields: dict[str, object] = {
+            "status": new_status,
+            "resolved_at": complaint.resolved_at or now,
+        }
+        complaint = ComplaintRepository.update(db, complaint, update_fields)
+        ComplaintRepository.add_history(
+            db,
+            ComplaintStatusHistory(
+                complaint_id=complaint.id,
+                from_status=current_status,
+                to_status=new_status,
+                changed_by_user_id=closed_by_user_id,
+                notes=notes or "Closed by supervisor confirmation",
+                created_at=now,
+            ),
+        )
+        NotificationService.notify_complaint_resolved(db, complaint)
         return complaint

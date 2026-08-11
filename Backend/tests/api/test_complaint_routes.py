@@ -370,3 +370,20 @@ def test_verify_complaint_rbac_failure(client: TestClient, db_session: Session):
         headers=_auth(citizen_token),
     )
     assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_close_complaint_happy_path(client: TestClient, db_session: Session):
+    """Supervisor confirm closes complaint and stamps resolved_at timestamp."""
+    citizen_token = _register_citizen_token(db_session, client, "close_cit@example.com")
+    admin_token = _register_and_login(db_session, client, "close_admin@example.com", UserRole.ADMIN)
+    complaint_id = _create_complaint(db_session, citizen_token, client)
+
+    resp = client.patch(
+        f"/api/v1/complaints/{complaint_id}/close",
+        json={"notes": "Confirmed by supervisor"},
+        headers=_auth(admin_token),
+    )
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    data = resp.json()
+    assert data["status"] == "closed"
+    assert data["resolved_at"] is not None
