@@ -1,9 +1,8 @@
 """Bulk waste pickup ORM model (S2-F04, US-31).
 
-Field shape mirrors ``Frontend/src/context/BulkPickupContext.jsx``: load
-bands and category surcharges drive a computed, informational ``fee``
-(assumption #1 in the plan — the service is municipality-run, no payment
-processing, the frontend already displays the fee so it stays).
+Field shape mirrors ``Frontend/src/context/BulkPickupContext.jsx``, minus fee:
+the service is municipality-run with no payment processing, so there is no
+fee/pricing concept on the backend.
 """
 
 from datetime import datetime
@@ -63,7 +62,6 @@ class BulkPickup(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(
         String(50), default=BulkPickupStatus.REQUESTED.value, nullable=False, index=True
     )
-    fee: Mapped[float] = mapped_column(Float, default=0, nullable=False)
     assigned_vehicle_id: Mapped[int | None] = mapped_column(
         ForeignKey("vehicles.id"), nullable=True, index=True
     )
