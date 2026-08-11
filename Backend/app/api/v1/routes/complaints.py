@@ -13,6 +13,7 @@ from app.schemas.complaint import (
     ComplaintStatus,
     ComplaintStatusHistoryRead,
     ComplaintSubmit,
+    ComplaintType,
     ComplaintUpdate,
     DuplicateCheckRequest,
 )
@@ -44,6 +45,7 @@ def list_complaints(
     search: str | None = None,
     status_filter: str | None = Query(default=None, alias="status"),
     ward_id: int | None = None,
+    complaint_type: ComplaintType | None = None,
     page: int = 1,
     page_size: int = 20,
 ) -> Page[ComplaintRead]:
@@ -51,6 +53,7 @@ def list_complaints(
         "search": search,
         "status": status_filter,
         "ward_id": ward_id,
+        "complaint_type": complaint_type.value if complaint_type else None,
         "page": page,
         "page_size": page_size,
     }

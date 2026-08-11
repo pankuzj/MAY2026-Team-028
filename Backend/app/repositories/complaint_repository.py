@@ -48,6 +48,10 @@ class ComplaintRepository:
         if ward_id is not None:
             stmt = stmt.where(Complaint.ward_id == ward_id)
 
+        complaint_type = filters.get("complaint_type")
+        if complaint_type:
+            stmt = stmt.where(Complaint.complaint_type == complaint_type)
+
         reporter_id = filters.get("reported_by_user_id")
         if reporter_id is not None:
             stmt = stmt.where(Complaint.reported_by_user_id == reporter_id)
