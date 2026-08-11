@@ -142,16 +142,30 @@ class TaskService:
 
     @staticmethod
     def complete_task(
-        db: Session, task_id: int, *, completed_by_user_id: int | None = None
+        db: Session,
+        task_id: int,
+        *,
+        completed_by_user_id: int | None = None,
+        completion_photo_url: str | None = None,
+        waste_removed: str | None = None,
+        resolution_notes: str | None = None,
     ) -> Task:
         task = TaskService.get_task(db, task_id)
         if task.status in {TaskStatus.COMPLETED.value, TaskStatus.CANCELLED.value}:
             return task
-        updated = TaskRepository.update(
-            db,
-            task,
-            {"status": TaskStatus.COMPLETED.value, "completed_at": datetime.now(UTC)},
-        )
+
+        update_data: dict[str, object] = {
+            "status": TaskStatus.COMPLETED.value,
+            "completed_at": datetime.now(UTC),
+        }
+        if completion_photo_url is not None:
+            update_data["completion_photo_url"] = completion_photo_url
+        if waste_removed is not None:
+            update_data["waste_removed"] = waste_removed
+        if resolution_notes is not None:
+            update_data["resolution_notes"] = resolution_notes
+
+        updated = TaskRepository.update(db, task, update_data)
         if updated.vehicle_id:
             ResourceService.update_vehicle_status(
                 db, updated.vehicle_id, status=VehicleStatus.AVAILABLE.value

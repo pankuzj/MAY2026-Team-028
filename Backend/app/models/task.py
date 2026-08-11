@@ -53,6 +53,8 @@ class Task(Base, TimestampMixin):
     vehicle_id: Mapped[int | None] = mapped_column(ForeignKey("vehicles.id"), nullable=True)
     assigned_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     resolution_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    completion_photo_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    waste_removed: Mapped[str | None] = mapped_column(String(100), nullable=True)
     assigned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
