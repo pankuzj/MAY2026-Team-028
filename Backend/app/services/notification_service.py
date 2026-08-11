@@ -50,6 +50,18 @@ class NotificationService:
         )
 
     @staticmethod
+    def notify_duplicate_detected(db: Session, complaint: Complaint) -> Notification:
+        """Notify the reporting citizen that a possible duplicate complaint was detected."""
+        return NotificationService.create_notification(
+            db,
+            user_id=complaint.reported_by_user_id,
+            notification_type=NotificationType.DUPLICATE_DETECTED,
+            title="Possible duplicate detected",
+            message=f"Your complaint '{complaint.title}' was identified as a potential duplicate of an active issue.",
+            related_complaint_id=complaint.id,
+        )
+
+    @staticmethod
     def list_notifications(
         db: Session,
         current_user: User,
