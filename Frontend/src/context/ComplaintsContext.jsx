@@ -146,6 +146,7 @@ export function ComplaintsProvider({ children }) {
       location: data.location,
       description: data.description,
       hazard: data.hazard,
+      complaint_type: data.complaintType || null,
       photo: data.photo,
       coords: data.coords,
       ward_id: user?.ward_id ?? null,

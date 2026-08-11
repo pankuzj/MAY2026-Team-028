@@ -36,6 +36,9 @@ class ComplaintService:
             title=complaint_in.location,
             description=complaint_in.description,
             category=complaint_in.hazard,
+            complaint_type=(
+                complaint_in.complaint_type.value if complaint_in.complaint_type else None
+            ),
             address=complaint_in.location,
             latitude=(complaint_in.coords or {}).get("lat") if complaint_in.coords else None,
             longitude=(complaint_in.coords or {}).get("lng") if complaint_in.coords else None,

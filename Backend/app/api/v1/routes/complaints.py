@@ -4,7 +4,6 @@ from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, Upload
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db, require_role
-from app.core.config import settings
 from app.models.complaint import Complaint
 from app.models.user import User, UserRole
 from app.repositories.complaint_repository import ComplaintRepository
@@ -19,6 +18,7 @@ from app.schemas.complaint import (
 )
 from app.services.complaint_service import ComplaintService
 from app.services.duplicate_detection_service import DuplicateDetectionService
+from app.services.upload_service import UploadRejectedError, save_upload
 
 router = APIRouter(prefix="/complaints", tags=["Complaints"])
 
@@ -106,21 +106,15 @@ async def upload_complaint_photo(
     photo: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ) -> dict[str, object]:
-    content_type = (photo.content_type or "").lower()
-    if content_type not in settings.upload_allowed_mime_type_set:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Unsupported image type."
-        )
-
     contents = await photo.read()
-    if len(contents) > settings.upload_max_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Image too large."
-        )
+    try:
+        url = save_upload(contents, declared_content_type=photo.content_type or "")
+    except UploadRejectedError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
 
     return {
-        "filename": photo.filename,
-        "content_type": content_type,
+        "url": url,
+        "content_type": photo.content_type,
         "size_bytes": len(contents),
     }
 
@@ -135,15 +129,12 @@ async def attach_complaint_photo(
     """Validate and attach an evidence photo to an existing complaint."""
     complaint = ComplaintService.get_complaint(db, complaint_id)
     ComplaintService.assert_can_read(complaint, current_user)
-    content_type = (photo.content_type or "").lower()
-    if content_type not in settings.upload_allowed_mime_type_set:
-        raise HTTPException(status_code=415, detail="Unsupported image type.")
     contents = await photo.read()
-    if len(contents) > settings.upload_max_bytes:
-        raise HTTPException(status_code=413, detail="Image too large.")
-    complaint = ComplaintRepository.update(
-        db, complaint, {"photo_url": photo.filename or "evidence-image"}
-    )
+    try:
+        url = save_upload(contents, declared_content_type=photo.content_type or "")
+    except UploadRejectedError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+    complaint = ComplaintRepository.update(db, complaint, {"photo_url": url})
     return _to_read_model(complaint)
 
 

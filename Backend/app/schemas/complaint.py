@@ -15,6 +15,18 @@ class ComplaintStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class ComplaintType(str, Enum):
+    """Community-facing complaint category (S2-A18).
+
+    Separate from ``category`` (the hazard classification field). Pydantic
+    validates any value outside this set as a 422 automatically.
+    """
+
+    OVERFLOW = "overflow"
+    DELAY = "delay"
+    EXTRA_COLLECTION = "extra_collection"
+
+
 class ComplaintBase(BaseModel):
     """Shared complaint fields."""
 
@@ -22,6 +34,7 @@ class ComplaintBase(BaseModel):
     description: str = Field(min_length=1)
     ward_id: int | None = None
     category: str | None = Field(default=None, max_length=100)
+    complaint_type: ComplaintType | None = None
     priority: str | None = Field(default=None, max_length=50)
     address: str | None = Field(default=None, max_length=255)
     latitude: float | None = None
@@ -41,6 +54,7 @@ class ComplaintSubmit(BaseModel):
     location: str = Field(min_length=1, max_length=255)
     description: str = Field(min_length=1)
     hazard: str | None = Field(default=None, max_length=100)
+    complaint_type: ComplaintType | None = None
     photo: str | None = Field(default=None, max_length=2048)
     coords: dict[str, float] | None = None
     ward_id: int | None = None
@@ -62,6 +76,7 @@ class ComplaintUpdate(BaseModel):
     description: str | None = Field(default=None, min_length=1)
     ward_id: int | None = None
     category: str | None = Field(default=None, max_length=100)
+    complaint_type: ComplaintType | None = None
     priority: str | None = Field(default=None, max_length=50)
     status: ComplaintStatus | None = None
     address: str | None = Field(default=None, max_length=255)

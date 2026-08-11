@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
@@ -60,6 +61,12 @@ def create_app() -> FastAPI:
 
     # Include versioned API routers
     app.include_router(api_v1_router, prefix=settings.api_v1_prefix)
+
+    # Serve uploaded evidence photos. save_upload() (S2-F05) guarantees every
+    # filename under this directory is a random uuid4 + known-good extension,
+    # so nothing user-controlled ever reaches this mount.
+    settings.upload_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
 
     return app
 
