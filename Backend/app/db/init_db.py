@@ -1,6 +1,7 @@
 """Database initialization and seeding of demo users."""
 
 import logging
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -97,7 +98,6 @@ DEMO_EXCEPTIONS_SEED = [
     {"exception_date": "2026-08-29", "notes": "Ganesh Chaturthi — dry waste collection only; wet waste resumes the day after."},
 ]
 
-from datetime import datetime
 
 
 def init_db(db: Session) -> None:
