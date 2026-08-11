@@ -56,6 +56,13 @@ class BulkPickupUpdate(BaseModel):
     notes: str | None = None
 
 
+class BulkPickupAssign(BaseModel):
+    """Payload for dispatching a crew member and vehicle to a pickup."""
+
+    worker_id: int
+    vehicle_id: int
+
+
 class BulkPickupRead(BaseModel):
     """Bulk pickup response schema."""
 

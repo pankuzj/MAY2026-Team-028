@@ -7,8 +7,11 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import InvalidStateTransitionError, NotFoundError, PermissionDeniedError
 from app.models.bulk_pickup import BulkPickup, BulkPickupStatus
 from app.models.user import User, UserRole
+from app.models.vehicle import VehicleStatus
+from app.models.worker import WorkerStatus
 from app.repositories.bulk_pickup_repository import BulkPickupRepository
-from app.schemas.bulk_pickup import BulkPickupCreate, BulkPickupUpdate
+from app.schemas.bulk_pickup import BulkPickupAssign, BulkPickupCreate, BulkPickupUpdate
+from app.services.resource_service import ResourceService
 
 __all__ = ["BulkPickupService"]
 
@@ -111,3 +114,30 @@ class BulkPickupService:
             pickup,
             {"status": BulkPickupStatus.CANCELLED.value, "cancelled_at": datetime.now(UTC)},
         )
+
+    @staticmethod
+    def assign_pickup(db: Session, pickup_id: int, assign_in: BulkPickupAssign) -> BulkPickup:
+        pickup = BulkPickupService.get_pickup(db, pickup_id)
+        if pickup.status not in {
+            BulkPickupStatus.REQUESTED.value,
+            BulkPickupStatus.SCHEDULED.value,
+        }:
+            raise InvalidStateTransitionError(
+                "Only requested or scheduled pickups can be assigned a crew and vehicle."
+            )
+
+        ResourceService.check_worker_available(db, assign_in.worker_id)
+        ResourceService.check_vehicle_available(db, assign_in.vehicle_id)
+
+        update_data: dict = {
+            "assigned_worker_id": assign_in.worker_id,
+            "assigned_vehicle_id": assign_in.vehicle_id,
+        }
+        if pickup.status == BulkPickupStatus.REQUESTED.value:
+            update_data["status"] = BulkPickupStatus.SCHEDULED.value
+            update_data.setdefault("scheduled_at", datetime.now(UTC))
+
+        updated = BulkPickupRepository.update(db, pickup, update_data)
+        ResourceService.update_worker_status(db, assign_in.worker_id, status=WorkerStatus.ASSIGNED.value)
+        ResourceService.update_vehicle_status(db, assign_in.vehicle_id, status=VehicleStatus.EN_ROUTE.value)
+        return updated

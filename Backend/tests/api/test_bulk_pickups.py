@@ -5,6 +5,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.user import UserRole
+from app.models.vehicle import Vehicle, VehicleStatus
+from app.models.worker import Worker, WorkerStatus
 from app.schemas.auth import LoginRequest
 from app.schemas.user import UserCreate
 from app.services.auth_service import AuthService
@@ -33,6 +35,27 @@ def _create_pickup(client: TestClient, token: str, **overrides) -> int:
     resp = client.post("/api/v1/bulk-pickups", json=payload, headers=_auth(token))
     assert resp.status_code == status.HTTP_201_CREATED, resp.text
     return resp.json()["id"]
+
+
+def _create_worker(db: Session, name: str = "Bulk Crew") -> Worker:
+    worker = Worker(full_name=name, status=WorkerStatus.AVAILABLE.value, is_active=True)
+    db.add(worker)
+    db.commit()
+    db.refresh(worker)
+    return worker
+
+
+def _create_vehicle(db: Session, plate: str = "KA-02-BP-0001") -> Vehicle:
+    vehicle = Vehicle(
+        plate_number=plate,
+        model_name="Mini Tipper",
+        status=VehicleStatus.AVAILABLE.value,
+        is_active=True,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+    return vehicle
 
 
 # ---------------------------------------------------------------------------
@@ -350,3 +373,115 @@ def test_cancel_pickup_by_admin_on_behalf(client: TestClient, db_session: Sessio
     resp = client.post(f"/api/v1/bulk-pickups/{pickup_id}/cancel", headers=_auth(admin_token))
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["status"] == "cancelled"
+
+
+# ---------------------------------------------------------------------------
+# POST /bulk-pickups/{id}/assign
+# ---------------------------------------------------------------------------
+
+
+def test_assign_pickup_happy_path(client: TestClient, db_session: Session):
+    """Happy Path: admin assigns an available crew member and vehicle."""
+    citizen_token = _register_and_login(
+        db_session, client, "bp_asg_citizen@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(db_session, client, "bp_asg_admin@example.com", UserRole.ADMIN)
+    pickup_id = _create_pickup(client, citizen_token)
+    worker = _create_worker(db_session)
+    vehicle = _create_vehicle(db_session)
+
+    resp = client.post(
+        f"/api/v1/bulk-pickups/{pickup_id}/assign",
+        json={"worker_id": worker.id, "vehicle_id": vehicle.id},
+        headers=_auth(admin_token),
+    )
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    data = resp.json()
+    assert data["assigned_worker_id"] == worker.id
+    assert data["assigned_vehicle_id"] == vehicle.id
+    assert data["status"] == "scheduled"
+
+    db_session.refresh(worker)
+    db_session.refresh(vehicle)
+    assert worker.status == WorkerStatus.ASSIGNED.value
+    assert vehicle.status == VehicleStatus.EN_ROUTE.value
+
+
+def test_assign_pickup_validation_failure(client: TestClient, db_session: Session):
+    """Validation Failure: missing vehicle_id returns 422."""
+    citizen_token = _register_and_login(
+        db_session, client, "bp_asg_val_citizen@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "bp_asg_val_admin@example.com", UserRole.ADMIN
+    )
+    pickup_id = _create_pickup(client, citizen_token)
+    worker = _create_worker(db_session, name="Val Worker")
+
+    resp = client.post(
+        f"/api/v1/bulk-pickups/{pickup_id}/assign",
+        json={"worker_id": worker.id},
+        headers=_auth(admin_token),
+    )
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_assign_pickup_rbac_failure(client: TestClient, db_session: Session):
+    """Auth/RBAC Failure: a citizen cannot assign crew/vehicle to a pickup."""
+    citizen_token = _register_and_login(
+        db_session, client, "bp_asg_rbac@example.com", UserRole.CITIZEN
+    )
+    pickup_id = _create_pickup(client, citizen_token)
+    worker = _create_worker(db_session, name="Rbac Worker")
+    vehicle = _create_vehicle(db_session, plate="KA-02-BP-0002")
+
+    resp = client.post(
+        f"/api/v1/bulk-pickups/{pickup_id}/assign",
+        json={"worker_id": worker.id, "vehicle_id": vehicle.id},
+        headers=_auth(citizen_token),
+    )
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_assign_pickup_edge_case_unavailable_vehicle(client: TestClient, db_session: Session):
+    """Edge Case: assigning a vehicle already in use returns 409 Conflict."""
+    citizen_token = _register_and_login(
+        db_session, client, "bp_asg_conflict_citizen@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "bp_asg_conflict_admin@example.com", UserRole.ADMIN
+    )
+    pickup_id = _create_pickup(client, citizen_token)
+    worker = _create_worker(db_session, name="Conflict Worker")
+    vehicle = _create_vehicle(db_session, plate="KA-02-BP-0003")
+    vehicle.status = VehicleStatus.MAINTENANCE.value
+    db_session.commit()
+
+    resp = client.post(
+        f"/api/v1/bulk-pickups/{pickup_id}/assign",
+        json={"worker_id": worker.id, "vehicle_id": vehicle.id},
+        headers=_auth(admin_token),
+    )
+    assert resp.status_code == status.HTTP_409_CONFLICT
+
+
+def test_assign_pickup_edge_case_terminal_state(client: TestClient, db_session: Session):
+    """Edge Case: assigning to a cancelled pickup returns 409 Conflict."""
+    citizen_token = _register_and_login(
+        db_session, client, "bp_asg_terminal_citizen@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "bp_asg_terminal_admin@example.com", UserRole.ADMIN
+    )
+    pickup_id = _create_pickup(client, citizen_token)
+    client.post(f"/api/v1/bulk-pickups/{pickup_id}/cancel", headers=_auth(citizen_token))
+    worker = _create_worker(db_session, name="Terminal Worker")
+    vehicle = _create_vehicle(db_session, plate="KA-02-BP-0004")
+
+    resp = client.post(
+        f"/api/v1/bulk-pickups/{pickup_id}/assign",
+        json={"worker_id": worker.id, "vehicle_id": vehicle.id},
+        headers=_auth(admin_token),
+    )
+    assert resp.status_code == status.HTTP_409_CONFLICT
+    assert resp.json()["error"]["code"] == "INVALID_STATE_TRANSITION"
