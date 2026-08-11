@@ -9,6 +9,7 @@ from app.models.complaint import Complaint, ComplaintStatus, ComplaintStatusHist
 from app.models.user import User, UserRole
 from app.repositories.complaint_repository import ComplaintRepository
 from app.schemas.complaint import ComplaintSubmit, ComplaintUpdate
+from app.services.notification_service import NotificationService
 
 __all__ = ["ComplaintService"]
 
@@ -121,6 +122,7 @@ class ComplaintService:
             complaint = ComplaintRepository.update(
                 db, complaint, {"resolved_at": datetime.now(UTC)}
             )
+            NotificationService.notify_complaint_resolved(db, complaint)
         if new_status_value == ComplaintStatus.CANCELLED.value:
             complaint = ComplaintRepository.update(
                 db, complaint, {"cancelled_at": datetime.now(UTC)}
