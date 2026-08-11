@@ -9,6 +9,8 @@ from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import engine
 from app.models.user import User, UserRole
+from app.models.ward import Ward
+from app.models.collection_schedule import CollectionSchedule, CollectionFrequency
 from app.repositories.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
@@ -51,9 +53,54 @@ DEMO_USERS_SEED = [
     },
 ]
 
+DEMO_WARDS_SEED = [
+    {"name": "MG Road (Ward 04)"},
+    {"name": "Indiranagar (Ward 12)"},
+    {"name": "Koramangala (Ward 08)"},
+    {"name": "Jayanagar (Ward 15)"},
+]
+
+DEMO_SCHEDULES_SEED = [
+    # MG Road (Ward 04) - ward_id 1
+    {"ward_idx": 0, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 0, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 0, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 2, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 0, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 4, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 0, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 1, "notes": "Dry Waste", "time_slot": "Morning"},
+    {"ward_idx": 0, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 5, "notes": "Dry Waste", "time_slot": "Morning"},
+    {"ward_idx": 0, "frequency": CollectionFrequency.MONTHLY.value, "day_of_week": 5, "week_of_month": 0, "notes": "Hazardous / E-Waste", "time_slot": "Morning"},
+
+    # Indiranagar (Ward 12) - ward_id 2
+    {"ward_idx": 1, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 0, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 1, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 2, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 1, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 4, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 1, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 3, "notes": "Dry Waste", "time_slot": "Morning"},
+    {"ward_idx": 1, "frequency": CollectionFrequency.MONTHLY.value, "day_of_week": 6, "week_of_month": 0, "notes": "Hazardous / E-Waste", "time_slot": "Morning"},
+
+    # Koramangala (Ward 08) - ward_id 3
+    {"ward_idx": 2, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 1, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 2, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 3, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 2, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 5, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 2, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 0, "notes": "Dry Waste", "time_slot": "Morning"},
+    {"ward_idx": 2, "frequency": CollectionFrequency.MONTHLY.value, "day_of_week": 5, "week_of_month": 2, "notes": "Hazardous / E-Waste", "time_slot": "Morning"},
+
+    # Jayanagar (Ward 15) - ward_id 4
+    {"ward_idx": 3, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 6, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 3, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 1, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 3, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 3, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 3, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 5, "notes": "Wet Waste", "time_slot": "Morning"},
+    {"ward_idx": 3, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 2, "notes": "Dry Waste", "time_slot": "Morning"},
+    {"ward_idx": 3, "frequency": CollectionFrequency.MONTHLY.value, "day_of_week": 6, "week_of_month": 2, "notes": "Hazardous / E-Waste", "time_slot": "Morning"},
+]
+
+DEMO_EXCEPTIONS_SEED = [
+    {"exception_date": "2026-08-15", "notes": "Independence Day — no collection. Pickup shifts to the next working day."},
+    {"exception_date": "2026-08-29", "notes": "Ganesh Chaturthi — dry waste collection only; wet waste resumes the day after."},
+]
+
+from datetime import datetime
 
 def init_db(db: Session) -> None:
-    """Ensure database tables exist and seed initial demo users."""
+    """Ensure database tables exist and seed initial demo users, wards, and schedules."""
     _ = _models.__all__
     Base.metadata.create_all(bind=engine)
 
@@ -69,3 +116,44 @@ def init_db(db: Session) -> None:
             )
             UserRepository.create(db, user)
             logger.info("Seeded demo user: %s (%s)", user_data["full_name"], user_data["email"])
+
+    # Seed wards and schedules
+    ward_objs = []
+    for ward_data in DEMO_WARDS_SEED:
+        existing_ward = db.query(Ward).filter(Ward.name == ward_data["name"]).first()
+        if not existing_ward:
+            ward = Ward(name=ward_data["name"])
+            db.add(ward)
+            db.commit()
+            db.refresh(ward)
+            ward_objs.append(ward)
+            logger.info("Seeded demo ward: %s", ward.name)
+        else:
+            ward_objs.append(existing_ward)
+
+    if not db.query(CollectionSchedule).first() and ward_objs:
+        for sched in DEMO_SCHEDULES_SEED:
+            ward = ward_objs[sched["ward_idx"]]
+            cs = CollectionSchedule(
+                ward_id=ward.id,
+                frequency=sched["frequency"],
+                day_of_week=sched.get("day_of_week"),
+                week_of_month=sched.get("week_of_month"),
+                time_slot=sched.get("time_slot"),
+                notes=sched.get("notes"),
+                is_exception=False
+            )
+            db.add(cs)
+        
+        for ward in ward_objs:
+            for exc in DEMO_EXCEPTIONS_SEED:
+                cs = CollectionSchedule(
+                    ward_id=ward.id,
+                    is_exception=True,
+                    exception_date=datetime.strptime(exc["exception_date"], "%Y-%m-%d").date(),
+                    notes=exc["notes"]
+                )
+                db.add(cs)
+        
+        db.commit()
+        logger.info("Seeded demo schedules and exceptions.")
