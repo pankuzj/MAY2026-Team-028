@@ -105,6 +105,7 @@ class ComplaintFilter(BaseModel):
     search: str | None = Field(default=None, max_length=255)
     status: ComplaintStatus | None = None
     ward_id: int | None = None
+    complaint_type: ComplaintType | None = None
     reported_by_user_id: int | None = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=100)

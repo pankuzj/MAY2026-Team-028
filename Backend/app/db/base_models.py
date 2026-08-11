@@ -15,10 +15,16 @@ from ``base``, so ``base`` cannot import models.
 
 from app.db.base import Base  # noqa: F401  (re-exported for Alembic's target_metadata)
 
-# --- Sprint 1 models (migration 0001) --------------------------------------
+# Sprint 1 models (migration 0001) + Sprint 2 models (migration 0003), one
+# sorted block so `ruff --fix` has nothing left to reorder.
+from app.models.bulk_pickup import BulkPickup  # noqa: F401
+from app.models.collection_schedule import CollectionSchedule  # noqa: F401
 from app.models.complaint import Complaint, ComplaintStatusHistory  # noqa: F401
 from app.models.equipment import Equipment  # noqa: F401
+from app.models.feedback import Feedback  # noqa: F401
+from app.models.notification import Notification  # noqa: F401
 from app.models.task import Task, task_equipment, task_workers  # noqa: F401
+from app.models.transparency import PostComment, TransparencyPost  # noqa: F401
 from app.models.user import User  # noqa: F401
 from app.models.vehicle import Vehicle  # noqa: F401
 from app.models.ward import Ward  # noqa: F401
