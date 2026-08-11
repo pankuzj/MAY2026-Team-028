@@ -86,3 +86,24 @@ def test_get_report_performance_requires_auth(client: TestClient):
     resp = client.get("/api/v1/reports/performance")
     assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
+
+# ---------------------------------------------------------------------------
+# GET /reports/public
+# ---------------------------------------------------------------------------
+
+
+def test_get_public_report_stats_happy_path(client: TestClient):
+    """Happy Path: GET /reports/public returns public high-level cleanup stats without auth."""
+    resp = client.get("/api/v1/reports/public")
+    assert resp.status_code == status.HTTP_200_OK, resp.text
+    data = resp.json()
+    assert "total_complaints" in data
+    assert "resolved_complaints" in data
+    assert "active_complaints" in data
+    assert "resolution_rate" in data
+    assert "avg_resolution_days" in data
+    assert "total_cleanups_completed" in data
+    assert "top_wards" in data
+    assert isinstance(data["top_wards"], list)
+
+
