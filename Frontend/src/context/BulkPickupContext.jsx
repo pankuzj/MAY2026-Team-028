@@ -16,10 +16,10 @@ export const PICKUP_CATEGORIES = [
 
 // Load bands drive the base fee and hint which vehicle can carry the load.
 export const LOAD_SIZES = [
-  { value: "Small", label: "Small — a few items (fits a van)", fee: 150 },
-  { value: "Medium", label: "Medium — half a tipper load", fee: 300 },
-  { value: "Large", label: "Large — full mini-tipper load", fee: 600 },
-  { value: "Extra Large", label: "Extra Large — needs a compactor truck", fee: 1000 },
+  { value: "Small", label: "Small — a few items (fits a van)" },
+  { value: "Medium", label: "Medium — half a tipper load" },
+  { value: "Large", label: "Large — full mini-tipper load" },
+  { value: "Extra Large", label: "Extra Large — needs a compactor truck" },
 ];
 
 export const TIME_SLOTS = [
@@ -29,20 +29,7 @@ export const TIME_SLOTS = [
   "Evening (17:00 - 20:00)",
 ];
 
-// Hazard / special-handling categories carry a surcharge on top of the load fee.
-const CATEGORY_SURCHARGE = {
-  "E-Waste & Electronics": 200,
-  "Construction Debris": 250,
-  "Scrap Metal": 100,
-};
 
-// Single source of truth for pricing — used by the form's live estimate and by
-// the context when persisting a request, so the two can never drift apart.
-export const calculateFee = (loadSize, category) => {
-  const band = LOAD_SIZES.find((l) => l.value === loadSize);
-  const base = band ? band.fee : 0;
-  return base + (CATEGORY_SURCHARGE[category] || 0);
-};
 
 const INITIAL_PICKUPS = [
   {
@@ -62,7 +49,6 @@ const INITIAL_PICKUPS = [
     scheduledDate: "2026-07-24",
     assignedCrew: "Ramesh Kumar",
     assignedVehicle: "KA-01-EV-9012",
-    fee: 300,
     createdAt: "2026-07-19",
   },
   {
@@ -82,7 +68,6 @@ const INITIAL_PICKUPS = [
     scheduledDate: null,
     assignedCrew: "Unassigned",
     assignedVehicle: "Unassigned",
-    fee: 350,
     createdAt: "2026-07-21",
   },
   {
@@ -102,7 +87,6 @@ const INITIAL_PICKUPS = [
     scheduledDate: "2026-07-20",
     assignedCrew: "Suresh Patil",
     assignedVehicle: "KA-01-EA-4821",
-    fee: 850,
     createdAt: "2026-07-17",
   },
 ];
@@ -134,7 +118,6 @@ export function BulkPickupProvider({ children }) {
           scheduledDate: null,
           assignedCrew: "Unassigned",
           assignedVehicle: "Unassigned",
-          fee: calculateFee(data.loadSize, data.category),
           createdAt: new Date().toISOString().slice(0, 10),
           ...data,
         };

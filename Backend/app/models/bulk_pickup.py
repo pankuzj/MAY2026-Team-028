@@ -24,7 +24,7 @@ class BulkPickupStatus(str, Enum):
 
 
 class BulkPickupCategory(str, Enum):
-    """Waste category, drives the surcharge portion of the fee calculation."""
+    """Waste category."""
 
     GENERAL = "general"
     E_WASTE = "e_waste"
@@ -33,7 +33,7 @@ class BulkPickupCategory(str, Enum):
 
 
 class BulkPickupLoadBand(str, Enum):
-    """Load size, drives the base portion of the fee calculation."""
+    """Load size."""
 
     SMALL = "small"
     MEDIUM = "medium"
