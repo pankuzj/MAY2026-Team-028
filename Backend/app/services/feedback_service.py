@@ -26,7 +26,11 @@ class FeedbackService:
         if complaint.reported_by_user_id != current_user.id:
             raise PermissionDeniedError("You can only leave feedback on your own complaint.")
 
-        if complaint.status != ComplaintStatus.RESOLVED.value:
+        if complaint.status not in (
+            ComplaintStatus.RESOLVED.value,
+            ComplaintStatus.VERIFIED.value,
+            ComplaintStatus.CLOSED.value,
+        ):
             raise InvalidStateTransitionError(
                 "Feedback can only be submitted once a complaint is resolved."
             )

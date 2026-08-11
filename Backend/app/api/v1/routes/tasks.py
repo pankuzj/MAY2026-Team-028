@@ -1,13 +1,13 @@
 """Task API routes."""
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Body, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db, require_role
 from app.models.task import Task
 from app.models.user import User, UserRole
 from app.repositories.task_repository import TaskRepository
-from app.schemas.task import TaskCreate, TaskRead, TaskUpdate
+from app.schemas.task import TaskComplete, TaskCreate, TaskRead, TaskUpdate
 from app.services.task_service import TaskService
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
@@ -73,10 +73,21 @@ def update_task(task_id: int, task_in: TaskUpdate, db: Session = Depends(get_db)
     dependencies=[Depends(require_role(UserRole.CREW, UserRole.ADMIN))],
 )
 def complete_task(
-    task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+    task_id: int,
+    payload: TaskComplete | None = Body(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> TaskRead:
     return _to_read_model(
-        TaskService.complete_task(db, task_id, completed_by_user_id=current_user.id), db
+        TaskService.complete_task(
+            db,
+            task_id,
+            completed_by_user_id=current_user.id,
+            completion_photo_url=payload.completion_photo_url if payload else None,
+            waste_removed=payload.waste_removed if payload else None,
+            resolution_notes=payload.resolution_notes if payload else None,
+        ),
+        db,
     )
 
 

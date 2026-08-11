@@ -48,6 +48,18 @@ class TaskUpdate(BaseModel):
     resolution_notes: str | None = None
 
 
+class TaskComplete(BaseModel):
+    """Payload for completing a task."""
+
+    completion_photo_url: str | None = Field(
+        default=None, description="URL of photo after task completion"
+    )
+    waste_removed: str | None = Field(
+        default=None, description="Quantity or description of waste removed (e.g. '1.4 Tons')"
+    )
+    resolution_notes: str | None = Field(default=None, description="Notes on task completion")
+
+
 class TaskRead(TaskBase):
     """Task response schema."""
 
@@ -56,6 +68,8 @@ class TaskRead(TaskBase):
     id: int
     assigned_by_user_id: int | None = None
     resolution_notes: str | None = None
+    completion_photo_url: str | None = None
+    waste_removed: str | None = None
     assigned_at: datetime | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None

@@ -411,6 +411,40 @@ def test_complete_task_edge_case_idempotent(client: TestClient, db_session: Sess
     assert resp2.json()["status"] == "completed"
 
 
+def test_complete_task_with_photo_and_waste_removed(client: TestClient, db_session: Session):
+    """Happy Path: Complete task with completion_photo_url and waste_removed capture."""
+    admin_token = _register_and_login(
+        db_session, client, "task_cmpl_photo_adm@example.com", UserRole.ADMIN
+    )
+    crew_token = _register_and_login(
+        db_session, client, "task_cmpl_photo_crew@example.com", UserRole.CREW
+    )
+
+    create_resp = client.post(
+        "/api/v1/tasks",
+        json={"title": "Cleanup task with photo"},
+        headers=_auth(admin_token),
+    )
+    task_id = create_resp.json()["id"]
+
+    completion_payload = {
+        "completion_photo_url": "/uploads/after_clean.jpg",
+        "waste_removed": "1.8 Tons",
+        "resolution_notes": "All debris cleared",
+    }
+    resp = client.post(
+        f"/api/v1/tasks/{task_id}/complete",
+        json=completion_payload,
+        headers=_auth(crew_token),
+    )
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data["status"] == "completed"
+    assert data["completion_photo_url"] == "/uploads/after_clean.jpg"
+    assert data["waste_removed"] == "1.8 Tons"
+    assert data["resolution_notes"] == "All debris cleared"
+
+
 # ---------------------------------------------------------------------------
 # 6. POST /tasks/{task_id}/cancel (cancel_task)
 # ---------------------------------------------------------------------------

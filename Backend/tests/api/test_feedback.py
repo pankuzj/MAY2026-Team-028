@@ -157,6 +157,29 @@ def test_submit_feedback_edge_case_duplicate(client: TestClient, db_session: Ses
     assert second.json()["error"]["code"] == "CONFLICT"
 
 
+def test_submit_feedback_closed_complaint(client: TestClient, db_session: Session):
+    """Happy Path: feedback can be submitted on a closed complaint."""
+    citizen_token = _register_and_login(
+        db_session, client, "fb_closed_citizen@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "fb_closed_admin@example.com", UserRole.ADMIN
+    )
+    complaint_id = _create_complaint(client, citizen_token)
+
+    # Close complaint via admin/supervisor close
+    client.patch(f"/api/v1/complaints/{complaint_id}/close", headers=_auth(admin_token))
+
+    resp = client.post(
+        f"/api/v1/complaints/{complaint_id}/feedback",
+        json={"rating": 4, "comment": "Good job closing it!"},
+        headers=_auth(citizen_token),
+    )
+    assert resp.status_code == status.HTTP_201_CREATED, resp.text
+    assert resp.json()["rating"] == 4
+
+
+
 # ---------------------------------------------------------------------------
 # GET /complaints/{id}/feedback
 # ---------------------------------------------------------------------------

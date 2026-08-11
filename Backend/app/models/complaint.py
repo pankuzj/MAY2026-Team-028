@@ -15,6 +15,8 @@ class ComplaintStatus(str, Enum):
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
+    VERIFIED = "verified"
+    CLOSED = "closed"
     CANCELLED = "cancelled"
 
 

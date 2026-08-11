@@ -8,7 +8,7 @@ a complaint closes is separate follow-up work (S2-A04), not implemented here.
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, InvalidStateTransitionError, NotFoundError
-from app.models.complaint import ComplaintStatus
+from app.models.complaint import Complaint, ComplaintStatus
 from app.models.transparency import PostComment, TransparencyPost
 from app.models.user import User
 from app.repositories.complaint_repository import ComplaintRepository
@@ -26,9 +26,13 @@ class TransparencyService:
         complaint = ComplaintRepository.get_by_id(db, post_in.complaint_id)
         if not complaint:
             raise NotFoundError("Complaint not found.")
-        if complaint.status != ComplaintStatus.RESOLVED.value:
+        if complaint.status not in {
+            ComplaintStatus.RESOLVED.value,
+            ComplaintStatus.VERIFIED.value,
+            ComplaintStatus.CLOSED.value,
+        }:
             raise InvalidStateTransitionError(
-                "A transparency post can only be published for a resolved complaint."
+                "A transparency post can only be published for a resolved or closed complaint."
             )
         if TransparencyRepository.get_by_complaint_id(db, complaint.id):
             raise ConflictError("A transparency post already exists for this complaint.")
@@ -41,6 +45,45 @@ class TransparencyService:
             before_photo_url=post_in.before_photo_url,
             after_photo_url=post_in.after_photo_url,
             posted_by_user_id=current_user.id,
+        )
+        return TransparencyRepository.create(db, post)
+
+    @staticmethod
+    def auto_create_post_for_complaint(
+        db: Session,
+        complaint: Complaint,
+        *,
+        closed_by_user_id: int | None = None,
+        after_photo_url: str | None = None,
+    ) -> TransparencyPost | None:
+        """Auto-generate a TransparencyPost when a complaint is closed (S2-A04)."""
+        existing = TransparencyRepository.get_by_complaint_id(db, complaint.id)
+        if existing:
+            return existing
+
+        if not after_photo_url:
+            from app.models.task import Task, TaskStatus
+
+            task = (
+                db.query(Task)
+                .filter(
+                    Task.complaint_id == complaint.id,
+                    Task.status == TaskStatus.COMPLETED.value,
+                )
+                .first()
+            )
+            if task and task.completion_photo_url:
+                after_photo_url = task.completion_photo_url
+
+        post = TransparencyPost(
+            complaint_id=complaint.id,
+            ward_id=complaint.ward_id,
+            title=f"Cleanup: {complaint.title}",
+            description=complaint.description,
+            before_photo_url=complaint.photo_url,
+            after_photo_url=after_photo_url,
+            applause_count=0,
+            posted_by_user_id=closed_by_user_id or complaint.reported_by_user_id,
         )
         return TransparencyRepository.create(db, post)
 

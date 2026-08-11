@@ -6,7 +6,9 @@ from app.api.v1.routes import (
     auth,
     bulk_pickups,
     complaints,
+    feed,
     notifications,
+    reports,
     resources,
     schedule,
     tasks,
@@ -22,6 +24,8 @@ router.include_router(tasks.router)
 router.include_router(resources.router)
 router.include_router(notifications.router)
 router.include_router(transparency.router)
+router.include_router(feed.router)
+router.include_router(reports.router)
 router.include_router(bulk_pickups.router)
 router.include_router(schedule.router)
 
