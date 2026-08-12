@@ -238,17 +238,28 @@ def test_mark_notification_read_edge_case_not_found(client: TestClient, db_sessi
 
 
 def test_mark_all_notifications_read_happy_path(client: TestClient, db_session: Session):
-    """Happy Path: mark-all-read flips every unread notification for the caller."""
+    """Happy Path: mark-all-read flips every unread notification for the caller.
+
+    Uses distinct complaint content so no duplicate_detected notification is
+    emitted alongside the resolved ones, keeping the expected count at exactly 2.
+    """
     citizen_token = _register_and_login(
         db_session, client, "notif_all@example.com", UserRole.CITIZEN
     )
     admin_token = _register_and_login(
         db_session, client, "notif_admin7@example.com", UserRole.ADMIN
     )
-    complaint_id_1 = _create_complaint(client, citizen_token)
-    complaint_id_2 = _create_complaint(client, citizen_token)
-    _resolve_complaint(client, admin_token, complaint_id_1)
-    _resolve_complaint(client, admin_token, complaint_id_2)
+    for loc, desc in [
+        ("Unique Alpha Street 1111", "Alpha issue one."),
+        ("Unique Beta Avenue 2222", "Beta issue two."),
+    ]:
+        resp = client.post(
+            "/api/v1/complaints",
+            json={"location": loc, "description": desc, "hazard": "biohazard"},
+            headers=_auth(citizen_token),
+        )
+        assert resp.status_code == status.HTTP_201_CREATED, resp.text
+        _resolve_complaint(client, admin_token, resp.json()["id"])
 
     resp = client.post("/api/v1/notifications/read-all", headers=_auth(citizen_token))
     assert resp.status_code == status.HTTP_200_OK
@@ -274,47 +285,59 @@ def test_mark_all_notifications_read_edge_case_empty(client: TestClient, db_sess
     assert resp.json()["marked"] == 0
 
 
-def test_notify_duplicate_detected_emitter(client: TestClient, db_session: Session):
-    """Notification emitter test: emitting duplicate detected notification creates inbox item."""
+# ---------------------------------------------------------------------------
+# S2-A05: duplicate_detected notification emitter
+# ---------------------------------------------------------------------------
+
+
+def test_duplicate_detected_notification_emitted_on_duplicate_complaint(
+    client: TestClient, db_session: Session
+):
+    """Happy Path: submitting a complaint that matches an existing one emits a
+    duplicate_detected notification for the submitter."""
     citizen_token = _register_and_login(
-        db_session, client, "notif_dup_emitter@example.com", UserRole.CITIZEN
+        db_session, client, "dup_citizen@example.com", UserRole.CITIZEN
     )
-    complaint_id = _create_complaint(client, citizen_token)
-    from app.services.complaint_service import ComplaintService
-    from app.services.notification_service import NotificationService
+    # First complaint — becomes the existing record.
+    _create_complaint(client, citizen_token)
 
-    complaint = ComplaintService.get_complaint(db_session, complaint_id)
-    notif = NotificationService.notify_duplicate_detected(db_session, complaint)
-
-    assert notif.type == "duplicate_detected"
-    assert notif.user_id == complaint.reported_by_user_id
-    assert notif.related_complaint_id == complaint_id
-
-    resp = client.get("/api/v1/notifications", headers=_auth(citizen_token))
-    assert resp.status_code == status.HTTP_200_OK
-    items = resp.json()["items"]
-    assert any(
-        item["type"] == "duplicate_detected" and item["related_complaint_id"] == complaint_id
-        for item in items
+    # Second complaint with identical content — should trigger duplicate detection.
+    resp = client.post(
+        "/api/v1/complaints",
+        json={
+            "location": "Test Street",
+            "description": "Garbage left on road.",
+            "hazard": "biohazard",
+        },
+        headers=_auth(citizen_token),
     )
+    assert resp.status_code == status.HTTP_201_CREATED
+
+    notifs = client.get("/api/v1/notifications", headers=_auth(citizen_token)).json()
+    dup_notifs = [n for n in notifs["items"] if n["type"] == "duplicate_detected"]
+    assert len(dup_notifs) >= 1, "Expected at least one duplicate_detected notification"
+    assert dup_notifs[0]["is_read"] is False
+    assert dup_notifs[0]["related_complaint_id"] == resp.json()["id"]
 
 
-def test_notify_complaint_resolved_emitter(client: TestClient, db_session: Session):
-    """Notification emitter test: resolving complaint emits complaint_resolved notification."""
+def test_duplicate_detected_notification_not_emitted_for_unique_complaint(
+    client: TestClient, db_session: Session
+):
+    """Edge Case: a complaint with no matching records does NOT emit a
+    duplicate_detected notification."""
     citizen_token = _register_and_login(
-        db_session, client, "notif_res_emitter@example.com", UserRole.CITIZEN
+        db_session, client, "uniq_citizen@example.com", UserRole.CITIZEN
     )
-    admin_token = _register_and_login(
-        db_session, client, "notif_admin_res@example.com", UserRole.ADMIN
-    )
-    complaint_id = _create_complaint(client, citizen_token)
-    _resolve_complaint(client, admin_token, complaint_id)
-
-    resp = client.get("/api/v1/notifications", headers=_auth(citizen_token))
-    assert resp.status_code == status.HTTP_200_OK
-    items = resp.json()["items"]
-    assert any(
-        item["type"] == "complaint_resolved" and item["related_complaint_id"] == complaint_id
-        for item in items
+    client.post(
+        "/api/v1/complaints",
+        json={
+            "location": "Completely Unique Zebra Lane 99999",
+            "description": "Totally unique issue that matches nothing.",
+            "hazard": "other",
+        },
+        headers=_auth(citizen_token),
     )
 
+    notifs = client.get("/api/v1/notifications", headers=_auth(citizen_token)).json()
+    dup_notifs = [n for n in notifs["items"] if n["type"] == "duplicate_detected"]
+    assert len(dup_notifs) == 0, "Unexpected duplicate_detected notification for a unique complaint"
