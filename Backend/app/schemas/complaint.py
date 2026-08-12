@@ -12,6 +12,8 @@ class ComplaintStatus(str, Enum):
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
+    VERIFIED = "verified"
+    CLOSED = "closed"
     CANCELLED = "cancelled"
 
 
@@ -83,6 +85,19 @@ class ComplaintUpdate(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     photo_url: str | None = Field(default=None, max_length=2048)
+
+
+class ComplaintVerify(BaseModel):
+    """Payload for verifying a complaint (Admin review)."""
+
+    notes: str | None = Field(default=None, description="Review notes by admin")
+
+
+class ComplaintClose(BaseModel):
+    """Payload for closing a complaint (Supervisor confirm)."""
+
+    notes: str | None = Field(default=None, description="Confirmation notes by supervisor")
+    after_photo_url: str | None = Field(default=None, description="Optional after photo URL")
 
 
 class ComplaintRead(ComplaintBase):

@@ -10,12 +10,14 @@ from app.models.user import User, UserRole
 from app.repositories.complaint_repository import ComplaintRepository
 from app.schemas.common import Page
 from app.schemas.complaint import (
+    ComplaintClose,
     ComplaintRead,
     ComplaintStatus,
     ComplaintStatusHistoryRead,
     ComplaintSubmit,
     ComplaintType,
     ComplaintUpdate,
+    ComplaintVerify,
     DuplicateCheckRequest,
 )
 from app.schemas.feedback import FeedbackCreate, FeedbackRead
@@ -206,6 +208,51 @@ def change_complaint_status(
             complaint_id,
             status_value,
             changed_by_user_id=current_user.id,
+        )
+    )
+
+
+@router.patch(
+    "/{complaint_id}/verify",
+    response_model=ComplaintRead,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
+def verify_complaint(
+    complaint_id: int,
+    verify_in: ComplaintVerify | None = Body(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ComplaintRead:
+    return _to_read_model(
+        ComplaintService.verify_complaint(
+            db,
+            complaint_id,
+            verified_by_user_id=current_user.id,
+            notes=verify_in.notes if verify_in else None,
+        )
+    )
+
+
+@router.patch(
+    "/{complaint_id}/close",
+    response_model=ComplaintRead,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
+def close_complaint(
+    complaint_id: int,
+    close_in: ComplaintClose | None = Body(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ComplaintRead:
+    return _to_read_model(
+        ComplaintService.close_complaint(
+            db,
+            complaint_id,
+            closed_by_user_id=current_user.id,
+            notes=close_in.notes if close_in else None,
+            after_photo_url=close_in.after_photo_url if close_in else None,
         )
     )
 

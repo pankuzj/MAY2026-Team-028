@@ -1,8 +1,7 @@
-"""Pydantic DTOs for the public transparency feed (S2-F03, US-25)."""
-
 from datetime import datetime
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class TransparencyPostCreate(BaseModel):
@@ -37,6 +36,13 @@ class PostCommentCreate(BaseModel):
     """Payload for commenting on a transparency post."""
 
     comment: str = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_content_alias(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "content" in data and "comment" not in data:
+            data["comment"] = data["content"]
+        return data
 
 
 class PostCommentRead(BaseModel):
