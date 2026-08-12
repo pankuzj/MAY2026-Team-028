@@ -1,0 +1,1598 @@
+openapi: 3.0.3
+info:
+  title: SmartSweep API - Bulk Pickups, Schedule, Feedback, Notifications & Transparency
+  description: >
+    OpenAPI 3.0 specification for SmartSweep's Sprint 2 surface: citizen bulk
+    waste pickup requests (S2-F04), ward collection schedules and computed
+    reminders (S2-F04), post-resolution citizen feedback (S2-F02), the in-app
+    notification inbox (S2-F02), and the public transparency feed with
+    applause and comments (S2-F03). Covers the six tables introduced in
+    migration 0003 (collection_schedules, bulk_pickups, feedback,
+    notifications, transparency_posts, post_comments).
+  version: 1.0.0
+paths:
+  /api/v1/bulk-pickups:
+    post:
+      summary: Request a bulk pickup
+      description: >
+        Submit a new bulk waste pickup request with a category, load size,
+        and address. Requires CITIZEN role. The request starts in
+        `requested` status; the fee is computed server-side from category
+        and load band.
+      operationId: createBulkPickup
+      x-user-story: US-31
+      tags:
+        - Bulk Pickups
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkPickupCreate'
+      responses:
+        '201':
+          description: Bulk pickup request created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkPickupRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+    get:
+      summary: List bulk pickup requests
+      description: >
+        Retrieve a paginated list of bulk pickup requests, optionally
+        filtered by status or ward. Citizens only see their own requests;
+        crew and admin see all requests matching the filters.
+      operationId: listBulkPickups
+      x-user-story: US-31
+      tags:
+        - Bulk Pickups
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status_filter
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/BulkPickupStatusEnum'
+          description: Filter results to a single pickup status.
+        - name: ward_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter results to a single ward.
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: 1-based page index.
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Maximum items per page.
+      responses:
+        '200':
+          description: Paginated bulk pickup list retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageBulkPickupRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/bulk-pickups/{pickup_id}:
+    get:
+      summary: Get bulk pickup by ID
+      description: >
+        Fetch a single bulk pickup request. Citizens may only read their own
+        request; crew and admin may read any request.
+      operationId: getBulkPickupById
+      x-user-story: US-31
+      tags:
+        - Bulk Pickups
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: pickup_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the bulk pickup request.
+      responses:
+        '200':
+          description: Bulk pickup request retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkPickupRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+    patch:
+      summary: Update a bulk pickup request
+      description: >
+        Modify a bulk pickup's status, assigned resources, schedule time, or
+        notes. Requires CREW or ADMIN role. Status changes are validated
+        against the pickup lifecycle (`requested` -> `scheduled` ->
+        `collected`, with `cancelled` reachable from `requested` or
+        `scheduled`); an illegal transition returns 409.
+      operationId: updateBulkPickup
+      x-user-story: US-31
+      tags:
+        - Bulk Pickups
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: pickup_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the bulk pickup request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkPickupUpdate'
+      responses:
+        '200':
+          description: Bulk pickup request updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkPickupRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/bulk-pickups/{pickup_id}/cancel:
+    post:
+      summary: Cancel a bulk pickup request
+      description: >
+        Cancel a bulk pickup that is still `requested` or `scheduled`. The
+        requesting citizen or an admin may cancel; only `requested` or
+        `scheduled` pickups are cancellable, otherwise 409 is returned.
+      operationId: cancelBulkPickup
+      x-user-story: US-31
+      tags:
+        - Bulk Pickups
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: pickup_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the bulk pickup request to cancel.
+      responses:
+        '200':
+          description: Bulk pickup request cancelled successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkPickupRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/bulk-pickups/{pickup_id}/assign:
+    post:
+      summary: Assign crew and vehicle to a bulk pickup
+      description: >
+        Dispatch a worker and vehicle to a `requested` or `scheduled`
+        pickup. Requires ADMIN role. Both the worker and vehicle must be
+        active and currently `available`, otherwise 409 is returned; an
+        unknown worker or vehicle ID returns 404. On success the worker
+        moves to `assigned`, the vehicle to `en_route`, and a still-
+        `requested` pickup moves to `scheduled`.
+      operationId: assignBulkPickup
+      x-user-story: US-31
+      tags:
+        - Bulk Pickups
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: pickup_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the bulk pickup request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkPickupAssign'
+      responses:
+        '200':
+          description: Crew and vehicle assigned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkPickupRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/schedule:
+    get:
+      summary: Get a ward's collection schedule
+      description: >
+        Retrieve the raw collection schedule rows (regular slots and one-off
+        exceptions) for a ward. Requires authentication; any role.
+      operationId: getWardSchedule
+      x-user-story: US-32/US-33
+      tags:
+        - Collection Schedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ward_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the ward.
+      responses:
+        '200':
+          description: Ward schedule rows retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionScheduleRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+    post:
+      summary: Create a schedule row
+      description: >
+        Create a regular recurring collection slot or a one-off exception
+        for a ward. Requires ADMIN role. `exception_date` is required when
+        `is_exception` is true; `day_of_week` is required otherwise;
+        `week_of_month` is required when `frequency` is `monthly`.
+      operationId: createScheduleRow
+      x-user-story: US-32/US-33
+      tags:
+        - Collection Schedule
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionScheduleCreate'
+      responses:
+        '201':
+          description: Schedule row created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionScheduleRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/schedule/reminders:
+    get:
+      summary: Get upcoming collection reminders for a ward
+      description: >
+        Return one computed next-occurrence reminder per regular schedule
+        row for a ward, plus any future-dated exceptions, sorted by date.
+        Requires authentication; any role.
+      operationId: getScheduleReminders
+      x-user-story: US-32/US-33
+      tags:
+        - Collection Schedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ward_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the ward.
+      responses:
+        '200':
+          description: Computed reminders retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduleReminderRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/schedule/{schedule_id}:
+    patch:
+      summary: Update a schedule row
+      description: Edit an existing regular slot or exception row. Requires ADMIN role.
+      operationId: updateScheduleRow
+      x-user-story: US-32/US-33
+      tags:
+        - Collection Schedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: schedule_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the schedule row.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionScheduleUpdate'
+      responses:
+        '200':
+          description: Schedule row updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionScheduleRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+    delete:
+      summary: Delete a schedule row
+      description: Remove a regular slot or exception row. Requires ADMIN role.
+      operationId: deleteScheduleRow
+      x-user-story: US-32/US-33
+      tags:
+        - Collection Schedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: schedule_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the schedule row.
+      responses:
+        '204':
+          description: Schedule row deleted successfully.
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/complaints/{complaint_id}/feedback:
+    post:
+      summary: Submit feedback on a complaint
+      description: >
+        Leave a one-time star rating and optional comment on a complaint the
+        current user reported, once it has reached `resolved`, `verified`,
+        or `closed` status. Only the reporting citizen may submit; a second
+        submission for the same complaint returns 409.
+      operationId: submitComplaintFeedback
+      x-user-story: US-24
+      tags:
+        - Feedback
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: complaint_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the complaint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackCreate'
+      responses:
+        '201':
+          description: Feedback submitted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+    get:
+      summary: Get feedback for a complaint
+      description: >
+        Fetch the feedback left on a complaint, subject to the same read
+        permissions as the complaint itself. Returns 404 if no feedback has
+        been submitted yet.
+      operationId: getComplaintFeedback
+      x-user-story: US-24
+      tags:
+        - Feedback
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: complaint_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the complaint.
+      responses:
+        '200':
+          description: Feedback retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/notifications:
+    get:
+      summary: List my notifications
+      description: >
+        Retrieve a paginated list of the current user's in-app
+        notifications, optionally filtered to unread items only.
+      operationId: listNotifications
+      x-user-story: US-06/US-23
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: unread_only
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: If true, return only unread notifications.
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: 1-based page index.
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Maximum items per page.
+      responses:
+        '200':
+          description: Paginated notification list retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageNotificationRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/notifications/{notification_id}/read:
+    patch:
+      summary: Mark a notification as read
+      description: >
+        Mark one of the current user's notifications as read. Idempotent —
+        marking an already-read notification again returns 200 unchanged.
+        Only the owning user may mark their own notification; another
+        user's notification ID returns 403.
+      operationId: markNotificationRead
+      x-user-story: US-06/US-23
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the notification.
+      responses:
+        '200':
+          description: Notification marked as read.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/notifications/read-all:
+    post:
+      summary: Mark all my notifications as read
+      description: Mark every unread notification for the current user as read in one call.
+      operationId: markAllNotificationsRead
+      x-user-story: US-06/US-23
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: All notifications marked as read; returns the count updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarkAllReadResult'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  /api/v1/transparency:
+    get:
+      summary: List transparency feed posts
+      description: >
+        Retrieve a paginated, public list of published cleanup posts,
+        optionally filtered by ward. No authentication required.
+      operationId: listTransparencyPosts
+      x-user-story: US-25
+      tags:
+        - Transparency
+      parameters:
+        - name: ward_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter results to a single ward.
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: 1-based page index.
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Maximum items per page.
+      responses:
+        '200':
+          description: Paginated transparency post list retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageTransparencyPostRead'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+    post:
+      summary: Publish a transparency post
+      description: >
+        Publish a before/after cleanup record for a resolved, verified, or
+        closed complaint. Requires CREW or ADMIN role. A complaint that
+        isn't yet resolved returns 409; a complaint that already has a post
+        also returns 409 (one post per complaint).
+      operationId: createTransparencyPost
+      x-user-story: US-25
+      tags:
+        - Transparency
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransparencyPostCreate'
+      responses:
+        '201':
+          description: Transparency post published successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransparencyPostRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/transparency/{post_id}:
+    get:
+      summary: Get a transparency post by ID
+      description: Fetch a single published transparency post. No authentication required.
+      operationId: getTransparencyPostById
+      x-user-story: US-25
+      tags:
+        - Transparency
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the transparency post.
+      responses:
+        '200':
+          description: Transparency post retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransparencyPostRead'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/transparency/{post_id}/applaud:
+    post:
+      summary: Applaud a transparency post
+      description: >
+        Increment a post's public applause counter by one. Anonymous,
+        unauthenticated, and repeatable.
+      operationId: applaudTransparencyPost
+      x-user-story: US-25
+      tags:
+        - Transparency
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the transparency post.
+      responses:
+        '200':
+          description: Applause counter incremented successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransparencyPostRead'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/transparency/{post_id}/comments:
+    get:
+      summary: List comments on a transparency post
+      description: Retrieve all comments on a transparency post. No authentication required.
+      operationId: listTransparencyPostComments
+      x-user-story: US-25
+      tags:
+        - Transparency
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the transparency post.
+      responses:
+        '200':
+          description: Comment list retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PostCommentRead'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+    post:
+      summary: Comment on a transparency post
+      description: >
+        Add a comment to a transparency post. Requires authentication so the
+        comment can be attributed to a user.
+      operationId: createTransparencyPostComment
+      x-user-story: US-25
+      tags:
+        - Transparency
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the transparency post.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCommentCreate'
+      responses:
+        '201':
+          description: Comment created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostCommentRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/feed:
+    get:
+      summary: List public feed posts
+      description: >
+        Public read-only alias of `GET /api/v1/transparency` for the
+        citizen-facing feed screen. Retrieve a paginated, public list of
+        published cleanup posts, optionally filtered by ward. No
+        authentication required.
+      operationId: listFeedPosts
+      x-user-story: US-25
+      tags:
+        - Feed
+      parameters:
+        - name: ward_id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter results to a single ward.
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: 1-based page index.
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Maximum items per page.
+      responses:
+        '200':
+          description: Paginated feed post list retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageTransparencyPostRead'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/feed/{post_id}:
+    get:
+      summary: Get a feed post by ID
+      description: >
+        Public read-only alias of `GET /api/v1/transparency/{post_id}`. No
+        authentication required.
+      operationId: getFeedPostById
+      x-user-story: US-25
+      tags:
+        - Feed
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the feed post.
+      responses:
+        '200':
+          description: Feed post retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransparencyPostRead'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/feed/{post_id}/applaud:
+    post:
+      summary: Applaud a feed post
+      description: >
+        Public read-only alias of `POST /api/v1/transparency/{post_id}/applaud`.
+        Increments the same underlying applause counter. Anonymous and repeatable.
+      operationId: applaudFeedPost
+      x-user-story: US-25
+      tags:
+        - Feed
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the feed post.
+      responses:
+        '200':
+          description: Applause counter incremented successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransparencyPostRead'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+  /api/v1/feed/{post_id}/comments:
+    get:
+      summary: List comments on a feed post
+      description: >
+        Public read-only alias of `GET /api/v1/transparency/{post_id}/comments`.
+        No authentication required.
+      operationId: listFeedPostComments
+      x-user-story: US-25
+      tags:
+        - Feed
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the feed post.
+      responses:
+        '200':
+          description: Comment list retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PostCommentRead'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+    post:
+      summary: Comment on a feed post
+      description: >
+        Alias of `POST /api/v1/transparency/{post_id}/comments`, writing to
+        the same underlying comment table. Requires authentication so the
+        comment can be attributed to a user.
+      operationId: createFeedPostComment
+      x-user-story: US-25
+      tags:
+        - Feed
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Numeric ID of the feed post.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCommentCreate'
+      responses:
+        '201':
+          description: Comment created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostCommentRead'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '422':
+          $ref: '#/components/responses/422ValidationError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    BulkPickupRead:
+      type: object
+      required:
+        - id
+        - requested_by_user_id
+        - category
+        - load_band
+        - address
+        - status
+        - fee
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        requested_by_user_id:
+          type: integer
+        ward_id:
+          type: integer
+          nullable: true
+        category:
+          type: string
+        load_band:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+        preferred_date:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/BulkPickupStatusEnum'
+        fee:
+          type: number
+          description: Fee computed server-side from category and load band.
+        assigned_vehicle_id:
+          type: integer
+          nullable: true
+        assigned_worker_id:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        scheduled_at:
+          type: string
+          format: date-time
+          nullable: true
+        collected_at:
+          type: string
+          format: date-time
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    BulkPickupCreate:
+      type: object
+      required:
+        - load_band
+        - address
+      properties:
+        category:
+          $ref: '#/components/schemas/BulkPickupCategoryEnum'
+        load_band:
+          $ref: '#/components/schemas/BulkPickupLoadBandEnum'
+        address:
+          type: string
+          minLength: 1
+          maxLength: 255
+        ward_id:
+          type: integer
+          nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+        preferred_date:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    BulkPickupUpdate:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/BulkPickupStatusEnum'
+        assigned_vehicle_id:
+          type: integer
+          nullable: true
+        assigned_worker_id:
+          type: integer
+          nullable: true
+        scheduled_at:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    BulkPickupAssign:
+      type: object
+      required:
+        - worker_id
+        - vehicle_id
+      properties:
+        worker_id:
+          type: integer
+        vehicle_id:
+          type: integer
+
+    BulkPickupStatusEnum:
+      type: string
+      enum:
+        - requested
+        - scheduled
+        - collected
+        - cancelled
+
+    BulkPickupCategoryEnum:
+      type: string
+      enum:
+        - general
+        - e_waste
+        - construction_debris
+        - scrap_metal
+
+    BulkPickupLoadBandEnum:
+      type: string
+      enum:
+        - small
+        - medium
+        - large
+        - extra_large
+
+    CollectionScheduleRead:
+      type: object
+      required:
+        - id
+        - ward_id
+        - frequency
+        - is_exception
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        ward_id:
+          type: integer
+        frequency:
+          $ref: '#/components/schemas/CollectionFrequencyEnum'
+        day_of_week:
+          type: integer
+          nullable: true
+          description: "Monday=0 .. Sunday=6, per date.weekday() convention."
+        week_of_month:
+          type: integer
+          nullable: true
+          description: "0-indexed nth occurrence in the month (0=first .. 3=fourth)."
+        time_slot:
+          type: string
+          nullable: true
+        is_exception:
+          type: boolean
+        exception_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CollectionScheduleCreate:
+      type: object
+      required:
+        - ward_id
+      properties:
+        ward_id:
+          type: integer
+        frequency:
+          $ref: '#/components/schemas/CollectionFrequencyEnum'
+        day_of_week:
+          type: integer
+          minimum: 0
+          maximum: 6
+          nullable: true
+          description: Required for a regular (non-exception) row.
+        week_of_month:
+          type: integer
+          minimum: 0
+          maximum: 3
+          nullable: true
+          description: Required when frequency is monthly.
+        time_slot:
+          type: string
+          maxLength: 50
+          nullable: true
+        is_exception:
+          type: boolean
+          default: false
+        exception_date:
+          type: string
+          format: date
+          nullable: true
+          description: Required when is_exception is true.
+        notes:
+          type: string
+          nullable: true
+
+    CollectionScheduleUpdate:
+      type: object
+      properties:
+        frequency:
+          $ref: '#/components/schemas/CollectionFrequencyEnum'
+        day_of_week:
+          type: integer
+          minimum: 0
+          maximum: 6
+          nullable: true
+        week_of_month:
+          type: integer
+          minimum: 0
+          maximum: 3
+          nullable: true
+        time_slot:
+          type: string
+          maxLength: 50
+          nullable: true
+        is_exception:
+          type: boolean
+          nullable: true
+        exception_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    ScheduleReminderRead:
+      type: object
+      required:
+        - schedule_id
+        - ward_id
+        - occurrence_date
+        - is_exception
+      properties:
+        schedule_id:
+          type: integer
+        ward_id:
+          type: integer
+        occurrence_date:
+          type: string
+          format: date
+        time_slot:
+          type: string
+          nullable: true
+        is_exception:
+          type: boolean
+        notes:
+          type: string
+          nullable: true
+
+    CollectionFrequencyEnum:
+      type: string
+      enum:
+        - weekly
+        - biweekly
+        - monthly
+
+    FeedbackCreate:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Star rating, 1 (worst) to 5 (best).
+        comment:
+          type: string
+          maxLength: 2000
+          nullable: true
+
+    FeedbackRead:
+      type: object
+      required:
+        - id
+        - complaint_id
+        - submitted_by_user_id
+        - rating
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        complaint_id:
+          type: integer
+        submitted_by_user_id:
+          type: integer
+        rating:
+          type: integer
+        comment:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    NotificationRead:
+      type: object
+      required:
+        - id
+        - user_id
+        - type
+        - title
+        - message
+        - is_read
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        type:
+          $ref: '#/components/schemas/NotificationTypeEnum'
+        title:
+          type: string
+        message:
+          type: string
+        related_complaint_id:
+          type: integer
+          nullable: true
+        is_read:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    NotificationTypeEnum:
+      type: string
+      enum:
+        - duplicate_detected
+        - complaint_resolved
+
+    MarkAllReadResult:
+      type: object
+      required:
+        - marked
+      properties:
+        marked:
+          type: integer
+          description: Number of notifications transitioned from unread to read.
+
+    TransparencyPostRead:
+      type: object
+      required:
+        - id
+        - complaint_id
+        - title
+        - applause_count
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        complaint_id:
+          type: integer
+        ward_id:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        before_photo_url:
+          type: string
+          nullable: true
+        after_photo_url:
+          type: string
+          nullable: true
+        applause_count:
+          type: integer
+        posted_by_user_id:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TransparencyPostCreate:
+      type: object
+      required:
+        - complaint_id
+        - title
+      properties:
+        complaint_id:
+          type: integer
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        before_photo_url:
+          type: string
+          maxLength: 2048
+          nullable: true
+        after_photo_url:
+          type: string
+          maxLength: 2048
+          nullable: true
+
+    PostCommentRead:
+      type: object
+      required:
+        - id
+        - post_id
+        - user_id
+        - comment
+        - created_at
+      properties:
+        id:
+          type: integer
+        post_id:
+          type: integer
+        user_id:
+          type: integer
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    PostCommentCreate:
+      type: object
+      required:
+        - comment
+      properties:
+        comment:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: >-
+            The comment body. A request keyed "content" instead of "comment"
+            is also accepted as an alias.
+
+    PageMeta:
+      type: object
+      required:
+        - page
+        - page_size
+        - total
+        - total_pages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: 1-based index of the returned page.
+        page_size:
+          type: integer
+          minimum: 1
+          description: Maximum items per page.
+        total:
+          type: integer
+          minimum: 0
+          description: Total matching rows, ignoring pagination.
+        total_pages:
+          type: integer
+          minimum: 0
+          description: ceil(total / page_size).
+
+    PageBulkPickupRead:
+      type: object
+      required:
+        - items
+        - meta
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkPickupRead'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    PageNotificationRead:
+      type: object
+      required:
+        - items
+        - meta
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationRead'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    PageTransparencyPostRead:
+      type: object
+      required:
+        - items
+        - meta
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransparencyPostRead'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    ErrorEnvelope:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+            request_id:
+              type: string
+              nullable: true
+
+  responses:
+    400BadRequest:
+      description: Bad request / Invalid input.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    401Unauthorized:
+      description: Unauthenticated request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    403Forbidden:
+      description: Permission denied for current user role.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    404NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    409Conflict:
+      description: Conflict with current resource state (e.g. illegal status transition, resource unavailable, duplicate submission).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    422ValidationError:
+      description: Request body or parameter validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
