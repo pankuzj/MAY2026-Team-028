@@ -35,6 +35,21 @@ class ComplaintType(str, Enum):
     EXTRA_COLLECTION = "extra_collection"
 
 
+class ComplaintCategory(str, Enum):
+    """Hazard classification chosen on the report form (US-28/29/30).
+
+    Values mirror ``Frontend/src/pages/ReportComplaint.jsx``'s ``#hazard``
+    select exactly (including the "None" default) so the API can validate
+    the field instead of accepting arbitrary free text.
+    """
+
+    NONE = "None"
+    FOUL_SMELL = "Foul Smell"
+    OVERFLOWING_BIN = "Overflowing Bin"
+    MOSQUITO_BREEDING = "Mosquito Breeding"
+    RISK_TO_CHILDREN = "Risk to Children"
+
+
 class Complaint(Base, TimestampMixin):
     """Citizen-reported waste or sanitation issue."""
 
@@ -43,7 +58,9 @@ class Complaint(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    category: Mapped[str | None] = mapped_column(
+        String(100), default=ComplaintCategory.NONE.value, nullable=True
+    )
     complaint_type: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     priority: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(

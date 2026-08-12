@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db, require_role
 from app.models.user import User, UserRole
-from app.schemas.bulk_pickup import BulkPickupCreate, BulkPickupRead, BulkPickupUpdate
+from app.schemas.bulk_pickup import (
+    BulkPickupAssign,
+    BulkPickupCreate,
+    BulkPickupRead,
+    BulkPickupUpdate,
+)
 from app.schemas.common import Page
 from app.services.bulk_pickup_service import BulkPickupService
 
@@ -82,4 +87,17 @@ def cancel_bulk_pickup(
 ) -> BulkPickupRead:
     return BulkPickupRead.model_validate(
         BulkPickupService.cancel_pickup(db, pickup_id, current_user)
+    )
+
+
+@router.post(
+    "/{pickup_id}/assign",
+    response_model=BulkPickupRead,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
+def assign_bulk_pickup(
+    pickup_id: int, assign_in: BulkPickupAssign, db: Session = Depends(get_db)
+) -> BulkPickupRead:
+    return BulkPickupRead.model_validate(
+        BulkPickupService.assign_pickup(db, pickup_id, assign_in)
     )

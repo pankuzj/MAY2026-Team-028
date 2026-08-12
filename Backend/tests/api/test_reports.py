@@ -35,12 +35,12 @@ def test_get_report_trends_happy_path(client: TestClient, db_session: Session):
     # Create complaints to populate trends
     client.post(
         "/api/v1/complaints",
-        json={"location": "Street A", "description": "Waste on road", "hazard": "biohazard"},
+        json={"location": "Street A", "description": "Waste on road", "hazard": "Risk to Children"},
         headers=_auth(token),
     )
     client.post(
         "/api/v1/complaints",
-        json={"location": "Street B", "description": "Foul smell", "hazard": "mosquito breeding"},
+        json={"location": "Street B", "description": "Foul smell", "hazard": "Mosquito Breeding"},
         headers=_auth(token),
     )
 

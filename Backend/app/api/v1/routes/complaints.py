@@ -10,6 +10,8 @@ from app.models.user import User, UserRole
 from app.repositories.complaint_repository import ComplaintRepository
 from app.schemas.common import Page
 from app.schemas.complaint import (
+    ComplaintCategory,
+    ComplaintClassifyRead,
     ComplaintClose,
     ComplaintRead,
     ComplaintStatus,
@@ -21,6 +23,7 @@ from app.schemas.complaint import (
     DuplicateCheckRequest,
 )
 from app.schemas.feedback import FeedbackCreate, FeedbackRead
+from app.services.complaint_classification_service import ComplaintClassificationService
 from app.services.complaint_service import ComplaintService
 from app.services.duplicate_detection_service import DuplicateDetectionService
 from app.services.feedback_service import FeedbackService
@@ -51,6 +54,7 @@ def list_complaints(
     status_filter: str | None = Query(default=None, alias="status"),
     ward_id: int | None = None,
     complaint_type: ComplaintType | None = None,
+    category: ComplaintCategory | None = None,
     page: int = 1,
     page_size: int = 20,
 ) -> Page[ComplaintRead]:
@@ -59,6 +63,7 @@ def list_complaints(
         "status": status_filter,
         "ward_id": ward_id,
         "complaint_type": complaint_type.value if complaint_type else None,
+        "category": category.value if category else None,
         "page": page,
         "page_size": page_size,
     }
@@ -91,11 +96,14 @@ def high_risk_complaints(
             "page_size": 500,
         },
     )
+    high_risk_categories = {
+        ComplaintCategory.RISK_TO_CHILDREN.value.lower(),
+        ComplaintCategory.MOSQUITO_BREEDING.value.lower(),
+    }
     high_risk = [
         item
         for item in items
-        if (item.category or "").lower()
-        in {"biohazard", "risk to children", "medical waste", "mosquito breeding"}
+        if (item.category or "").lower() in high_risk_categories
         or (item.priority or "").lower() in {"high", "urgent", "critical"}
     ]
     start = (page - 1) * page_size
@@ -308,6 +316,27 @@ def get_complaint_feedback(
     if not feedback:
         raise NotFoundError("No feedback has been submitted for this complaint.")
     return FeedbackRead.model_validate(feedback)
+
+
+@router.post(
+    "/{complaint_id}/classify",
+    response_model=ComplaintClassifyRead,
+    dependencies=[Depends(require_role(UserRole.CREW, UserRole.ADMIN))],
+)
+def classify_complaint(
+    complaint_id: int,
+    db: Session = Depends(get_db),
+) -> ComplaintClassifyRead:
+    """Classify a complaint's hazard category via Claude, falling back to keyword matching."""
+    complaint = ComplaintService.get_complaint(db, complaint_id)
+    result = ComplaintClassificationService.classify(db, complaint)
+    return ComplaintClassifyRead(
+        complaint=_to_read_model(complaint),
+        category=result.category,
+        source=result.source,
+        confidence=result.confidence,
+        reasoning=result.reasoning,
+    )
 
 
 @router.get(

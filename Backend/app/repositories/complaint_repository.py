@@ -52,6 +52,10 @@ class ComplaintRepository:
         if complaint_type:
             stmt = stmt.where(Complaint.complaint_type == complaint_type)
 
+        category = filters.get("category")
+        if category:
+            stmt = stmt.where(Complaint.category == category)
+
         reporter_id = filters.get("reported_by_user_id")
         if reporter_id is not None:
             stmt = stmt.where(Complaint.reported_by_user_id == reporter_id)
