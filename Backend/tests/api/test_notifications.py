@@ -27,13 +27,19 @@ def _auth(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _create_complaint(client: TestClient, token: str) -> int:
+def _create_complaint(
+    client: TestClient,
+    token: str,
+    location: str = "Test Street",
+    description: str = "Garbage left on road.",
+    hazard: str = "Risk to Children",
+) -> int:
     resp = client.post(
         "/api/v1/complaints",
         json={
-            "location": "Test Street",
-            "description": "Garbage left on road.",
-            "hazard": "Risk to Children",
+            "location": location,
+            "description": description,
+            "hazard": hazard,
         },
         headers=_auth(token),
     )
@@ -127,8 +133,18 @@ def test_list_notifications_pagination(client: TestClient, db_session: Session):
     admin_token = _register_and_login(
         db_session, client, "notif_admin_page@example.com", UserRole.ADMIN
     )
-    c1 = _create_complaint(client, citizen_token)
-    c2 = _create_complaint(client, citizen_token)
+    c1 = _create_complaint(
+        client,
+        citizen_token,
+        location="Alpha North Road",
+        description="Broken street lamp post near park.",
+    )
+    c2 = _create_complaint(
+        client,
+        citizen_token,
+        location="Beta South Avenue",
+        description="Water pipe leakage beside bus stop.",
+    )
     _resolve_complaint(client, admin_token, c1)
     _resolve_complaint(client, admin_token, c2)
 
@@ -255,7 +271,7 @@ def test_mark_all_notifications_read_happy_path(client: TestClient, db_session: 
     ]:
         resp = client.post(
             "/api/v1/complaints",
-            json={"location": loc, "description": desc, "hazard": "biohazard"},
+            json={"location": loc, "description": desc, "hazard": "Risk to Children"},
             headers=_auth(citizen_token),
         )
         assert resp.status_code == status.HTTP_201_CREATED, resp.text
@@ -307,7 +323,7 @@ def test_duplicate_detected_notification_emitted_on_duplicate_complaint(
         json={
             "location": "Test Street",
             "description": "Garbage left on road.",
-            "hazard": "biohazard",
+            "hazard": "Risk to Children",
         },
         headers=_auth(citizen_token),
     )
@@ -333,7 +349,7 @@ def test_duplicate_detected_notification_not_emitted_for_unique_complaint(
         json={
             "location": "Completely Unique Zebra Lane 99999",
             "description": "Totally unique issue that matches nothing.",
-            "hazard": "other",
+            "hazard": "Risk to Children",
         },
         headers=_auth(citizen_token),
     )
