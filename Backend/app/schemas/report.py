@@ -1,6 +1,6 @@
 """Pydantic DTOs for reports and analytics endpoints."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class StatusCount(BaseModel):

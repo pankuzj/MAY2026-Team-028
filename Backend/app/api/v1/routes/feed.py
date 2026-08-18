@@ -71,4 +71,3 @@ def create_feed_post_comment(
     """Add a comment to a feed post (requires auth)."""
     comment = TransparencyService.add_comment(db, post_id, current_user, comment_in)
     return PostCommentRead.model_validate(comment)
-

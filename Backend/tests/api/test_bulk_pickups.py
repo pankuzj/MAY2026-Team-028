@@ -385,7 +385,9 @@ def test_assign_pickup_happy_path(client: TestClient, db_session: Session):
     citizen_token = _register_and_login(
         db_session, client, "bp_asg_citizen@example.com", UserRole.CITIZEN
     )
-    admin_token = _register_and_login(db_session, client, "bp_asg_admin@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "bp_asg_admin@example.com", UserRole.ADMIN
+    )
     pickup_id = _create_pickup(client, citizen_token)
     worker = _create_worker(db_session)
     vehicle = _create_vehicle(db_session)

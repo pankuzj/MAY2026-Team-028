@@ -1,6 +1,7 @@
 """Analytics and reporting service."""
 
 from collections import defaultdict
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -73,12 +74,8 @@ class ReportService:
             cancelled=cancelled_cnt,
         )
 
-        status_breakdown = [
-            StatusCount(status=k, count=v) for k, v in status_counts.items()
-        ]
-        hazard_breakdown = [
-            HazardCount(hazard=k, count=v) for k, v in hazard_counts.items()
-        ]
+        status_breakdown = [StatusCount(status=k, count=v) for k, v in status_counts.items()]
+        hazard_breakdown = [HazardCount(hazard=k, count=v) for k, v in hazard_counts.items()]
         time_series = [
             TimeSeriesPoint(date=k, count=v)
             for k, v in sorted(time_series_map.items(), key=lambda x: x[0])
@@ -100,8 +97,14 @@ class ReportService:
         complaints = list(db.scalars(c_stmt).all())
 
         resolved_complaints = [
-            c for c in complaints
-            if c.status in (ComplaintStatus.RESOLVED.value, ComplaintStatus.VERIFIED.value, ComplaintStatus.CLOSED.value)
+            c
+            for c in complaints
+            if c.status
+            in (
+                ComplaintStatus.RESOLVED.value,
+                ComplaintStatus.VERIFIED.value,
+                ComplaintStatus.CLOSED.value,
+            )
             and c.resolved_at is not None
             and c.created_at is not None
         ]
@@ -126,11 +129,22 @@ class ReportService:
         for w in wards:
             w_complaints = complaints_by_ward.get(w.id, [])
             w_resolved = [
-                c for c in w_complaints
-                if c.status in (ComplaintStatus.RESOLVED.value, ComplaintStatus.VERIFIED.value, ComplaintStatus.CLOSED.value)
+                c
+                for c in w_complaints
+                if c.status
+                in (
+                    ComplaintStatus.RESOLVED.value,
+                    ComplaintStatus.VERIFIED.value,
+                    ComplaintStatus.CLOSED.value,
+                )
             ]
-            w_res_with_time = [c for c in w_resolved if c.resolved_at is not None and c.created_at is not None]
-            w_days = sum(max(0.0, (c.resolved_at - c.created_at).total_seconds() / (24 * 3600)) for c in w_res_with_time)
+            w_res_with_time = [
+                c for c in w_resolved if c.resolved_at is not None and c.created_at is not None
+            ]
+            w_days = sum(
+                max(0.0, (c.resolved_at - c.created_at).total_seconds() / (24 * 3600))
+                for c in w_res_with_time
+            )
             w_avg_days = round(w_days / len(w_res_with_time), 1) if w_res_with_time else 0.0
             rate = round((len(w_resolved) / len(w_complaints)) * 100, 1) if w_complaints else 0.0
 
@@ -178,16 +192,31 @@ class ReportService:
         total = len(complaints)
 
         resolved_list = [
-            c for c in complaints
-            if c.status in (ComplaintStatus.RESOLVED.value, ComplaintStatus.VERIFIED.value, ComplaintStatus.CLOSED.value)
+            c
+            for c in complaints
+            if c.status
+            in (
+                ComplaintStatus.RESOLVED.value,
+                ComplaintStatus.VERIFIED.value,
+                ComplaintStatus.CLOSED.value,
+            )
         ]
         resolved_cnt = len(resolved_list)
-        active_cnt = total - resolved_cnt - sum(1 for c in complaints if c.status == ComplaintStatus.CANCELLED.value)
+        active_cnt = (
+            total
+            - resolved_cnt
+            - sum(1 for c in complaints if c.status == ComplaintStatus.CANCELLED.value)
+        )
 
         rate = round((resolved_cnt / total) * 100, 1) if total else 0.0
 
-        res_with_time = [c for c in resolved_list if c.resolved_at is not None and c.created_at is not None]
-        total_days = sum(max(0.0, (c.resolved_at - c.created_at).total_seconds() / (24 * 3600)) for c in res_with_time)
+        res_with_time = [
+            c for c in resolved_list if c.resolved_at is not None and c.created_at is not None
+        ]
+        total_days = sum(
+            max(0.0, (c.resolved_at - c.created_at).total_seconds() / (24 * 3600))
+            for c in res_with_time
+        )
         avg_days = round(total_days / len(res_with_time), 1) if res_with_time else 0.0
 
         posts_count = len(list(db.scalars(select(TransparencyPost)).all()))
@@ -197,9 +226,15 @@ class ReportService:
         top_wards_list: list[TopWardStats] = []
         for w in wards:
             w_res = sum(
-                1 for c in complaints
+                1
+                for c in complaints
                 if c.ward_id == w.id
-                and c.status in (ComplaintStatus.RESOLVED.value, ComplaintStatus.VERIFIED.value, ComplaintStatus.CLOSED.value)
+                and c.status
+                in (
+                    ComplaintStatus.RESOLVED.value,
+                    ComplaintStatus.VERIFIED.value,
+                    ComplaintStatus.CLOSED.value,
+                )
             )
             top_wards_list.append(TopWardStats(ward_id=w.id, name=w.name, resolved_count=w_res))
 

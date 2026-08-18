@@ -382,7 +382,9 @@ def test_auto_generate_transparency_post_on_close(client: TestClient, db_session
     # Attach before photo to complaint
     client.post(
         f"/api/v1/complaints/{complaint_id}/photo",
-        files={"photo": ("before.png", io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 10), "image/png")},
+        files={
+            "photo": ("before.png", io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 10), "image/png")
+        },
         headers=_auth(citizen_token),
     )
 

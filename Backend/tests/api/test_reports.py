@@ -105,5 +105,3 @@ def test_get_public_report_stats_happy_path(client: TestClient):
     assert "total_cleanups_completed" in data
     assert "top_wards" in data
     assert isinstance(data["top_wards"], list)
-
-

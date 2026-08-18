@@ -63,41 +63,179 @@ DEMO_WARDS_SEED = [
 
 DEMO_SCHEDULES_SEED = [
     # MG Road (Ward 04) - ward_id 1
-    {"ward_idx": 0, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 0, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 0, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 2, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 0, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 4, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 0, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 1, "notes": "Dry Waste", "time_slot": "Morning"},
-    {"ward_idx": 0, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 5, "notes": "Dry Waste", "time_slot": "Morning"},
-    {"ward_idx": 0, "frequency": CollectionFrequency.MONTHLY.value, "day_of_week": 5, "week_of_month": 0, "notes": "Hazardous / E-Waste", "time_slot": "Morning"},
-
+    {
+        "ward_idx": 0,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 0,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 0,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 2,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 0,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 4,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 0,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 1,
+        "notes": "Dry Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 0,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 5,
+        "notes": "Dry Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 0,
+        "frequency": CollectionFrequency.MONTHLY.value,
+        "day_of_week": 5,
+        "week_of_month": 0,
+        "notes": "Hazardous / E-Waste",
+        "time_slot": "Morning",
+    },
     # Indiranagar (Ward 12) - ward_id 2
-    {"ward_idx": 1, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 0, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 1, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 2, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 1, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 4, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 1, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 3, "notes": "Dry Waste", "time_slot": "Morning"},
-    {"ward_idx": 1, "frequency": CollectionFrequency.MONTHLY.value, "day_of_week": 6, "week_of_month": 0, "notes": "Hazardous / E-Waste", "time_slot": "Morning"},
-
+    {
+        "ward_idx": 1,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 0,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 1,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 2,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 1,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 4,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 1,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 3,
+        "notes": "Dry Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 1,
+        "frequency": CollectionFrequency.MONTHLY.value,
+        "day_of_week": 6,
+        "week_of_month": 0,
+        "notes": "Hazardous / E-Waste",
+        "time_slot": "Morning",
+    },
     # Koramangala (Ward 08) - ward_id 3
-    {"ward_idx": 2, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 1, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 2, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 3, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 2, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 5, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 2, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 0, "notes": "Dry Waste", "time_slot": "Morning"},
-    {"ward_idx": 2, "frequency": CollectionFrequency.MONTHLY.value, "day_of_week": 5, "week_of_month": 2, "notes": "Hazardous / E-Waste", "time_slot": "Morning"},
-
+    {
+        "ward_idx": 2,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 1,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 2,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 3,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 2,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 5,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 2,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 0,
+        "notes": "Dry Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 2,
+        "frequency": CollectionFrequency.MONTHLY.value,
+        "day_of_week": 5,
+        "week_of_month": 2,
+        "notes": "Hazardous / E-Waste",
+        "time_slot": "Morning",
+    },
     # Jayanagar (Ward 15) - ward_id 4
-    {"ward_idx": 3, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 6, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 3, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 1, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 3, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 3, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 3, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 5, "notes": "Wet Waste", "time_slot": "Morning"},
-    {"ward_idx": 3, "frequency": CollectionFrequency.WEEKLY.value, "day_of_week": 2, "notes": "Dry Waste", "time_slot": "Morning"},
-    {"ward_idx": 3, "frequency": CollectionFrequency.MONTHLY.value, "day_of_week": 6, "week_of_month": 2, "notes": "Hazardous / E-Waste", "time_slot": "Morning"},
+    {
+        "ward_idx": 3,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 6,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 3,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 1,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 3,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 3,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 3,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 5,
+        "notes": "Wet Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 3,
+        "frequency": CollectionFrequency.WEEKLY.value,
+        "day_of_week": 2,
+        "notes": "Dry Waste",
+        "time_slot": "Morning",
+    },
+    {
+        "ward_idx": 3,
+        "frequency": CollectionFrequency.MONTHLY.value,
+        "day_of_week": 6,
+        "week_of_month": 2,
+        "notes": "Hazardous / E-Waste",
+        "time_slot": "Morning",
+    },
 ]
 
 DEMO_EXCEPTIONS_SEED = [
-    {"exception_date": "2026-08-15", "notes": "Independence Day — no collection. Pickup shifts to the next working day."},
-    {"exception_date": "2026-08-29", "notes": "Ganesh Chaturthi — dry waste collection only; wet waste resumes the day after."},
+    {
+        "exception_date": "2026-08-15",
+        "notes": "Independence Day — no collection. Pickup shifts to the next working day.",
+    },
+    {
+        "exception_date": "2026-08-29",
+        "notes": "Ganesh Chaturthi — dry waste collection only; wet waste resumes the day after.",
+    },
 ]
-
 
 
 def init_db(db: Session) -> None:
@@ -142,19 +280,19 @@ def init_db(db: Session) -> None:
                 week_of_month=sched.get("week_of_month"),
                 time_slot=sched.get("time_slot"),
                 notes=sched.get("notes"),
-                is_exception=False
+                is_exception=False,
             )
             db.add(cs)
-        
+
         for ward in ward_objs:
             for exc in DEMO_EXCEPTIONS_SEED:
                 cs = CollectionSchedule(
                     ward_id=ward.id,
                     is_exception=True,
                     exception_date=datetime.strptime(exc["exception_date"], "%Y-%m-%d").date(),
-                    notes=exc["notes"]
+                    notes=exc["notes"],
                 )
                 db.add(cs)
-        
+
         db.commit()
         logger.info("Seeded demo schedules and exceptions.")

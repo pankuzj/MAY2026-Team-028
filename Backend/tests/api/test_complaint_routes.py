@@ -329,9 +329,7 @@ def test_list_complaints_filters_by_category(client: TestClient, db_session: Ses
     assert data["items"][0]["category"] == "Risk to Children"
 
 
-def test_list_complaints_rejects_invalid_category_filter(
-    client: TestClient, db_session: Session
-):
+def test_list_complaints_rejects_invalid_category_filter(client: TestClient, db_session: Session):
     """Filtering by a category outside the enum returns 422, not a silent no-op."""
     token = _register_and_login(db_session, client, "cat_filter_bad@example.com", UserRole.CITIZEN)
     resp = client.get(
@@ -373,9 +371,7 @@ def test_classify_complaint_falls_back_to_heuristic_without_api_key(
         db_session, citizen_token, client, "Stagnant water breeding mosquitoes near the drain."
     )
 
-    resp = client.post(
-        f"/api/v1/complaints/{complaint_id}/classify", headers=_auth(admin_token)
-    )
+    resp = client.post(f"/api/v1/complaints/{complaint_id}/classify", headers=_auth(admin_token))
     assert resp.status_code == status.HTTP_200_OK, resp.text
     data = resp.json()
     assert data["source"] == "heuristic"
@@ -385,12 +381,8 @@ def test_classify_complaint_falls_back_to_heuristic_without_api_key(
 
 def test_classify_complaint_validation_failure(client: TestClient, db_session: Session):
     """Validation Failure: non-integer complaint id returns 422."""
-    admin_token = _register_and_login(
-        db_session, client, "clsfy_val@example.com", UserRole.ADMIN
-    )
-    resp = client.post(
-        "/api/v1/complaints/not-an-id/classify", headers=_auth(admin_token)
-    )
+    admin_token = _register_and_login(db_session, client, "clsfy_val@example.com", UserRole.ADMIN)
+    resp = client.post("/api/v1/complaints/not-an-id/classify", headers=_auth(admin_token))
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
@@ -402,20 +394,14 @@ def test_classify_complaint_rbac_failure(client: TestClient, db_session: Session
     complaint_id = _create_complaint_with_description(
         db_session, citizen_token, client, "Garbage left uncollected."
     )
-    resp = client.post(
-        f"/api/v1/complaints/{complaint_id}/classify", headers=_auth(citizen_token)
-    )
+    resp = client.post(f"/api/v1/complaints/{complaint_id}/classify", headers=_auth(citizen_token))
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
 def test_classify_complaint_edge_case_not_found(client: TestClient, db_session: Session):
     """Edge Case: classifying a non-existent complaint returns 404."""
-    admin_token = _register_and_login(
-        db_session, client, "clsfy_404@example.com", UserRole.ADMIN
-    )
-    resp = client.post(
-        "/api/v1/complaints/999999/classify", headers=_auth(admin_token)
-    )
+    admin_token = _register_and_login(db_session, client, "clsfy_404@example.com", UserRole.ADMIN)
+    resp = client.post("/api/v1/complaints/999999/classify", headers=_auth(admin_token))
     assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -606,7 +592,9 @@ def test_upload_photo_rejects_oversized_file(client: TestClient, db_session: Ses
 def test_verify_complaint_happy_path(client: TestClient, db_session: Session):
     """Admin review verifies complaint status to 'verified'."""
     citizen_token = _register_citizen_token(db_session, client, "verify_cit@example.com")
-    admin_token = _register_and_login(db_session, client, "verify_admin@example.com", UserRole.ADMIN)
+    admin_token = _register_and_login(
+        db_session, client, "verify_admin@example.com", UserRole.ADMIN
+    )
     complaint_id = _create_complaint(db_session, citizen_token, client)
 
     # Admin verifies the complaint

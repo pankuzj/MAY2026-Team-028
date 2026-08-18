@@ -138,6 +138,10 @@ class BulkPickupService:
             update_data.setdefault("scheduled_at", datetime.now(UTC))
 
         updated = BulkPickupRepository.update(db, pickup, update_data)
-        ResourceService.update_worker_status(db, assign_in.worker_id, status=WorkerStatus.ASSIGNED.value)
-        ResourceService.update_vehicle_status(db, assign_in.vehicle_id, status=VehicleStatus.EN_ROUTE.value)
+        ResourceService.update_worker_status(
+            db, assign_in.worker_id, status=WorkerStatus.ASSIGNED.value
+        )
+        ResourceService.update_vehicle_status(
+            db, assign_in.vehicle_id, status=VehicleStatus.EN_ROUTE.value
+        )
         return updated

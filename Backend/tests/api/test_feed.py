@@ -64,7 +64,9 @@ def _create_post(client: TestClient, admin_token: str, complaint_id: int) -> int
 
 def test_get_feed_happy_path(client: TestClient, db_session: Session):
     """Happy Path: GET /feed returns paginated public feed posts without requiring auth."""
-    citizen_token = _register_and_login(db_session, client, "feed_cit@example.com", UserRole.CITIZEN)
+    citizen_token = _register_and_login(
+        db_session, client, "feed_cit@example.com", UserRole.CITIZEN
+    )
     admin_token = _register_and_login(db_session, client, "feed_adm@example.com", UserRole.ADMIN)
     cid = _create_complaint(client, citizen_token)
     _resolve_complaint(client, admin_token, cid)
@@ -93,7 +95,9 @@ def test_get_feed_with_ward_filter(client: TestClient, db_session: Session):
 
 def test_applaud_feed_post_happy_path(client: TestClient, db_session: Session):
     """Happy Path: POST /feed/{id}/applaud increments applaud count."""
-    citizen_token = _register_and_login(db_session, client, "applaud_cit@example.com", UserRole.CITIZEN)
+    citizen_token = _register_and_login(
+        db_session, client, "applaud_cit@example.com", UserRole.CITIZEN
+    )
     admin_token = _register_and_login(db_session, client, "applaud_adm@example.com", UserRole.ADMIN)
     cid = _create_complaint(client, citizen_token)
     _resolve_complaint(client, admin_token, cid)
@@ -110,7 +114,9 @@ def test_applaud_feed_post_happy_path(client: TestClient, db_session: Session):
 
 def test_create_feed_post_comment_happy_path(client: TestClient, db_session: Session):
     """Happy Path: POST /feed/{id}/comments adds a comment to a feed post."""
-    citizen_token = _register_and_login(db_session, client, "comment_cit@example.com", UserRole.CITIZEN)
+    citizen_token = _register_and_login(
+        db_session, client, "comment_cit@example.com", UserRole.CITIZEN
+    )
     admin_token = _register_and_login(db_session, client, "comment_adm@example.com", UserRole.ADMIN)
     cid = _create_complaint(client, citizen_token)
     _resolve_complaint(client, admin_token, cid)
@@ -134,12 +140,15 @@ def test_create_feed_post_comment_happy_path(client: TestClient, db_session: Ses
 
 def test_create_feed_post_comment_requires_auth(client: TestClient, db_session: Session):
     """Auth Failure: POST /feed/{id}/comments without auth returns 401."""
-    citizen_token = _register_and_login(db_session, client, "comment_noauth_cit@example.com", UserRole.CITIZEN)
-    admin_token = _register_and_login(db_session, client, "comment_noauth_adm@example.com", UserRole.ADMIN)
+    citizen_token = _register_and_login(
+        db_session, client, "comment_noauth_cit@example.com", UserRole.CITIZEN
+    )
+    admin_token = _register_and_login(
+        db_session, client, "comment_noauth_adm@example.com", UserRole.ADMIN
+    )
     cid = _create_complaint(client, citizen_token)
     _resolve_complaint(client, admin_token, cid)
     post_id = _create_post(client, admin_token, cid)
 
     resp = client.post(f"/api/v1/feed/{post_id}/comments", json={"content": "No auth comment"})
     assert resp.status_code == status.HTTP_401_UNAUTHORIZED
-

@@ -98,6 +98,4 @@ def cancel_bulk_pickup(
 def assign_bulk_pickup(
     pickup_id: int, assign_in: BulkPickupAssign, db: Session = Depends(get_db)
 ) -> BulkPickupRead:
-    return BulkPickupRead.model_validate(
-        BulkPickupService.assign_pickup(db, pickup_id, assign_in)
-    )
+    return BulkPickupRead.model_validate(BulkPickupService.assign_pickup(db, pickup_id, assign_in))

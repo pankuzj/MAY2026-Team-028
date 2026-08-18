@@ -179,7 +179,6 @@ def test_submit_feedback_closed_complaint(client: TestClient, db_session: Sessio
     assert resp.json()["rating"] == 4
 
 
-
 # ---------------------------------------------------------------------------
 # GET /complaints/{id}/feedback
 # ---------------------------------------------------------------------------

@@ -136,7 +136,9 @@ class ComplaintClassificationService:
             category = ComplaintCategory(data["category"])
             confidence = float(data["confidence"])
         except (json.JSONDecodeError, KeyError, ValueError):
-            logger.warning("Claude returned an unparseable classification %r; using heuristic.", text)
+            logger.warning(
+                "Claude returned an unparseable classification %r; using heuristic.", text
+            )
             return None
 
         return ClassificationResult(category=category, source="llm", confidence=confidence)
