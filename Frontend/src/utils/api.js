@@ -3,11 +3,14 @@
  * Handles JWT authentication headers, token storage, auto-refresh, and error envelopes.
  */
 
+const envApiUrl = (import.meta.env.VITE_API_URL || "").trim().replace(/\/$/, "");
+
 const BASE_CANDIDATES = [
+  envApiUrl,
   "/api/v1",
   "http://localhost:8000/api/v1",
   "http://127.0.0.1:8000/api/v1",
-];
+].filter(Boolean);
 
 export const getStoredTokenPair = () => {
   try {
