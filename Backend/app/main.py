@@ -47,9 +47,15 @@ def create_app() -> FastAPI:
     # Middleware runs in reverse registration order (last added = outermost),
     # so request-id/access-log wraps CORS to time and tag the whole response
     # including CORS headers.
+    cors_origins = settings.cors_origin_list
+    cors_regex = r"^https?://.*"
+    if "*" in cors_origins:
+        cors_origins = []
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origin_list,
+        allow_origins=cors_origins,
+        allow_origin_regex=cors_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
