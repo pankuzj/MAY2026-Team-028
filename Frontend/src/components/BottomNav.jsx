@@ -1,31 +1,24 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { IconHome, IconReport, IconClipboard, IconBroom, IconGrid, IconUsers, IconTruck, IconFeed, IconPackage, IconCalendar, IconChartBar } from "./Icons";
+import { IconHome, IconReport, IconClipboard, IconBroom, IconGrid, IconFeed, IconPackage, IconChartBar } from "./Icons";
 
 const roleLinks = {
   citizen: [
     { to: "/", label: "Home", icon: IconHome },
     { to: "/report", label: "Report", icon: IconReport },
-    { to: "/my-complaints", label: "Mine", icon: IconClipboard },
-    { to: "/bulk-pickup", label: "Bulk", icon: IconPackage },
-    { to: "/schedule", label: "Schedule", icon: IconCalendar },
+    { to: "/my-complaints", label: "My Issues", icon: IconClipboard },
     { to: "/feed", label: "Feed", icon: IconFeed },
   ],
   crew: [
     { to: "/", label: "Home", icon: IconHome },
     { to: "/crew", label: "Tasks", icon: IconBroom },
-    { to: "/workforce", label: "Crew", icon: IconUsers },
-    { to: "/vehicles", label: "Fleet", icon: IconTruck },
-    { to: "/bulk-pickup-manage", label: "Bulk", icon: IconPackage },
+    { to: "/bulk-pickup-manage", label: "Bulk Pickups", icon: IconPackage },
     { to: "/feed", label: "Feed", icon: IconFeed },
   ],
   admin: [
     { to: "/", label: "Home", icon: IconHome },
-    { to: "/dashboard", label: "Admin", icon: IconGrid },
-    { to: "/reports", label: "Reports", icon: IconChartBar },
-    { to: "/workforce", label: "Crew", icon: IconUsers },
-    { to: "/vehicles", label: "Fleet", icon: IconTruck },
-    { to: "/bulk-pickup-manage", label: "Bulk", icon: IconPackage },
+    { to: "/dashboard", label: "Dashboard", icon: IconGrid },
+    { to: "/reports", label: "Trends", icon: IconChartBar },
     { to: "/feed", label: "Feed", icon: IconFeed },
   ],
 };
