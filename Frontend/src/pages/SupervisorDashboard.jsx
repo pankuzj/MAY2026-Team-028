@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { useComplaints } from "../context/ComplaintsContext";
+import { useOperational } from "../context/OperationalContext";
 import { useToast } from "../context/ToastContext";
 import { getDuplicateMatches } from "../utils/duplicateDetection";
 import ComplaintCard from "../components/ComplaintCard";
-import { IconSearch, IconSliders, IconX } from "../components/Icons";
+import { IconSearch, IconSliders, IconX, IconUserPlus } from "../components/Icons";
 
 // Kept in sync with the hazard options offered on ReportComplaint /
 // ComplaintDetail's edit form — "None" is intentionally left out of the
@@ -30,11 +31,17 @@ const DEFAULT_ADVANCED = {
 
 export default function SupervisorDashboard() {
   const { complaints, updateStatus } = useComplaints();
+  const { workforce = [] } = useOperational();
   const { notify } = useToast();
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [advanced, setAdvanced] = useState(DEFAULT_ADVANCED);
+
+  // Assignment Modal States
+  const [assigningComplaint, setAssigningComplaint] = useState(null);
+  const [selectedWorkerId, setSelectedWorkerId] = useState("");
+  const [assignmentNotes, setAssignmentNotes] = useState("");
 
   const advancedActive =
     advanced.hazard !== "All" ||
@@ -78,9 +85,10 @@ export default function SupervisorDashboard() {
       );
   }, [complaints, filter, search, advanced]);
 
-  const handleAssign = async (id) => {
+  const handleAssign = (id) => {
     const complaint = complaints.find((c) => c.id === id);
-    const dupes = complaint ? getDuplicateMatches(complaint, complaints) : [];
+    if (!complaint) return;
+    const dupes = getDuplicateMatches(complaint, complaints);
     if (dupes.length) {
       const caseList = dupes
         .map((m) => `#${String(m.complaint.id).padStart(4, "0")}`)
@@ -91,9 +99,30 @@ export default function SupervisorDashboard() {
       if (!proceed) return;
     }
 
-    const result = await updateStatus(id, "In Progress");
+    setAssigningComplaint(complaint);
+    setSelectedWorkerId(workforce[0]?.id || "");
+    setAssignmentNotes("");
+  };
+
+  const handleConfirmAssignment = async (e) => {
+    e.preventDefault();
+    if (!assigningComplaint || !selectedWorkerId) return;
+
+    const worker = workforce.find((w) => w.id === selectedWorkerId);
+    const workerName = worker ? worker.name : selectedWorkerId;
+
+    const result = await updateStatus(assigningComplaint.id, "In Progress", {
+      assignedTo: workerName,
+      assignedWorkerId: selectedWorkerId,
+      instructions: assignmentNotes.trim() || undefined,
+      assignedAt: new Date().toISOString().slice(0, 10),
+    });
+
     if (result.success) {
-      notify(`Crew assigned to case #${String(id).padStart(4, "0")}`, "success");
+      notify(`Assigned Case #${String(assigningComplaint.id).padStart(4, "0")} to ${workerName}`, "success");
+      setAssigningComplaint(null);
+      setSelectedWorkerId("");
+      setAssignmentNotes("");
     } else {
       notify(result.error || "Couldn't assign crew.", "error");
     }
@@ -229,6 +258,62 @@ export default function SupervisorDashboard() {
               duplicatesOf={getDuplicateMatches(c, complaints)}
             />
           ))}
+        </div>
+      )}
+
+      {/* MODAL: Assign Crew Personnel */}
+      {assigningComplaint && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Dispatch Crew to Case #{String(assigningComplaint.id).padStart(4, "0")}</h2>
+              <button className="icon-btn" onClick={() => setAssigningComplaint(null)}><IconX /></button>
+            </div>
+            <form onSubmit={handleConfirmAssignment} className="complaint-form">
+              <div style={{ padding: "0.85rem", background: "rgba(255,255,255,0.05)", borderRadius: "8px", marginBottom: "1rem" }}>
+                <p style={{ margin: 0, fontWeight: "600" }}>📍 {assigningComplaint.location}</p>
+                <p style={{ margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#aaa" }}>{assigningComplaint.description}</p>
+                {assigningComplaint.hazard && (
+                  <span className="hazard-tag" style={{ display: "inline-block", marginTop: "0.5rem" }}>
+                    ⚠️ {assigningComplaint.hazard}
+                  </span>
+                )}
+              </div>
+
+              <label>
+                Select Field Personnel / Crew Lead
+                <select
+                  required
+                  value={selectedWorkerId}
+                  onChange={(e) => setSelectedWorkerId(e.target.value)}
+                >
+                  <option value="">-- Choose Field Personnel --</option>
+                  {workforce.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name} ({w.role} - {w.shift})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Dispatch Instructions / Special Notes (Optional)
+                <textarea
+                  rows={2}
+                  placeholder="e.g. High priority area near school gate. Bring odor neutralizer."
+                  value={assignmentNotes}
+                  onChange={(e) => setAssignmentNotes(e.target.value)}
+                />
+              </label>
+
+              <div className="modal-actions">
+                <button type="button" className="secondary-btn" onClick={() => setAssigningComplaint(null)}>Cancel</button>
+                <button type="submit" className="primary-btn" disabled={!selectedWorkerId}>
+                  <IconUserPlus /> Confirm & Dispatch
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

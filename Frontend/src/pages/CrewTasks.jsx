@@ -1,11 +1,30 @@
+import { useState } from "react";
 import { useComplaints } from "../context/ComplaintsContext";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import ComplaintCard from "../components/ComplaintCard";
+import { IconCheckCircle, IconUsers } from "../components/Icons";
 
 export default function CrewTasks() {
   const { complaints, updateStatus } = useComplaints();
+  const { user } = useAuth();
   const { notify } = useToast();
-  const assigned = complaints.filter((c) => c.status === "In Progress");
+  const [activeTab, setActiveTab] = useState("my"); // 'my' | 'all'
+
+  // Normalize user name for comparison
+  const userName = (user?.name || user?.email || "").toLowerCase();
+  const isGenericCrew = userName === "crew" || userName === "crew demo" || userName === "crew member" || userName.includes("demo");
+
+  const allInProgress = complaints.filter((c) => c.status === "In Progress");
+
+  const myTasks = allInProgress.filter((c) => {
+    if (!c.assignedTo) return true; // Unassigned in-progress jobs visible to all crew
+    const assignee = c.assignedTo.toLowerCase();
+    if (isGenericCrew) return true; // Demo account can see all tasks
+    return assignee.includes(userName) || userName.includes(assignee);
+  });
+
+  const displayedTasks = activeTab === "my" ? myTasks : allInProgress;
 
   const handleComplete = async (id) => {
     const result = await updateStatus(id, "Resolved");
@@ -18,13 +37,48 @@ export default function CrewTasks() {
 
   return (
     <div className="page">
-      <span className="eyebrow">Cleanup Crew</span>
-      <h1>Assigned Tasks</h1>
-      {assigned.length === 0 ? (
-        <p>No tasks assigned right now. Check back after the supervisor assigns a case.</p>
+      <div className="page-header">
+        <div>
+          <span className="eyebrow">Cleanup Crew Operations</span>
+          <h1>Field Task Queue</h1>
+          <p className="page-lead">
+            Welcome, <strong>{user?.name || "Crew Specialist"}</strong>. Review and resolve your assigned remediation tasks.
+          </p>
+        </div>
+      </div>
+
+      {/* Tab Switcher */}
+      <div className="filters" style={{ marginBottom: "1.5rem" }}>
+        <button
+          type="button"
+          className={activeTab === "my" ? "active" : ""}
+          onClick={() => setActiveTab("my")}
+        >
+          <IconCheckCircle /> My Assigned Tasks ({myTasks.length})
+        </button>
+        <button
+          type="button"
+          className={activeTab === "all" ? "active" : ""}
+          onClick={() => setActiveTab("all")}
+        >
+          <IconUsers /> All Ward Jobs ({allInProgress.length})
+        </button>
+      </div>
+
+      {displayedTasks.length === 0 ? (
+        <div className="empty-state" style={{ textAlign: "center", padding: "3rem 1rem", background: "var(--card-bg, rgba(255,255,255,0.03))", borderRadius: "12px" }}>
+          <p style={{ fontSize: "1.1rem", fontWeight: "600" }}>
+            {activeTab === "my" ? "No specific tasks assigned to you right now." : "No in-progress tasks across the ward."}
+          </p>
+          <p style={{ color: "var(--text-muted, #888)", fontSize: "0.9rem" }}>
+            {activeTab === "my"
+              ? "Switch to 'All Ward Jobs' to browse active cases or wait for the supervisor to dispatch a task."
+              : "All reported complaints are either pending assignment or already resolved."}
+          </p>
+        </div>
       ) : (
         <div className="complaint-list grid-desktop">
-          {assigned.map((c) => (
+          {displayedTasks.map((c) => (
             <ComplaintCard key={c.id} complaint={c} onComplete={handleComplete} />
           ))}
         </div>

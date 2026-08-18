@@ -25,6 +25,11 @@ export default function ComplaintCard({ complaint, onAssign, onComplete, duplica
         <p className="hazard-tag"><IconAlertTriangle /> {complaint.hazard}</p>
       )}
       {complaint.reportedBy && <p className="reported-by">Filed by {complaint.reportedBy}</p>}
+      {complaint.assignedTo && (
+        <p className="assigned-to-tag" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem", color: "var(--accent-color, #10b981)", fontWeight: "600", marginTop: "0.25rem" }}>
+          <IconUserPlus /> Assigned to: {complaint.assignedTo}
+        </p>
+      )}
       <p className="date">Reported: {complaint.createdAt}</p>
       <div className="card-actions">
         {complaint.coords && (

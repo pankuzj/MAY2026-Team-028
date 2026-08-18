@@ -15,6 +15,8 @@ const initialComplaints = [
     reportedBy: "Anita Rao",
     status: "Pending",
     createdAt: "2026-06-20",
+    assignedTo: null,
+    assignedWorkerId: null,
   },
   {
     id: 2,
@@ -26,6 +28,9 @@ const initialComplaints = [
     reportedBy: "Mohammed Iqbal",
     status: "In Progress",
     createdAt: "2026-06-18",
+    assignedTo: "Ramesh Kumar",
+    assignedWorkerId: "W-102",
+    assignedAt: "2026-06-18",
   },
   {
     id: 3,
@@ -38,6 +43,8 @@ const initialComplaints = [
     status: "Resolved",
     createdAt: "2026-06-10",
     resolvedAt: "2026-06-13",
+    assignedTo: "Ramesh Kumar",
+    assignedWorkerId: "W-102",
   },
   {
     id: 4,
@@ -84,6 +91,8 @@ const initialComplaints = [
     reportedBy: "Anita Rao",
     status: "Pending",
     createdAt: "2026-07-01",
+    assignedTo: null,
+    assignedWorkerId: null,
   },
   {
     id: 8,
@@ -95,12 +104,22 @@ const initialComplaints = [
     reportedBy: "Mohammed Iqbal",
     status: "In Progress",
     createdAt: "2026-06-28",
+    assignedTo: "Suresh Patil",
+    assignedWorkerId: "W-101",
+    assignedAt: "2026-06-28",
   },
 ];
 
 export function ComplaintsProvider({ children }) {
-  const [complaints, setComplaints] = useState(initialComplaints);
+  const [complaints, setComplaints] = useState(() => {
+    const saved = localStorage.getItem("smartsweep-complaints");
+    return saved ? JSON.parse(saved) : initialComplaints;
+  });
   const { user } = useAuth();
+
+  useEffect(() => {
+    localStorage.setItem("smartsweep-complaints", JSON.stringify(complaints));
+  }, [complaints]);
 
   const toLocalComplaint = (apiComplaint, fallbackData = {}) => ({
     id: apiComplaint.id,
@@ -119,7 +138,11 @@ export function ComplaintsProvider({ children }) {
         : `User #${apiComplaint.reported_by_user_id}`),
     status: apiComplaint.status
       ? apiComplaint.status.replace(/_/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase())
-      : "Pending",
+      : fallbackData.status || "Pending",
+    assignedTo: fallbackData.assignedTo || apiComplaint.assigned_to || null,
+    assignedWorkerId: fallbackData.assignedWorkerId || apiComplaint.assigned_worker_id || null,
+    assignedAt: fallbackData.assignedAt || apiComplaint.assigned_at || null,
+    instructions: fallbackData.instructions || null,
     createdAt: (apiComplaint.created_at || new Date().toISOString()).slice(0, 10),
     resolvedAt: apiComplaint.resolved_at ? apiComplaint.resolved_at.slice(0, 10) : undefined,
     cancelledAt: apiComplaint.cancelled_at ? apiComplaint.cancelled_at.slice(0, 10) : undefined,
@@ -212,7 +235,7 @@ export function ComplaintsProvider({ children }) {
     return { success: true };
   };
 
-  const updateStatus = async (id, status) => {
+  const updateStatus = async (id, status, extraData = {}) => {
     const backendStatus = status.toLowerCase().replace(/ /g, "_");
     const result = await apiFetch(`/complaints/${id}/status`, {
       method: "PATCH",
@@ -222,12 +245,13 @@ export function ComplaintsProvider({ children }) {
     if (!result.success) {
       return await updateComplaint(id, {
         status,
+        ...extraData,
         ...(status === "Resolved" ? { resolvedAt: new Date().toISOString().slice(0, 10) } : {}),
       });
     }
 
-    const updated = toLocalComplaint(result.data);
-    setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
+    const updated = toLocalComplaint(result.data, extraData);
+    setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated, ...extraData } : c)));
     return { success: true };
   };
 

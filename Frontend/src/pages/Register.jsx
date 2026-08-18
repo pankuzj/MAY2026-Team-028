@@ -15,7 +15,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("citizen");
+  const role = "citizen";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
