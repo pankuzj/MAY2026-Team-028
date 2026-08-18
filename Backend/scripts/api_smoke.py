@@ -253,7 +253,7 @@ def main() -> int:
         payload = {
             "location": "MG Road near bus stop",
             "description": "Overflowing garbage bin attracting stray dogs.",
-            "hazard": "biohazard",
+            "hazard": "Overflowing Bin",
             "coords": {"lat": 18.5204, "lng": 73.8567},
             "ward_id": ids["ward_id"],
         }
@@ -283,29 +283,41 @@ def main() -> int:
         check("Create near-duplicate complaint", "POST", "/complaints", 201, r)
         dup_id = r.json().get("id") if r.status_code == 201 else None
 
-        r = client.get(f"{PREFIX}/complaints")
+        r = client.get(f"{PREFIX}/complaints", headers=bearer(citizen["access_token"]))
         check("List complaints (paged)", "GET", "/complaints", 200, r)
 
         r = client.get(
             f"{PREFIX}/complaints",
             params={"status": "pending", "ward_id": ids["ward_id"], "page": 1, "page_size": 5},
+            headers=bearer(citizen["access_token"]),
         )
         check("List complaints with filters", "GET", "/complaints?filters", 200, r)
 
-        r = client.get(f"{PREFIX}/complaints", params={"search": "garbage"})
+        r = client.get(
+            f"{PREFIX}/complaints",
+            params={"search": "garbage"},
+            headers=bearer(citizen["access_token"]),
+        )
         check("List complaints with search", "GET", "/complaints?search", 200, r)
 
         if complaint_id:
-            r = client.get(f"{PREFIX}/complaints/{complaint_id}")
+            r = client.get(
+                f"{PREFIX}/complaints/{complaint_id}",
+                headers=bearer(citizen["access_token"]),
+            )
             check("Get complaint by id", "GET", "/complaints/{id}", 200, r)
 
-        r = client.get(f"{PREFIX}/complaints/999999")
+        r = client.get(
+            f"{PREFIX}/complaints/999999",
+            headers=bearer(citizen["access_token"]),
+        )
         check("Get unknown complaint -> 404", "GET", "/complaints/{id}", 404, r)
 
         if complaint_id:
             r = client.patch(
                 f"{PREFIX}/complaints/{complaint_id}",
-                json={"priority": "high", "category": "biohazard"},
+                json={"priority": "high", "category": "Risk to Children"},
+                headers=bearer(citizen["access_token"]),
             )
             check("Update complaint fields", "PATCH", "/complaints/{id}", 200, r)
 
@@ -346,7 +358,10 @@ def main() -> int:
             )
             check("Cancel resolved complaint rejected", "POST", "/complaints/{id}/cancel", 409, r)
 
-            r = client.get(f"{PREFIX}/complaints/{complaint_id}/history")
+            r = client.get(
+                f"{PREFIX}/complaints/{complaint_id}/history",
+                headers=bearer(citizen["access_token"]),
+            )
             check("Complaint status history", "GET", "/complaints/{id}/history", 200, r)
             if r.status_code == 200:
                 rows = r.json()
@@ -374,7 +389,10 @@ def main() -> int:
                     f"{len(rows)} rows",
                 )
 
-            r = client.get(f"{PREFIX}/complaints/{complaint_id}/duplicates")
+            r = client.get(
+                f"{PREFIX}/complaints/{complaint_id}/duplicates",
+                headers=bearer(crew["access_token"]),
+            )
             check("Duplicate detection", "GET", "/complaints/{id}/duplicates", 200, r)
             if r.status_code == 200:
                 matches = r.json()
@@ -397,7 +415,10 @@ def main() -> int:
             )
             check("Cancel pending complaint", "POST", "/complaints/{id}/cancel", 200, r)
 
-        r = client.get(f"{PREFIX}/complaints/high-risk")
+        r = client.get(
+            f"{PREFIX}/complaints/high-risk",
+            headers=bearer(citizen["access_token"]),
+        )
         check(
             "High-risk complaints feed",
             "GET",
@@ -414,26 +435,30 @@ def main() -> int:
                 f"keys={sorted(body) if isinstance(body, dict) else type(body).__name__}",
             )
             check_body(
-                "High-risk picks up the biohazard/high-priority complaint",
+                "High-risk picks up the high-priority complaint",
                 bool(body.get("items")),
                 f"{body.get('meta', {}).get('total')} total",
             )
 
         png = b"\x89PNG\r\n\x1a\n" + b"0" * 512
         r = client.post(
-            f"{PREFIX}/complaints/upload-photo", files={"photo": ("bin.png", png, "image/png")}
+            f"{PREFIX}/complaints/upload-photo",
+            files={"photo": ("bin.png", png, "image/png")},
+            headers=bearer(citizen["access_token"]),
         )
         check("Upload valid photo", "POST", "/complaints/upload-photo", 200, r)
 
         r = client.post(
             f"{PREFIX}/complaints/upload-photo",
             files={"photo": ("evil.exe", b"MZ", "application/octet-stream")},
+            headers=bearer(citizen["access_token"]),
         )
         check("Upload disallowed MIME rejected", "POST", "/complaints/upload-photo", 415, r)
 
         r = client.post(
             f"{PREFIX}/complaints/upload-photo",
             files={"photo": ("huge.png", b"0" * (6 * 1024 * 1024), "image/png")},
+            headers=bearer(citizen["access_token"]),
         )
         check("Upload oversized photo rejected", "POST", "/complaints/upload-photo", 413, r)
 
@@ -508,7 +533,10 @@ def main() -> int:
                 kind="observation",
             )
 
-        r = client.get(f"{PREFIX}/tasks/999999")
+        r = client.get(
+            f"{PREFIX}/tasks/999999",
+            headers=bearer(crew["access_token"]),
+        )
         check("Get unknown task -> 404", "GET", "/tasks/{id}", 404, r)
 
         # second task, unlinked from any complaint, purely for the cancel happy path

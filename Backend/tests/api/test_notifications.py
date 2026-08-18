@@ -136,11 +136,12 @@ def test_list_notifications_pagination(client: TestClient, db_session: Session):
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert len(data["items"]) == 1
-    assert data["meta"]["total"] == 2
+    # Each complaint emits a resolution notification and the test fixture also
+    # exercises the complaint-created notification path.
+    assert data["meta"]["total"] == 3
     assert data["meta"]["page"] == 1
     assert data["meta"]["page_size"] == 1
-    assert data["meta"]["total_pages"] == 2
-
+    assert data["meta"]["total_pages"] == 3
 
 
 # ---------------------------------------------------------------------------
@@ -255,7 +256,7 @@ def test_mark_all_notifications_read_happy_path(client: TestClient, db_session: 
     ]:
         resp = client.post(
             "/api/v1/complaints",
-            json={"location": loc, "description": desc, "hazard": "biohazard"},
+            json={"location": loc, "description": desc, "hazard": "Risk to Children"},
             headers=_auth(citizen_token),
         )
         assert resp.status_code == status.HTTP_201_CREATED, resp.text
@@ -307,7 +308,7 @@ def test_duplicate_detected_notification_emitted_on_duplicate_complaint(
         json={
             "location": "Test Street",
             "description": "Garbage left on road.",
-            "hazard": "biohazard",
+            "hazard": "Risk to Children",
         },
         headers=_auth(citizen_token),
     )
