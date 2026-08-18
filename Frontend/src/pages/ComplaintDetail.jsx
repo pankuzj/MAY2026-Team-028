@@ -4,6 +4,7 @@ import { useComplaints } from "../context/ComplaintsContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { getDuplicateMatches } from "../utils/duplicateDetection";
+import { getMediaUrl } from "../utils/api";
 import {
   IconArrowRight,
   IconPin,
@@ -187,7 +188,15 @@ export default function ComplaintDetail() {
 
       <div className="detail-photo-wrap">
         {complaint.photo ? (
-          <img src={complaint.photo} alt="Reported issue" className="detail-photo" />
+          <img
+            src={getMediaUrl(complaint.photo)}
+            alt="Reported issue evidence"
+            className="detail-photo"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=800&q=80";
+            }}
+          />
         ) : (
           <div className="detail-photo detail-photo-empty">No photo attached</div>
         )}

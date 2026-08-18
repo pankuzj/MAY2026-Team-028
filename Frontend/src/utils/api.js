@@ -178,6 +178,50 @@ export async function createComplaintApi(payload) {
   });
 }
 
+export async function uploadPhotoApi(fileOrBlob) {
+  const formData = new FormData();
+  formData.append("photo", fileOrBlob, "evidence.jpg");
+
+  const { access } = getStoredTokenPair();
+  const headers = {};
+  if (access) {
+    headers["Authorization"] = `Bearer ${access}`;
+  }
+
+  for (const base of BASE_CANDIDATES) {
+    try {
+      const response = await fetch(`${base}/complaints/upload-photo`, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, url: data.url };
+      }
+    } catch {
+      // try next candidate
+    }
+  }
+  return { success: false, error: "Failed to upload photo to server." };
+}
+
+export function getMediaUrl(path) {
+  if (!path) return null;
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
+    return path;
+  }
+  const backendBase = (
+    import.meta.env.VITE_API_URL ||
+    "https://smartswip.onrender.com/api/v1"
+  )
+    .replace(/\/api\/v1\/?$/, "")
+    .replace(/\/$/, "");
+
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `${backendBase}${cleanPath}`;
+}
+
 export async function refreshTokenApi(refreshToken) {
   let response;
   try {

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { apiFetch, createComplaintApi } from "../utils/api";
+import { apiFetch, createComplaintApi, getMediaUrl } from "../utils/api";
 
 const ComplaintsContext = createContext(null);
 
@@ -10,7 +10,7 @@ const initialComplaints = [
     location: "MG Road, Near Bus Stop",
     description: "Garbage overflowing for 3 days, foul smell.",
     hazard: "Foul Smell",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9716, lng: 77.5946 },
     reportedBy: "Anita Rao",
     status: "Pending",
@@ -23,7 +23,7 @@ const initialComplaints = [
     location: "5th Cross, Indiranagar",
     description: "Illegal dumping near park entrance.",
     hazard: "Mosquito Breeding",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9784, lng: 77.6408 },
     reportedBy: "Mohammed Iqbal",
     status: "In Progress",
@@ -37,7 +37,7 @@ const initialComplaints = [
     location: "80 Feet Road, Koramangala",
     description: "Overflowing community bin attracting stray animals.",
     hazard: "Overflowing Bin",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1503596476-1c12a8ba09a9?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9352, lng: 77.6146 },
     reportedBy: "Sagnik Halder",
     status: "Resolved",
@@ -51,7 +51,7 @@ const initialComplaints = [
     location: "Jayanagar 4th Block Park",
     description: "Leaves and general litter piled near the entrance gate.",
     hazard: "None",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9254, lng: 77.5931 },
     reportedBy: "Anita Rao",
     status: "Resolved",
@@ -63,7 +63,7 @@ const initialComplaints = [
     location: "MG Road Metro Station Exit",
     description: "Medical waste dumped near the footpath, children play nearby.",
     hazard: "Risk to Children",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1528323273322-d81458248d40?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9758, lng: 77.6069 },
     reportedBy: "Mohammed Iqbal",
     status: "Resolved",
@@ -86,7 +86,7 @@ const initialComplaints = [
     location: "Sony World Signal, Koramangala",
     description: "Foul smell from an uncollected bin for over a week.",
     hazard: "Foul Smell",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9343, lng: 77.6224 },
     reportedBy: "Anita Rao",
     status: "Pending",
@@ -99,7 +99,7 @@ const initialComplaints = [
     location: "Jayanagar 9th Block Market",
     description: "Vegetable market waste overflowing onto the road.",
     hazard: "Overflowing Bin",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9184, lng: 77.5847 },
     reportedBy: "Mohammed Iqbal",
     status: "In Progress",
@@ -126,7 +126,7 @@ export function ComplaintsProvider({ children }) {
     location: apiComplaint.title || apiComplaint.address || fallbackData.location || "Unknown Location",
     description: apiComplaint.description || fallbackData.description || "",
     hazard: apiComplaint.category || fallbackData.hazard || "None",
-    photo: apiComplaint.photo_url || fallbackData.photo || null,
+    photo: getMediaUrl(apiComplaint.photo_url) || getMediaUrl(fallbackData.photo) || null,
     coords:
       apiComplaint.latitude != null && apiComplaint.longitude != null
         ? { lat: apiComplaint.latitude, lng: apiComplaint.longitude }
