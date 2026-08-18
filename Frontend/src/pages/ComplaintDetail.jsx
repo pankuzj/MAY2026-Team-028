@@ -202,11 +202,16 @@ export default function ComplaintDetail() {
         )}
       </div>
 
-      {complaint.assignedTo && (
-        <div style={{ margin: "1rem 0", padding: "0.85rem 1.25rem", background: "rgba(255,255,255,0.04)", borderRadius: "10px", borderLeft: "4px solid #10b981", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      {(complaint.assignedTo || complaint.assignedVehicle) && (
+        <div style={{ margin: "1rem 0", padding: "0.85rem 1.25rem", background: "rgba(255,255,255,0.04)", borderRadius: "10px", borderLeft: "4px solid #10b981", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
           <div>
-            <span style={{ fontSize: "0.8rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>Assigned Crew Personnel</span>
-            <p style={{ margin: "0.2rem 0 0", fontSize: "1.05rem", fontWeight: "600" }}>👷 {complaint.assignedTo}</p>
+            <span style={{ fontSize: "0.8rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>Dispatch Details</span>
+            {complaint.assignedTo && (
+              <p style={{ margin: "0.2rem 0 0", fontSize: "1.05rem", fontWeight: "600" }}>👷 Crew Lead: {complaint.assignedTo}</p>
+            )}
+            {complaint.assignedVehicle && (
+              <p style={{ margin: "0.2rem 0 0", fontSize: "0.95rem", color: "#38bdf8", fontWeight: "600" }}>🚛 Assigned Fleet: {complaint.assignedVehicle}</p>
+            )}
             {complaint.instructions && (
               <p style={{ margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#aaa" }}>Note: {complaint.instructions}</p>
             )}
