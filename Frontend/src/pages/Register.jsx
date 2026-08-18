@@ -69,33 +69,11 @@ export default function Register() {
       <span className="brand-mark" style={{ display: "flex", margin: "0 auto 1rem" }}>
         <IconBroom />
       </span>
-      <span className="eyebrow">Create Account</span>
+      <span className="eyebrow">Citizen Registration</span>
       <h1>SmartSweep</h1>
-      <p className="login-sub">Register as a citizen or crew member</p>
+      <p className="login-sub">Create your citizen account to report issues & track cleanups</p>
 
       <form className="login-form" onSubmit={handleSubmit}>
-        <label>
-          Account Type
-          <div className="role-select">
-            <button
-              type="button"
-              className={role === "citizen" ? "active" : ""}
-              onClick={() => setRole("citizen")}
-              disabled={isSubmitting}
-            >
-              Citizen
-            </button>
-            <button
-              type="button"
-              className={role === "crew" ? "active" : ""}
-              onClick={() => setRole("crew")}
-              disabled={isSubmitting}
-            >
-              Crew Member
-            </button>
-          </div>
-        </label>
-
         <label>
           Full Name
           <input
@@ -150,10 +128,8 @@ export default function Register() {
         )}
 
         <p style={{ color: "#888", fontSize: "0.85rem", marginTop: "-0.5rem" }}>
-          {role === "citizen"
-            ? "Register as a Citizen to report garbage issues and track their status."
-            : "Register as a Crew Member to access cleanup task tools and fleet management."}
-          {" "}Admin accounts are provisioned separately and aren't available through sign-up.
+          Register as a Citizen to report garbage issues and track community cleanup progress.
+          Field crew and administrative accounts are provisioned directly by Municipal Admins.
         </p>
 
         <button type="submit" disabled={isSubmitting}>

@@ -32,4 +32,5 @@ class Worker(Base, TimestampMixin):
         String(50), default=WorkerStatus.AVAILABLE.value, nullable=False, index=True
     )
     ward_id: Mapped[int | None] = mapped_column(ForeignKey("wards.id"), nullable=True, index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

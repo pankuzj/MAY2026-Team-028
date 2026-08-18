@@ -353,3 +353,48 @@ def test_update_equipment_status_edge_case_not_found(client: TestClient, db_sess
         headers=_auth(token),
     )
     assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+# ---------------------------------------------------------------------------
+# 7. POST /resources/workers (create_worker & onboard credentials)
+# ---------------------------------------------------------------------------
+
+
+def test_admin_can_onboard_worker_with_credentials(client: TestClient, db_session: Session):
+    """Happy Path: Admin onboards worker; user account and worker record are provisioned."""
+    token = _register_and_login(db_session, client, "admin_onboarder@example.com", UserRole.ADMIN)
+    payload = {
+        "full_name": "Ravi Shankar",
+        "email": "ravi.crew@example.com",
+        "password": "crewpassword123",
+        "phone": "+91 9988776655",
+        "role_title": "Sanitation Specialist",
+        "employee_code": "EMP-9001",
+        "status": "available",
+    }
+    resp = client.post("/api/v1/resources/workers", json=payload, headers=_auth(token))
+    assert resp.status_code == status.HTTP_201_CREATED
+    data = resp.json()
+    assert data["full_name"] == "Ravi Shankar"
+    assert data["email"] == "ravi.crew@example.com"
+    assert data["user_id"] is not None
+
+    # Verify that the new worker can immediately login with their provisioned credentials
+    login_resp = client.post(
+        "/api/v1/auth/login",
+        json={"email": "ravi.crew@example.com", "password": "crewpassword123"},
+    )
+    assert login_resp.status_code == status.HTTP_200_OK
+    assert "access_token" in login_resp.json()
+
+
+def test_citizen_cannot_onboard_worker(client: TestClient, db_session: Session):
+    """RBAC Failure: Citizen cannot onboard workers."""
+    token = _register_and_login(db_session, client, "citizen_denied@example.com", UserRole.CITIZEN)
+    payload = {
+        "full_name": "Intruder Worker",
+        "email": "intruder.crew@example.com",
+        "password": "password123",
+    }
+    resp = client.post("/api/v1/resources/workers", json=payload, headers=_auth(token))
+    assert resp.status_code == status.HTTP_403_FORBIDDEN

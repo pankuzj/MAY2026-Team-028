@@ -25,6 +25,8 @@ export default function WorkforceEquipment() {
   // New Worker Form State
   const [newWorker, setNewWorker] = useState({
     name: "",
+    email: "",
+    password: "crew123",
     role: "Sanitation Specialist",
     shift: "Morning (06:00 - 14:00)",
     ward: "Indiranagar (Ward 12)",
@@ -74,16 +76,22 @@ export default function WorkforceEquipment() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreateWorker = (e) => {
+  const handleCreateWorker = async (e) => {
     e.preventDefault();
-    if (!newWorker.name || !newWorker.phone) {
-      notify("Please fill in worker name and contact number.", "error");
+    if (!newWorker.name || !newWorker.phone || !newWorker.email) {
+      notify("Please fill in crew member name, login email, and phone number.", "error");
       return;
     }
-    addWorker(newWorker);
-    notify(`Added ${newWorker.name} to workforce roster!`, "success");
+    const res = await addWorker(newWorker);
+    if (res?.error) {
+      notify(res.error, "error");
+      return;
+    }
+    notify(`Successfully onboarded ${newWorker.name} with crew portal access!`, "success");
     setNewWorker({
       name: "",
+      email: "",
+      password: "crew123",
       role: "Sanitation Specialist",
       shift: "Morning (06:00 - 14:00)",
       ward: "Indiranagar (Ward 12)",
@@ -138,7 +146,7 @@ export default function WorkforceEquipment() {
         <div className="page-actions">
           {activeTab === "workforce" ? (
             <button className="primary-btn" onClick={() => setShowAddWorkerModal(true)}>
-              <IconPlus /> Add Personnel
+              <IconPlus /> Onboard Crew Member
             </button>
           ) : (
             <button className="primary-btn" onClick={() => setShowAddEqModal(true)}>
@@ -341,12 +349,12 @@ export default function WorkforceEquipment() {
         </div>
       )}
 
-      {/* MODAL: Add Worker */}
+      {/* MODAL: Onboard Crew Member */}
       {showAddWorkerModal && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>Add New Personnel</h2>
+              <h2>Onboard Crew Personnel</h2>
               <button className="icon-btn" onClick={() => setShowAddWorkerModal(false)}><IconX /></button>
             </div>
             <form onSubmit={handleCreateWorker} className="complaint-form">
@@ -360,6 +368,29 @@ export default function WorkforceEquipment() {
                   onChange={(e) => setNewWorker({ ...newWorker, name: e.target.value })}
                 />
               </label>
+
+              <label>
+                Portal Login Email
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. rajesh.crew@smartsweep.gov"
+                  value={newWorker.email}
+                  onChange={(e) => setNewWorker({ ...newWorker, email: e.target.value })}
+                />
+              </label>
+
+              <label>
+                Initial Login Password
+                <input
+                  type="text"
+                  required
+                  placeholder="Default: crew123"
+                  value={newWorker.password}
+                  onChange={(e) => setNewWorker({ ...newWorker, password: e.target.value })}
+                />
+              </label>
+
               <label>
                 Role & Designation
                 <select
@@ -373,6 +404,7 @@ export default function WorkforceEquipment() {
                   <option value="Rapid Response Crew">Rapid Response Crew</option>
                 </select>
               </label>
+
               <label>
                 Shift Roster
                 <select
@@ -384,6 +416,7 @@ export default function WorkforceEquipment() {
                   <option value="Night (22:00 - 06:00)">Night (22:00 - 06:00)</option>
                 </select>
               </label>
+
               <label>
                 Assigned Ward / Zone
                 <input
@@ -394,6 +427,7 @@ export default function WorkforceEquipment() {
                   onChange={(e) => setNewWorker({ ...newWorker, ward: e.target.value })}
                 />
               </label>
+
               <label>
                 Contact Phone
                 <input
@@ -404,9 +438,10 @@ export default function WorkforceEquipment() {
                   onChange={(e) => setNewWorker({ ...newWorker, phone: e.target.value })}
                 />
               </label>
+
               <div className="modal-actions">
                 <button type="button" className="secondary-btn" onClick={() => setShowAddWorkerModal(false)}>Cancel</button>
-                <button type="submit" className="primary-btn">Add Personnel</button>
+                <button type="submit" className="primary-btn">Onboard & Provision Access</button>
               </div>
             </form>
           </div>

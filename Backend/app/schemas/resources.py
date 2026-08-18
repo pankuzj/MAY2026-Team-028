@@ -48,7 +48,9 @@ class WorkerBase(BaseModel):
 
 
 class WorkerCreate(WorkerBase):
-    """Payload for creating a worker."""
+    """Payload for onboarding a worker (with optional user credentials)."""
+
+    password: str | None = Field(default=None, min_length=6)
 
 
 class WorkerUpdate(BaseModel):
@@ -70,6 +72,7 @@ class WorkerRead(WorkerBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    user_id: int | None = None
     created_at: datetime
     updated_at: datetime
 

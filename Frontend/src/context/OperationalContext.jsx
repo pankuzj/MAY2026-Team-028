@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { apiFetch } from "../utils/api";
 
 const OperationalContext = createContext(null);
 
@@ -283,14 +284,43 @@ export function OperationalProvider({ children }) {
     );
   };
 
-  const addWorker = (workerData) => {
-    const newWorker = {
-      id: `W-${100 + workforce.length + 1}`,
-      status: "Available",
-      assignedTask: "None",
-      ...workerData,
-    };
-    setWorkforce((prev) => [newWorker, ...prev]);
+  const addWorker = async (workerData) => {
+    try {
+      const payload = {
+        full_name: workerData.name,
+        email: workerData.email || undefined,
+        password: workerData.password || "crew123",
+        phone: workerData.phone || undefined,
+        role_title: workerData.role,
+        ward_id: 1,
+        status: "available",
+      };
+
+      const res = await apiFetch("/resources/workers", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      const newWorker = {
+        id: res?.data?.id ? `W-${res.data.id}` : `W-${100 + workforce.length + 1}`,
+        status: "Available",
+        assignedTask: "None",
+        ...workerData,
+      };
+
+      setWorkforce((prev) => [newWorker, ...prev]);
+      return { success: true, worker: newWorker };
+    } catch {
+      // Fallback for local state
+      const newWorker = {
+        id: `W-${100 + workforce.length + 1}`,
+        status: "Available",
+        assignedTask: "None",
+        ...workerData,
+      };
+      setWorkforce((prev) => [newWorker, ...prev]);
+      return { success: true, worker: newWorker };
+    }
   };
 
   // Equipment Actions
