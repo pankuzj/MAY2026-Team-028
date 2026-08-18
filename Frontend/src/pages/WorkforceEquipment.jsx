@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useOperational } from "../context/OperationalContext";
-import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { IconUsers, IconWrench, IconSearch, IconPlus, IconCheckCircle, IconAlertTriangle, IconX } from "../components/Icons";
 
@@ -13,10 +12,7 @@ export default function WorkforceEquipment() {
     updateEquipmentStatus,
     addEquipment,
   } = useOperational();
-  const { user } = useAuth();
   const { notify } = useToast();
-
-  const isAdmin = user?.role === "admin";
 
   const [activeTab, setActiveTab] = useState("workforce"); // 'workforce' | 'equipment'
   const [search, setSearch] = useState("");
@@ -144,24 +140,20 @@ export default function WorkforceEquipment() {
           <span className="eyebrow">Municipal Operations</span>
           <h1>Workforce & Equipment Allocation</h1>
           <p className="page-lead">
-            {isAdmin
-              ? "Manage sanitation personnel shifts, duty rosters, and allocate machinery & gear across municipal wards."
-              : "View field personnel roster, check equipment inventory, and manage your operational shift status."}
+            Manage sanitation personnel shifts, duty rosters, and allocate machinery & gear across municipal wards.
           </p>
         </div>
-        {isAdmin && (
-          <div className="page-actions">
-            {activeTab === "workforce" ? (
-              <button className="primary-btn" onClick={() => setShowAddWorkerModal(true)}>
-                <IconPlus /> Onboard Crew Member
-              </button>
-            ) : (
-              <button className="primary-btn" onClick={() => setShowAddEqModal(true)}>
-                <IconPlus /> Add Equipment
-              </button>
-            )}
-          </div>
-        )}
+        <div className="page-actions">
+          {activeTab === "workforce" ? (
+            <button className="primary-btn" onClick={() => setShowAddWorkerModal(true)}>
+              <IconPlus /> Onboard Crew Member
+            </button>
+          ) : (
+            <button className="primary-btn" onClick={() => setShowAddEqModal(true)}>
+              <IconPlus /> Add Equipment
+            </button>
+          )}
+        </div>
       </div>
 
       {/* KPI Overview Banner */}

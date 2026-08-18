@@ -30,7 +30,6 @@ const initialComplaints = [
     createdAt: "2026-06-18",
     assignedTo: "Ramesh Kumar",
     assignedWorkerId: "W-102",
-    assignedVehicle: "KA-01-EV-9012 (Electric Tipper Truck)",
     assignedAt: "2026-06-18",
   },
   {
@@ -46,7 +45,6 @@ const initialComplaints = [
     resolvedAt: "2026-06-13",
     assignedTo: "Ramesh Kumar",
     assignedWorkerId: "W-102",
-    assignedVehicle: "KA-01-EV-9012 (Electric Tipper Truck)",
   },
   {
     id: 4,
@@ -108,7 +106,6 @@ const initialComplaints = [
     createdAt: "2026-06-28",
     assignedTo: "Suresh Patil",
     assignedWorkerId: "W-101",
-    assignedVehicle: "KA-01-TR-4455 (Heavy Compactor)",
     assignedAt: "2026-06-28",
   },
 ];
@@ -144,7 +141,6 @@ export function ComplaintsProvider({ children }) {
       : fallbackData.status || "Pending",
     assignedTo: fallbackData.assignedTo || apiComplaint.assigned_to || null,
     assignedWorkerId: fallbackData.assignedWorkerId || apiComplaint.assigned_worker_id || null,
-    assignedVehicle: fallbackData.assignedVehicle || apiComplaint.assigned_vehicle || null,
     assignedAt: fallbackData.assignedAt || apiComplaint.assigned_at || null,
     instructions: fallbackData.instructions || null,
     createdAt: (apiComplaint.created_at || new Date().toISOString()).slice(0, 10),

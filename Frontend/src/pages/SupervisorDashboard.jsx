@@ -31,7 +31,7 @@ const DEFAULT_ADVANCED = {
 
 export default function SupervisorDashboard() {
   const { complaints, updateStatus } = useComplaints();
-  const { workforce = [], vehicles = [] } = useOperational();
+  const { workforce = [] } = useOperational();
   const { notify } = useToast();
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
@@ -41,7 +41,6 @@ export default function SupervisorDashboard() {
   // Assignment Modal States
   const [assigningComplaint, setAssigningComplaint] = useState(null);
   const [selectedWorkerId, setSelectedWorkerId] = useState("");
-  const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [assignmentNotes, setAssignmentNotes] = useState("");
 
   const advancedActive =
@@ -102,7 +101,6 @@ export default function SupervisorDashboard() {
 
     setAssigningComplaint(complaint);
     setSelectedWorkerId(workforce[0]?.id || "");
-    setSelectedVehicleId(vehicles[0]?.id || "");
     setAssignmentNotes("");
   };
 
@@ -112,13 +110,10 @@ export default function SupervisorDashboard() {
 
     const worker = workforce.find((w) => w.id === selectedWorkerId);
     const workerName = worker ? worker.name : selectedWorkerId;
-    const vehicle = vehicles.find((v) => v.id === selectedVehicleId);
-    const vehicleLabel = vehicle ? `${vehicle.plateNo} (${vehicle.model})` : undefined;
 
     const result = await updateStatus(assigningComplaint.id, "In Progress", {
       assignedTo: workerName,
       assignedWorkerId: selectedWorkerId,
-      assignedVehicle: vehicleLabel,
       instructions: assignmentNotes.trim() || undefined,
       assignedAt: new Date().toISOString().slice(0, 10),
     });
@@ -127,7 +122,6 @@ export default function SupervisorDashboard() {
       notify(`Assigned Case #${String(assigningComplaint.id).padStart(4, "0")} to ${workerName}`, "success");
       setAssigningComplaint(null);
       setSelectedWorkerId("");
-      setSelectedVehicleId("");
       setAssignmentNotes("");
     } else {
       notify(result.error || "Couldn't assign crew.", "error");
@@ -297,21 +291,6 @@ export default function SupervisorDashboard() {
                   {workforce.map((w) => (
                     <option key={w.id} value={w.id}>
                       {w.name} ({w.role} - {w.shift})
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Assign Fleet Vehicle (Optional)
-                <select
-                  value={selectedVehicleId}
-                  onChange={(e) => setSelectedVehicleId(e.target.value)}
-                >
-                  <option value="">-- No Vehicle Assigned --</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.plateNo} ({v.model} - {v.status})
                     </option>
                   ))}
                 </select>

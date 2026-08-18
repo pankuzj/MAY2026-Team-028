@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { useOperational } from "../context/OperationalContext";
 import { useComplaints } from "../context/ComplaintsContext";
-import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { IconTruck, IconSearch, IconPlus, IconRadar, IconX, IconCheckCircle, IconAlertTriangle } from "../components/Icons";
 
 export default function VehicleAssignment() {
   const { vehicles, updateVehicleStatus, addVehicle } = useOperational();
   const { complaints } = useComplaints();
-  const { user } = useAuth();
   const { notify } = useToast();
-
-  const isAdmin = user?.role === "admin";
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -77,7 +73,7 @@ export default function VehicleAssignment() {
       assigningVehicle.assignedTask,
       assigningVehicle.ward
     );
-    notify(`Vehicle status updated for ${assigningVehicle.plateNo}`, "success");
+    notify(`Vehicle dispatch updated for ${assigningVehicle.plateNo}`, "success");
     setAssigningVehicle(null);
   };
 
@@ -88,18 +84,14 @@ export default function VehicleAssignment() {
           <span className="eyebrow">Fleet Management</span>
           <h1>Vehicle & Fleet Assignment</h1>
           <p className="page-lead">
-            {isAdmin
-              ? "Track, dispatch, and assign waste compactors, mini tippers, and sweeping vehicles across active sanitation zones."
-              : "Monitor municipal fleet availability and update vehicle route statuses during field cleanups."}
+            Track, dispatch, and assign waste compactors, mini tippers, and sweeping vehicles across active sanitation zones.
           </p>
         </div>
-        {isAdmin && (
-          <div className="page-actions">
-            <button className="primary-btn" onClick={() => setShowAddVehicleModal(true)}>
-              <IconPlus /> Register Vehicle
-            </button>
-          </div>
-        )}
+        <div className="page-actions">
+          <button className="primary-btn" onClick={() => setShowAddVehicleModal(true)}>
+            <IconPlus /> Register Vehicle
+          </button>
+        </div>
       </div>
 
       {/* KPI Overview Banner */}
