@@ -131,6 +131,7 @@ export function ComplaintsProvider({ children }) {
       apiComplaint.latitude != null && apiComplaint.longitude != null
         ? { lat: apiComplaint.latitude, lng: apiComplaint.longitude }
         : fallbackData.coords || null,
+    reportedByUserId: apiComplaint.reported_by_user_id ?? fallbackData.reportedByUserId ?? user?.id,
     reportedBy:
       fallbackData.reportedBy ||
       (apiComplaint.reported_by_user_id === user?.id
@@ -148,29 +149,43 @@ export function ComplaintsProvider({ children }) {
     cancelledAt: apiComplaint.cancelled_at ? apiComplaint.cancelled_at.slice(0, 10) : undefined,
   });
 
-  useEffect(() => {
-    async function loadComplaints() {
-      if (!user) {
-        setComplaints(initialComplaints);
-        return;
-      }
-      const res = await apiFetch("/complaints?page=1&page_size=100");
-      if (res.success && res.data) {
-        const rawList = Array.isArray(res.data) ? res.data : res.data.items || [];
-        const formatted = rawList.map((item) => toLocalComplaint(item));
-        setComplaints(formatted);
-      }
+  const refreshComplaints = async () => {
+    if (!user) {
+      setComplaints(initialComplaints);
+      return;
     }
-    loadComplaints();
+    const res = await apiFetch("/complaints?page=1&page_size=100");
+    if (res.success && res.data) {
+      const rawList = Array.isArray(res.data) ? res.data : res.data.items || [];
+      const formatted = rawList.map((item) => toLocalComplaint(item));
+      setComplaints(formatted);
+    }
+  };
+
+  useEffect(() => {
+    refreshComplaints();
   }, [user]);
 
   const addComplaint = async (data) => {
+    let photoUrl = data.photo;
+    if (data.photo && data.photo.startsWith("data:")) {
+      try {
+        const blob = await (await fetch(data.photo)).blob();
+        const uploadRes = await uploadPhotoApi(blob);
+        if (uploadRes.success && uploadRes.url) {
+          photoUrl = uploadRes.url;
+        }
+      } catch (e) {
+        console.warn("Photo upload helper failed, proceeding with direct payload", e);
+      }
+    }
+
     const payload = {
       location: data.location,
       description: data.description,
-      hazard: data.hazard,
+      hazard: data.hazard && data.hazard !== "None" ? data.hazard : "None",
       complaint_type: data.complaintType || null,
-      photo: data.photo,
+      photo: photoUrl,
       coords: data.coords,
       ward_id: user?.ward_id ?? null,
     };
@@ -182,6 +197,7 @@ export function ComplaintsProvider({ children }) {
 
     const newComplaint = toLocalComplaint(result.data, {
       ...data,
+      photo: photoUrl,
       reportedBy: user?.name || "Citizen",
     });
     setComplaints((prev) => [newComplaint, ...prev.filter((c) => c.id !== newComplaint.id)]);
@@ -257,7 +273,7 @@ export function ComplaintsProvider({ children }) {
 
   return (
     <ComplaintsContext.Provider
-      value={{ complaints, addComplaint, updateStatus, updateComplaint, cancelComplaint }}
+      value={{ complaints, addComplaint, updateStatus, updateComplaint, cancelComplaint, refreshComplaints }}
     >
       {children}
     </ComplaintsContext.Provider>

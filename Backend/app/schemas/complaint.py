@@ -52,7 +52,7 @@ class ComplaintBase(BaseModel):
     address: str | None = Field(default=None, max_length=255)
     latitude: float | None = None
     longitude: float | None = None
-    photo_url: str | None = Field(default=None, max_length=2048)
+    photo_url: str | None = Field(default=None, max_length=10_000_000)
 
 
 class ComplaintCreate(ComplaintBase):
@@ -68,7 +68,7 @@ class ComplaintSubmit(BaseModel):
     description: str = Field(min_length=1)
     hazard: ComplaintCategory | None = None
     complaint_type: ComplaintType | None = None
-    photo: str | None = Field(default=None, max_length=2048)
+    photo: str | None = Field(default=None, max_length=10_000_000)
     coords: dict[str, float] | None = None
     ward_id: int | None = None
 
@@ -95,7 +95,7 @@ class ComplaintUpdate(BaseModel):
     address: str | None = Field(default=None, max_length=255)
     latitude: float | None = None
     longitude: float | None = None
-    photo_url: str | None = Field(default=None, max_length=2048)
+    photo_url: str | None = Field(default=None, max_length=10_000_000)
 
 
 class ComplaintVerify(BaseModel):

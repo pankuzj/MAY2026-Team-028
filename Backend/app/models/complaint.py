@@ -73,7 +73,7 @@ class Complaint(Base, TimestampMixin):
     address: Mapped[str | None] = mapped_column(String(255), nullable=True)
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
-    photo_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

@@ -136,7 +136,11 @@ export default function ReportComplaint() {
   };
 
   const submitComplaint = async () => {
-    await addComplaint({ ...form, reportedBy: user?.name });
+    const res = await addComplaint({ ...form, reportedBy: user?.name });
+    if (res && res.success === false) {
+      notify(res.error || "Failed to submit complaint. Please check your inputs.", "error");
+      return;
+    }
     notify("Complaint submitted successfully", "success");
     navigate("/my-complaints");
   };
