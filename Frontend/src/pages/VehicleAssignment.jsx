@@ -2,17 +2,62 @@ import { useState } from "react";
 import { useOperational } from "../context/OperationalContext";
 import { useComplaints } from "../context/ComplaintsContext";
 import { useToast } from "../context/ToastContext";
-import { IconTruck, IconSearch, IconPlus, IconRadar, IconX, IconCheckCircle, IconAlertTriangle } from "../components/Icons";
+import {
+  IconTruck,
+  IconSearch,
+  IconPlus,
+  IconX,
+  IconCheckCircle,
+  IconUsers,
+  IconWrench,
+} from "../components/Icons";
+
+const MUNICIPAL_WARDS = [
+  "Indiranagar (Ward 12)",
+  "Koramangala (Ward 08)",
+  "MG Road (Ward 04)",
+  "Whitefield (Ward 15)",
+  "Central Depot (All Wards)",
+];
+
+const VEHICLE_TYPES = [
+  "Mini Tipper",
+  "Compactor",
+  "Road Sweeper",
+  "Inspection Van",
+  "Hazmat Van",
+];
+
+const PAYLOAD_CAPACITIES = [
+  "1.5 Tons",
+  "2.5 Tons",
+  "3.0 Tons",
+  "4.0 Tons",
+  "8.5 Tons",
+  "5 Passengers",
+];
+
+function normalizeStatus(status) {
+  if (!status) return "Available";
+  const s = status.toLowerCase();
+  if (s === "dispatched" || s === "en route" || s === "on site" || s === "in use") {
+    return "Dispatched";
+  }
+  if (s === "maintenance" || s === "repair") {
+    return "Maintenance";
+  }
+  return "Available";
+}
 
 export default function VehicleAssignment() {
-  const { vehicles, updateVehicleStatus, addVehicle } = useOperational();
-  const { complaints } = useComplaints();
+  const { vehicles = [], updateVehicleStatus, addVehicle, workforce = [] } = useOperational();
+  const { complaints = [] } = useComplaints();
   const { notify } = useToast();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  // Modal State
+  // Modal States
   const [showAddVehicleModal, setShowAddVehicleModal] = useState(false);
   const [assigningVehicle, setAssigningVehicle] = useState(null);
 
@@ -26,32 +71,42 @@ export default function VehicleAssignment() {
   });
 
   // Calculate Metrics
-  const totalEnRoute = vehicles.filter((v) => v.status === "En Route" || v.status === "On Site").length;
-  const totalAvailable = vehicles.filter((v) => v.status === "Available").length;
-  const totalMaintenance = vehicles.filter((v) => v.status === "Maintenance").length;
+  const totalFleet = vehicles.length;
+  const totalAvailable = vehicles.filter((v) => normalizeStatus(v.status) === "Available").length;
+  const totalDispatched = vehicles.filter((v) => normalizeStatus(v.status) === "Dispatched").length;
+  const totalMaintenance = vehicles.filter((v) => normalizeStatus(v.status) === "Maintenance").length;
 
   // Filtered List
   const filteredVehicles = vehicles.filter((v) => {
     const q = search.trim().toLowerCase();
+    const currentNormStatus = normalizeStatus(v.status);
+
     const matchesSearch =
       !q ||
-      v.plateNo.toLowerCase().includes(q) ||
-      v.model.toLowerCase().includes(q) ||
-      v.driver.toLowerCase().includes(q) ||
-      v.ward.toLowerCase().includes(q) ||
-      v.type.toLowerCase().includes(q);
-    const matchesStatus = statusFilter === "All" || v.status === statusFilter;
+      v.plateNo?.toLowerCase().includes(q) ||
+      v.model?.toLowerCase().includes(q) ||
+      v.driver?.toLowerCase().includes(q) ||
+      v.ward?.toLowerCase().includes(q) ||
+      v.type?.toLowerCase().includes(q) ||
+      v.assignedTask?.toLowerCase().includes(q);
+
+    const matchesStatus = statusFilter === "All" || currentNormStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const handleCreateVehicle = (e) => {
     e.preventDefault();
-    if (!newV.plateNo) {
-      notify("Please provide license plate number.", "error");
+    if (!newV.plateNo.trim()) {
+      notify("Please provide a valid license plate number.", "error");
       return;
     }
-    addVehicle(newV);
-    notify(`Vehicle ${newV.plateNo} registered in municipal fleet!`, "success");
+    addVehicle({
+      ...newV,
+      plateNo: newV.plateNo.trim().toUpperCase(),
+      status: "Available",
+      assignedTask: "Standby at Central Depot",
+    });
+    notify(`Vehicle ${newV.plateNo.toUpperCase()} registered in municipal fleet!`, "success");
     setNewV({
       plateNo: "",
       model: "Electric Tipper Truck",
@@ -63,16 +118,50 @@ export default function VehicleAssignment() {
     setShowAddVehicleModal(false);
   };
 
+  const handleReturnToDepot = (v) => {
+    updateVehicleStatus(
+      v.id,
+      "Available",
+      "Unassigned",
+      "Standby at Central Depot",
+      v.ward || "Central Depot (All Wards)"
+    );
+    notify(`Vehicle ${v.plateNo} returned to depot and marked Available.`, "success");
+  };
+
+  const handleOpenDispatch = (v, defaultStatus = null) => {
+    const currentNorm = normalizeStatus(v.status);
+    setAssigningVehicle({
+      ...v,
+      status: defaultStatus || (currentNorm === "Available" ? "Dispatched" : currentNorm),
+      driver: v.driver && v.driver !== "Unassigned" ? v.driver : (workforce[0]?.name || "Unassigned"),
+      ward: v.ward || MUNICIPAL_WARDS[0],
+      assignedTask: v.assignedTask && v.assignedTask !== "Standby at Central Depot"
+        ? v.assignedTask
+        : "Routine Ward Patrol & Inspection",
+    });
+  };
+
   const handleSaveAssignment = (e) => {
     e.preventDefault();
     if (!assigningVehicle) return;
+
+    let finalDriver = assigningVehicle.driver;
+    let finalTask = assigningVehicle.assignedTask;
+
+    if (assigningVehicle.status === "Available") {
+      finalDriver = "Unassigned";
+      finalTask = "Standby at Central Depot";
+    }
+
     updateVehicleStatus(
       assigningVehicle.id,
       assigningVehicle.status,
-      assigningVehicle.driver,
-      assigningVehicle.assignedTask,
+      finalDriver,
+      finalTask,
       assigningVehicle.ward
     );
+
     notify(`Vehicle dispatch updated for ${assigningVehicle.plateNo}`, "success");
     setAssigningVehicle(null);
   };
@@ -81,10 +170,10 @@ export default function VehicleAssignment() {
     <div className="page page-wide">
       <div className="page-header">
         <div>
-          <span className="eyebrow">Fleet Management</span>
+          <span className="eyebrow">Fleet Operations</span>
           <h1>Vehicle & Fleet Assignment</h1>
           <p className="page-lead">
-            Track, dispatch, and assign waste compactors, mini tippers, and sweeping vehicles across active sanitation zones.
+            Manage municipal fleet status, assign dedicated drivers and crews, and dispatch vehicles to active sanitation zones.
           </p>
         </div>
         <div className="page-actions">
@@ -99,29 +188,29 @@ export default function VehicleAssignment() {
         <div className="kpi-card">
           <div className="kpi-icon accent"><IconTruck /></div>
           <div>
-            <span className="kpi-value">{totalEnRoute} / {vehicles.length}</span>
-            <span className="kpi-label">Active Dispatched</span>
+            <span className="kpi-value">{totalFleet}</span>
+            <span className="kpi-label">Total Fleet</span>
           </div>
         </div>
         <div className="kpi-card">
           <div className="kpi-icon green"><IconCheckCircle /></div>
           <div>
             <span className="kpi-value">{totalAvailable}</span>
-            <span className="kpi-label">Available Fleet</span>
+            <span className="kpi-label">Available in Depot</span>
           </div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-icon blue"><IconRadar /></div>
+          <div className="kpi-icon blue"><IconUsers /></div>
           <div>
-            <span className="kpi-value">Live GPS</span>
-            <span className="kpi-label">Telemetry Active</span>
+            <span className="kpi-value">{totalDispatched}</span>
+            <span className="kpi-label">Active Dispatched</span>
           </div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-icon amber"><IconAlertTriangle /></div>
+          <div className="kpi-icon amber"><IconWrench /></div>
           <div>
             <span className="kpi-value">{totalMaintenance}</span>
-            <span className="kpi-label">Depot Maintenance</span>
+            <span className="kpi-label">In Maintenance</span>
           </div>
         </div>
       </div>
@@ -133,7 +222,7 @@ export default function VehicleAssignment() {
           <input
             type="text"
             className="search-input"
-            placeholder="Search by license plate, vehicle model, driver, or ward..."
+            placeholder="Search by license plate, vehicle model, driver, ward, or task..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -144,7 +233,7 @@ export default function VehicleAssignment() {
           )}
         </div>
         <div className="filters">
-          {["All", "En Route", "On Site", "Available", "In Depot", "Maintenance"].map((st) => (
+          {["All", "Available", "Dispatched", "Maintenance"].map((st) => (
             <button
               key={st}
               className={statusFilter === st ? "active" : ""}
@@ -159,84 +248,98 @@ export default function VehicleAssignment() {
       {/* Vehicle Grid */}
       <div className="card-grid">
         {filteredVehicles.length === 0 ? (
-          <div className="empty-state">No fleet vehicles match your search query.</div>
+          <div className="empty-state">No fleet vehicles match your filter criteria.</div>
         ) : (
-          filteredVehicles.map((v) => (
-            <div key={v.id} className="op-card fleet-card">
-              <div className="op-card-header">
-                <div className="fleet-badge-wrap">
-                  <span className="op-id">{v.id}</span>
-                  <h3 className="op-title">{v.plateNo}</h3>
-                  <span className="op-subtitle">{v.model}</span>
-                </div>
-                <span className={`op-status-badge status-${v.status.toLowerCase().replace(" ", "-")}`}>
-                  {v.status}
-                </span>
-              </div>
-
-              <div className="op-card-body">
-                {/* Fuel/Battery Level Indicator */}
-                <div className="fuel-bar-wrap">
-                  <div className="fuel-label">
-                    <span>Fuel / Charge Level:</span>
-                    <span className="font-bold">{v.fuelLevel}%</span>
+          filteredVehicles.map((v) => {
+            const normStatus = normalizeStatus(v.status);
+            return (
+              <div key={v.id} className="op-card fleet-card">
+                <div className="op-card-header">
+                  <div className="fleet-badge-wrap">
+                    <span className="op-id">{v.id}</span>
+                    <h3 className="op-title">{v.plateNo}</h3>
+                    <span className="op-subtitle">{v.model} • {v.type}</span>
                   </div>
-                  <div className="fuel-track">
-                    <div
-                      className={`fuel-fill ${v.fuelLevel < 35 ? "low" : ""}`}
-                      style={{ width: `${v.fuelLevel}%` }}
-                    />
+                  <span className={`op-status-badge status-${normStatus.toLowerCase()}`}>
+                    {normStatus}
+                  </span>
+                </div>
+
+                <div className="op-card-body">
+                  <div className="op-detail-row">
+                    <span className="label">Driver & Crew:</span>
+                    <span className="value font-bold">{v.driver || "Unassigned"}</span>
                   </div>
+
+                  <div className="op-detail-row">
+                    <span className="label">Operational Ward:</span>
+                    <span className="value">{v.ward || "Central Depot"}</span>
+                  </div>
+
+                  <div className="op-detail-row">
+                    <span className="label">Assigned Mission:</span>
+                    <span className="value tag">{v.assignedTask || "Standby at Central Depot"}</span>
+                  </div>
+
+                  <div className="op-detail-row">
+                    <span className="label">Payload Capacity:</span>
+                    <span className="value">{v.capacity}</span>
+                  </div>
+
+                  {v.lastMaintenance && (
+                    <div className="op-detail-row">
+                      <span className="label">Last Service:</span>
+                      <span className="value">{v.lastMaintenance}</span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="op-detail-row">
-                  <span className="label">Driver & Crew:</span>
-                  <span className="value font-bold">{v.driver}</span>
-                </div>
-
-                <div className="op-detail-row">
-                  <span className="label">Zone / Ward:</span>
-                  <span className="value">{v.ward}</span>
-                </div>
-
-                <div className="op-detail-row">
-                  <span className="label">Assigned Task:</span>
-                  <span className="value tag">{v.assignedTask}</span>
-                </div>
-
-                <div className="op-detail-row">
-                  <span className="label">Payload Capacity:</span>
-                  <span className="value">{v.capacity}</span>
+                <div className="op-card-footer">
+                  {normStatus === "Dispatched" ? (
+                    <div className="fleet-actions-wrap">
+                      <button
+                        className="primary-btn btn-sm"
+                        onClick={() => handleOpenDispatch(v)}
+                      >
+                        Update Dispatch
+                      </button>
+                      <button
+                        className="secondary-btn btn-sm"
+                        onClick={() => handleReturnToDepot(v)}
+                      >
+                        Return to Depot
+                      </button>
+                    </div>
+                  ) : normStatus === "Available" ? (
+                    <div className="fleet-actions-wrap">
+                      <button
+                        className="primary-btn btn-sm"
+                        onClick={() => handleOpenDispatch(v, "Dispatched")}
+                      >
+                        Dispatch Vehicle
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="fleet-actions-wrap">
+                      <button
+                        className="primary-btn btn-sm"
+                        onClick={() => handleReturnToDepot(v)}
+                      >
+                        Mark Available
+                      </button>
+                      <button
+                        className="secondary-btn btn-sm"
+                        onClick={() => handleOpenDispatch(v)}
+                      >
+                        Edit Status
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-
-              <div className="op-card-footer">
-                <button
-                  className="primary-btn btn-sm"
-                  onClick={() => setAssigningVehicle({ ...v })}
-                >
-                  Dispatch / Assign
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
-      </div>
-
-      {/* Live Fleet Tracking Radar Banner */}
-      <div className="live-radar-box">
-        <div className="radar-head">
-          <IconRadar className="radar-spin-icon" />
-          <div>
-            <h4>Live Municipal Fleet Telemetry</h4>
-            <p>Real-time GPS dispatch & automated payload routing active across Ward 04, Ward 08, & Ward 12.</p>
-          </div>
-        </div>
-        <div className="radar-pills">
-          <span className="pill green">● KA-01-EA-4821 [Speed: 24 km/h]</span>
-          <span className="pill blue">● KA-01-EV-9012 [On Site - Compacting]</span>
-          <span className="pill accent">● KA-05-MS-1104 [Depot Ready]</span>
-        </div>
       </div>
 
       {/* MODAL: Register Vehicle */}
@@ -244,7 +347,7 @@ export default function VehicleAssignment() {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>Register New Vehicle</h2>
+              <h2>Register New Fleet Vehicle</h2>
               <button className="icon-btn" onClick={() => setShowAddVehicleModal(false)}><IconX /></button>
             </div>
             <form onSubmit={handleCreateVehicle} className="complaint-form">
@@ -258,19 +361,19 @@ export default function VehicleAssignment() {
                   onChange={(e) => setNewV({ ...newV, plateNo: e.target.value })}
                 />
               </label>
+
               <label>
                 Vehicle Type
                 <select
                   value={newV.type}
                   onChange={(e) => setNewV({ ...newV, type: e.target.value })}
                 >
-                  <option value="Mini Tipper">Mini Tipper</option>
-                  <option value="Compactor">Heavy Compactor Truck</option>
-                  <option value="Road Sweeper">Mechanical Road Sweeper</option>
-                  <option value="Inspection Van">Inspection Van</option>
-                  <option value="Hazmat Van">Biohazard Transporter</option>
+                  {VEHICLE_TYPES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
                 </select>
               </label>
+
               <label>
                 Model Name
                 <input
@@ -281,38 +384,53 @@ export default function VehicleAssignment() {
                   onChange={(e) => setNewV({ ...newV, model: e.target.value })}
                 />
               </label>
+
               <label>
                 Payload Capacity
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 4.5 Tons"
+                <select
                   value={newV.capacity}
                   onChange={(e) => setNewV({ ...newV, capacity: e.target.value })}
-                />
+                >
+                  {PAYLOAD_CAPACITIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </label>
+
               <label>
-                Assigned Ward
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Indiranagar (Ward 12)"
+                Base Operational Ward
+                <select
                   value={newV.ward}
                   onChange={(e) => setNewV({ ...newV, ward: e.target.value })}
-                />
+                >
+                  {MUNICIPAL_WARDS.map((w) => (
+                    <option key={w} value={w}>{w}</option>
+                  ))}
+                </select>
               </label>
+
               <label>
-                Assigned Driver / Lead
-                <input
-                  type="text"
-                  placeholder="e.g. Suresh Patil"
+                Initial Driver / Crew Lead
+                <select
                   value={newV.driver}
                   onChange={(e) => setNewV({ ...newV, driver: e.target.value })}
-                />
+                >
+                  <option value="Unassigned">Unassigned (Depot Standby)</option>
+                  {workforce.map((w) => (
+                    <option key={w.id} value={w.name}>
+                      {w.name} ({w.role})
+                    </option>
+                  ))}
+                </select>
               </label>
+
               <div className="modal-actions">
-                <button type="button" className="secondary-btn" onClick={() => setShowAddVehicleModal(false)}>Cancel</button>
-                <button type="submit" className="primary-btn">Register to Fleet</button>
+                <button type="button" className="secondary-btn" onClick={() => setShowAddVehicleModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="primary-btn">
+                  Register Vehicle
+                </button>
               </div>
             </form>
           </div>
@@ -329,51 +447,79 @@ export default function VehicleAssignment() {
             </div>
             <form onSubmit={handleSaveAssignment} className="complaint-form">
               <label>
-                Dispatch Status
+                Operating Status
                 <select
                   value={assigningVehicle.status}
-                  onChange={(e) => setAssigningVehicle({ ...assigningVehicle, status: e.target.value })}
+                  onChange={(e) => {
+                    const nextStatus = e.target.value;
+                    setAssigningVehicle((prev) => ({
+                      ...prev,
+                      status: nextStatus,
+                      ...(nextStatus === "Available"
+                        ? { driver: "Unassigned", assignedTask: "Standby at Central Depot" }
+                        : {}),
+                    }));
+                  }}
                 >
-                  <option value="En Route">En Route</option>
-                  <option value="On Site">On Site</option>
-                  <option value="Available">Available</option>
-                  <option value="In Depot">In Depot</option>
-                  <option value="Maintenance">Maintenance</option>
+                  <option value="Dispatched">Dispatched (In Use)</option>
+                  <option value="Available">Available (In Depot)</option>
+                  <option value="Maintenance">Maintenance (Under Repair)</option>
                 </select>
               </label>
+
               <label>
                 Driver & Crew Lead
-                <input
-                  type="text"
+                <select
                   value={assigningVehicle.driver}
                   onChange={(e) => setAssigningVehicle({ ...assigningVehicle, driver: e.target.value })}
-                />
-              </label>
-              <label>
-                Target Route / Ward
-                <input
-                  type="text"
-                  value={assigningVehicle.ward}
-                  onChange={(e) => setAssigningVehicle({ ...assigningVehicle, ward: e.target.value })}
-                />
-              </label>
-              <label>
-                Assigned Task / Case Reference
-                <select
-                  value={assigningVehicle.assignedTask}
-                  onChange={(e) => setAssigningVehicle({ ...assigningVehicle, assignedTask: e.target.value })}
+                  disabled={assigningVehicle.status === "Available"}
                 >
-                  <option value="Standby at Central Depot">Standby at Central Depot</option>
-                  {complaints.map((c) => (
-                    <option key={c.id} value={`Case #${String(c.id).padStart(4, "0")} (${c.location})`}>
-                      Case #{String(c.id).padStart(4, "0")} - {c.location} [{c.status}]
+                  <option value="Unassigned">Unassigned</option>
+                  {workforce.map((w) => (
+                    <option key={w.id} value={w.name}>
+                      {w.name} — {w.role} [{w.status}]
                     </option>
                   ))}
                 </select>
               </label>
+
+              <label>
+                Operational Ward
+                <select
+                  value={assigningVehicle.ward}
+                  onChange={(e) => setAssigningVehicle({ ...assigningVehicle, ward: e.target.value })}
+                >
+                  {MUNICIPAL_WARDS.map((w) => (
+                    <option key={w} value={w}>{w}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Assigned Mission / Case Reference
+                <select
+                  value={assigningVehicle.assignedTask}
+                  onChange={(e) => setAssigningVehicle({ ...assigningVehicle, assignedTask: e.target.value })}
+                  disabled={assigningVehicle.status === "Available"}
+                >
+                  <option value="Standby at Central Depot">Standby at Central Depot</option>
+                  <option value="Routine Ward Patrol & Inspection">Routine Ward Patrol & Inspection</option>
+                  <option value="Special Sanitation & Waste Drive">Special Sanitation & Waste Drive</option>
+                  {complaints.map((c) => (
+                    <option key={c.id} value={`Case #${String(c.id).padStart(4, "0")} (${c.location})`}>
+                      Case #{String(c.id).padStart(4, "0")} — {c.location} [{c.status}]
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               <div className="modal-actions">
-                <button type="button" className="secondary-btn" onClick={() => setAssigningVehicle(null)}>Cancel</button>
-                <button type="submit" className="primary-btn">Save & Dispatch</button>
+                <button type="button" className="secondary-btn" onClick={() => setAssigningVehicle(null)}>
+                  Cancel
+                </button>
+                <button type="submit" className="primary-btn">
+                  Save & Apply Dispatch
+                </button>
               </div>
             </form>
           </div>

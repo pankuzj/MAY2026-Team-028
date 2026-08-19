@@ -2620,7 +2620,8 @@ span.star-btn {
 
 .op-status-badge.status-on-duty,
 .op-status-badge.status-en-route,
-.op-status-badge.status-in-use {
+.op-status-badge.status-in-use,
+.op-status-badge.status-dispatched {
   background: var(--progress-dim);
   color: var(--progress);
 }
@@ -2684,38 +2685,23 @@ span.star-btn {
   font-size: 0.75rem;
 }
 
-/* Fleet Specifics & Fuel Bar */
-.fuel-bar-wrap {
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  padding: 0.6rem;
-  margin-bottom: 0.25rem;
+.op-card-footer {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
 }
 
-.fuel-label {
+.fleet-actions-wrap {
   display: flex;
-  justify-content: space-between;
-  font-size: 0.76rem;
-  margin-bottom: 0.35rem;
-  color: var(--text-h);
+  gap: 0.5rem;
+  align-items: center;
 }
 
-.fuel-track {
-  height: 6px;
-  background: var(--line);
-  border-radius: var(--radius-pill);
-  overflow: hidden;
-}
-
-.fuel-fill {
-  height: 100%;
-  background: var(--resolved);
-  transition: width 0.3s ease;
-}
-
-.fuel-fill.low {
-  background: var(--hazard);
+.fleet-actions-wrap .primary-btn,
+.fleet-actions-wrap .secondary-btn {
+  flex: 1;
+  text-align: center;
+  justify-content: center;
 }
 
 /* Live Telemetry Radar Banner */
