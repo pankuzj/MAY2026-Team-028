@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.png" alt="SmartSweep Logo" width="220" />
+</p>
+
 # SmartSweep
 
 A modern civic-tech platform for reporting, dispatching, and resolving municipal waste and sanitation issues — bridging citizens, collection crews, and ward administrators in a unified system.
