@@ -3,6 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { IconReport, IconClipboard, IconBroom, IconGrid, IconLogOut, IconUsers, IconTruck, IconFeed, IconPackage, IconCalendar, IconChartBar } from "./Icons";
+import logoMark from "../assets/logo-mark.png";
 
 const roleLinks = {
   citizen: [
@@ -48,7 +49,7 @@ export default function Navbar() {
     <nav className="navbar">
       <Link to={user ? "/" : "/login"} className="brand">
         <span className="brand-mark">
-          <IconBroom />
+          <img src={logoMark} alt="SmartSweep Logo" className="brand-logo-img" />
         </span>
         SmartSweep
       </Link>
