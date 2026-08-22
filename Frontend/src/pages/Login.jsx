@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { IconAlertCircle, IconBroom } from "../components/Icons";
+import { IconAlertCircle } from "../components/Icons";
+import logoImg from "../assets/logo.png";
 
 const roleHome = { citizen: "/report", crew: "/crew", admin: "/dashboard" };
 
@@ -44,7 +45,9 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <span className="brand-mark" style={{ display: "flex", margin: "0 auto 1rem" }}><IconBroom /></span>
+      <div className="auth-logo-wrap">
+        <img src={logoImg} alt="SmartSweep Logo" className="auth-logo" />
+      </div>
       <span className="eyebrow">Restricted Access</span>
       <h1>SmartSweep</h1>
       <p className="login-sub">Sign in to continue</p>
