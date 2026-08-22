@@ -79,9 +79,8 @@ export default function ReportComplaint() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext("2d").drawImage(video, 0, 0);
-    canvas.toBlob((blob) => {
-      if (blob) setForm((prev) => ({ ...prev, photo: URL.createObjectURL(blob) }));
-    }, "image/jpeg");
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+    setForm((prev) => ({ ...prev, photo: dataUrl }));
     handleCloseCamera();
   };
 
@@ -94,7 +93,11 @@ export default function ReportComplaint() {
   const handlePhoto = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setForm((prev) => ({ ...prev, photo: URL.createObjectURL(file) }));
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        setForm((prev) => ({ ...prev, photo: uploadEvent.target?.result }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -133,7 +136,11 @@ export default function ReportComplaint() {
   };
 
   const submitComplaint = async () => {
-    await addComplaint({ ...form, reportedBy: user?.name });
+    const res = await addComplaint({ ...form, reportedBy: user?.name });
+    if (res && res.success === false) {
+      notify(res.error || "Failed to submit complaint. Please check your inputs.", "error");
+      return;
+    }
     notify("Complaint submitted successfully", "success");
     navigate("/my-complaints");
   };

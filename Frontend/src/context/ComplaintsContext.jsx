@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { apiFetch, createComplaintApi } from "../utils/api";
+import { apiFetch, createComplaintApi, getMediaUrl } from "../utils/api";
 
 const ComplaintsContext = createContext(null);
 
@@ -10,41 +10,48 @@ const initialComplaints = [
     location: "MG Road, Near Bus Stop",
     description: "Garbage overflowing for 3 days, foul smell.",
     hazard: "Foul Smell",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9716, lng: 77.5946 },
     reportedBy: "Anita Rao",
     status: "Pending",
     createdAt: "2026-06-20",
+    assignedTo: null,
+    assignedWorkerId: null,
   },
   {
     id: 2,
     location: "5th Cross, Indiranagar",
     description: "Illegal dumping near park entrance.",
     hazard: "Mosquito Breeding",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9784, lng: 77.6408 },
     reportedBy: "Mohammed Iqbal",
     status: "In Progress",
     createdAt: "2026-06-18",
+    assignedTo: "Ramesh Kumar",
+    assignedWorkerId: "W-102",
+    assignedAt: "2026-06-18",
   },
   {
     id: 3,
     location: "80 Feet Road, Koramangala",
     description: "Overflowing community bin attracting stray animals.",
     hazard: "Overflowing Bin",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1503596476-1c12a8ba09a9?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9352, lng: 77.6146 },
     reportedBy: "Sagnik Halder",
     status: "Resolved",
     createdAt: "2026-06-10",
     resolvedAt: "2026-06-13",
+    assignedTo: "Ramesh Kumar",
+    assignedWorkerId: "W-102",
   },
   {
     id: 4,
     location: "Jayanagar 4th Block Park",
     description: "Leaves and general litter piled near the entrance gate.",
     hazard: "None",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9254, lng: 77.5931 },
     reportedBy: "Anita Rao",
     status: "Resolved",
@@ -56,7 +63,7 @@ const initialComplaints = [
     location: "MG Road Metro Station Exit",
     description: "Medical waste dumped near the footpath, children play nearby.",
     hazard: "Risk to Children",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1528323273322-d81458248d40?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9758, lng: 77.6069 },
     reportedBy: "Mohammed Iqbal",
     status: "Resolved",
@@ -79,39 +86,52 @@ const initialComplaints = [
     location: "Sony World Signal, Koramangala",
     description: "Foul smell from an uncollected bin for over a week.",
     hazard: "Foul Smell",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9343, lng: 77.6224 },
     reportedBy: "Anita Rao",
     status: "Pending",
     createdAt: "2026-07-01",
+    assignedTo: null,
+    assignedWorkerId: null,
   },
   {
     id: 8,
     location: "Jayanagar 9th Block Market",
     description: "Vegetable market waste overflowing onto the road.",
     hazard: "Overflowing Bin",
-    photo: null,
+    photo: "https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?auto=format&fit=crop&w=800&q=80",
     coords: { lat: 12.9184, lng: 77.5847 },
     reportedBy: "Mohammed Iqbal",
     status: "In Progress",
     createdAt: "2026-06-28",
+    assignedTo: "Suresh Patil",
+    assignedWorkerId: "W-101",
+    assignedAt: "2026-06-28",
   },
 ];
 
 export function ComplaintsProvider({ children }) {
-  const [complaints, setComplaints] = useState(initialComplaints);
+  const [complaints, setComplaints] = useState(() => {
+    const saved = localStorage.getItem("smartsweep-complaints");
+    return saved ? JSON.parse(saved) : initialComplaints;
+  });
   const { user } = useAuth();
+
+  useEffect(() => {
+    localStorage.setItem("smartsweep-complaints", JSON.stringify(complaints));
+  }, [complaints]);
 
   const toLocalComplaint = (apiComplaint, fallbackData = {}) => ({
     id: apiComplaint.id,
     location: apiComplaint.title || apiComplaint.address || fallbackData.location || "Unknown Location",
     description: apiComplaint.description || fallbackData.description || "",
     hazard: apiComplaint.category || fallbackData.hazard || "None",
-    photo: apiComplaint.photo_url || fallbackData.photo || null,
+    photo: getMediaUrl(apiComplaint.photo_url) || getMediaUrl(fallbackData.photo) || null,
     coords:
       apiComplaint.latitude != null && apiComplaint.longitude != null
         ? { lat: apiComplaint.latitude, lng: apiComplaint.longitude }
         : fallbackData.coords || null,
+    reportedByUserId: apiComplaint.reported_by_user_id ?? fallbackData.reportedByUserId ?? user?.id,
     reportedBy:
       fallbackData.reportedBy ||
       (apiComplaint.reported_by_user_id === user?.id
@@ -119,35 +139,53 @@ export function ComplaintsProvider({ children }) {
         : `User #${apiComplaint.reported_by_user_id}`),
     status: apiComplaint.status
       ? apiComplaint.status.replace(/_/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase())
-      : "Pending",
+      : fallbackData.status || "Pending",
+    assignedTo: fallbackData.assignedTo || apiComplaint.assigned_to || null,
+    assignedWorkerId: fallbackData.assignedWorkerId || apiComplaint.assigned_worker_id || null,
+    assignedAt: fallbackData.assignedAt || apiComplaint.assigned_at || null,
+    instructions: fallbackData.instructions || null,
     createdAt: (apiComplaint.created_at || new Date().toISOString()).slice(0, 10),
     resolvedAt: apiComplaint.resolved_at ? apiComplaint.resolved_at.slice(0, 10) : undefined,
     cancelledAt: apiComplaint.cancelled_at ? apiComplaint.cancelled_at.slice(0, 10) : undefined,
   });
 
-  useEffect(() => {
-    async function loadComplaints() {
-      if (!user) {
-        setComplaints(initialComplaints);
-        return;
-      }
-      const res = await apiFetch("/complaints?page=1&page_size=100");
-      if (res.success && res.data) {
-        const rawList = Array.isArray(res.data) ? res.data : res.data.items || [];
-        const formatted = rawList.map((item) => toLocalComplaint(item));
-        setComplaints(formatted);
-      }
+  const refreshComplaints = async () => {
+    if (!user) {
+      setComplaints(initialComplaints);
+      return;
     }
-    loadComplaints();
+    const res = await apiFetch("/complaints?page=1&page_size=100");
+    if (res.success && res.data) {
+      const rawList = Array.isArray(res.data) ? res.data : res.data.items || [];
+      const formatted = rawList.map((item) => toLocalComplaint(item));
+      setComplaints(formatted);
+    }
+  };
+
+  useEffect(() => {
+    refreshComplaints();
   }, [user]);
 
   const addComplaint = async (data) => {
+    let photoUrl = data.photo;
+    if (data.photo && data.photo.startsWith("data:")) {
+      try {
+        const blob = await (await fetch(data.photo)).blob();
+        const uploadRes = await uploadPhotoApi(blob);
+        if (uploadRes.success && uploadRes.url) {
+          photoUrl = uploadRes.url;
+        }
+      } catch (e) {
+        console.warn("Photo upload helper failed, proceeding with direct payload", e);
+      }
+    }
+
     const payload = {
       location: data.location,
       description: data.description,
-      hazard: data.hazard,
+      hazard: data.hazard && data.hazard !== "None" ? data.hazard : "None",
       complaint_type: data.complaintType || null,
-      photo: data.photo,
+      photo: photoUrl,
       coords: data.coords,
       ward_id: user?.ward_id ?? null,
     };
@@ -159,6 +197,7 @@ export function ComplaintsProvider({ children }) {
 
     const newComplaint = toLocalComplaint(result.data, {
       ...data,
+      photo: photoUrl,
       reportedBy: user?.name || "Citizen",
     });
     setComplaints((prev) => [newComplaint, ...prev.filter((c) => c.id !== newComplaint.id)]);
@@ -212,7 +251,7 @@ export function ComplaintsProvider({ children }) {
     return { success: true };
   };
 
-  const updateStatus = async (id, status) => {
+  const updateStatus = async (id, status, extraData = {}) => {
     const backendStatus = status.toLowerCase().replace(/ /g, "_");
     const result = await apiFetch(`/complaints/${id}/status`, {
       method: "PATCH",
@@ -222,18 +261,19 @@ export function ComplaintsProvider({ children }) {
     if (!result.success) {
       return await updateComplaint(id, {
         status,
+        ...extraData,
         ...(status === "Resolved" ? { resolvedAt: new Date().toISOString().slice(0, 10) } : {}),
       });
     }
 
-    const updated = toLocalComplaint(result.data);
-    setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
+    const updated = toLocalComplaint(result.data, extraData);
+    setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated, ...extraData } : c)));
     return { success: true };
   };
 
   return (
     <ComplaintsContext.Provider
-      value={{ complaints, addComplaint, updateStatus, updateComplaint, cancelComplaint }}
+      value={{ complaints, addComplaint, updateStatus, updateComplaint, cancelComplaint, refreshComplaints }}
     >
       {children}
     </ComplaintsContext.Provider>

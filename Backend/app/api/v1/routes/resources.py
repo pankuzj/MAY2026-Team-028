@@ -16,6 +16,7 @@ from app.schemas.resources import (
     EquipmentStatus,
     VehicleRead,
     VehicleStatus,
+    WorkerCreate,
     WorkerRead,
     WorkerStatus,
 )
@@ -44,6 +45,20 @@ def _to_equipment_read(equipment: Equipment) -> EquipmentRead:
 )
 def list_workers(db: Session = Depends(get_db)) -> list[WorkerRead]:
     return [_to_worker_read(worker) for worker in WorkerRepository.list(db)]
+
+
+@router.post(
+    "/workers",
+    response_model=WorkerRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+    summary="Onboard a new field worker with login credentials",
+)
+def create_worker(
+    worker_in: WorkerCreate, db: Session = Depends(get_db)
+) -> WorkerRead:
+    worker = ResourceService.create_worker(db, worker_in)
+    return _to_worker_read(worker)
 
 
 @router.patch(

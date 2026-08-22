@@ -4,6 +4,7 @@ import { useComplaints } from "../context/ComplaintsContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { getDuplicateMatches } from "../utils/duplicateDetection";
+import { getMediaUrl } from "../utils/api";
 import {
   IconArrowRight,
   IconPin,
@@ -187,11 +188,34 @@ export default function ComplaintDetail() {
 
       <div className="detail-photo-wrap">
         {complaint.photo ? (
-          <img src={complaint.photo} alt="Reported issue" className="detail-photo" />
+          <img
+            src={getMediaUrl(complaint.photo)}
+            alt="Reported issue evidence"
+            className="detail-photo"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=800&q=80";
+            }}
+          />
         ) : (
           <div className="detail-photo detail-photo-empty">No photo attached</div>
         )}
       </div>
+
+      {complaint.assignedTo && (
+        <div style={{ margin: "1rem 0", padding: "0.85rem 1.25rem", background: "rgba(255,255,255,0.04)", borderRadius: "10px", borderLeft: "4px solid #10b981", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <span style={{ fontSize: "0.8rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>Assigned Crew Personnel</span>
+            <p style={{ margin: "0.2rem 0 0", fontSize: "1.05rem", fontWeight: "600" }}>👷 {complaint.assignedTo}</p>
+            {complaint.instructions && (
+              <p style={{ margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#aaa" }}>Note: {complaint.instructions}</p>
+            )}
+          </div>
+          {complaint.assignedAt && (
+            <span style={{ fontSize: "0.85rem", color: "#888" }}>Dispatched {complaint.assignedAt}</span>
+          )}
+        </div>
+      )}
 
       {user?.role === "crew" && complaint.hazard && complaint.hazard !== "None" && (
         <div className="hazard-banner">

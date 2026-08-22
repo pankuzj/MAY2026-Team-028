@@ -48,6 +48,19 @@ class ComplaintService:
     def create_complaint(
         db: Session, current_user: User, complaint_in: ComplaintSubmit
     ) -> Complaint:
+        photo_val = complaint_in.photo
+        if photo_val and photo_val.startswith("data:"):
+            try:
+                import base64
+                from app.services.upload_service import save_upload
+
+                header, b64 = photo_val.split(",", 1)
+                ctype = header.split(";")[0].split(":")[1] if ":" in header else "image/jpeg"
+                raw_bytes = base64.b64decode(b64)
+                photo_val = save_upload(raw_bytes, declared_content_type=ctype)
+            except Exception:
+                pass
+
         complaint = Complaint(
             title=complaint_in.location,
             description=complaint_in.description,
@@ -58,7 +71,7 @@ class ComplaintService:
             address=complaint_in.location,
             latitude=(complaint_in.coords or {}).get("lat") if complaint_in.coords else None,
             longitude=(complaint_in.coords or {}).get("lng") if complaint_in.coords else None,
-            photo_url=complaint_in.photo,
+            photo_url=photo_val,
             ward_id=complaint_in.ward_id or current_user.ward_id,
             reported_by_user_id=current_user.id,
             status=ComplaintStatus.PENDING.value,

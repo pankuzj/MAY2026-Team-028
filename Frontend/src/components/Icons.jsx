@@ -259,3 +259,23 @@ export const IconCheck = (props) => (
     <path d="M20 6 9 17l-5-5" />
   </svg>
 );
+
+export const IconMenu = (props) => (
+  <svg {...base} {...props}>
+    <path d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+);
+
+export const IconChevronRight = (props) => (
+  <svg {...base} {...props}>
+    <path d="m9 18 6-6-6-6" />
+  </svg>
+);
+
+export const IconUser = (props) => (
+  <svg {...base} {...props}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M6 20v-2a6 6 0 0 1 12 0v2" />
+  </svg>
+);
+

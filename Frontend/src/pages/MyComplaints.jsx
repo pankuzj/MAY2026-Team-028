@@ -1,12 +1,19 @@
+import { useEffect } from "react";
 import { useComplaints } from "../context/ComplaintsContext";
 import { useAuth } from "../context/AuthContext";
 import ComplaintCard from "../components/ComplaintCard";
 
 export default function MyComplaints() {
-  const { complaints } = useComplaints();
+  const { complaints, refreshComplaints } = useComplaints();
   const { user } = useAuth();
 
-  const myComplaints = complaints.filter((c) => c.reportedBy === user?.name);
+  useEffect(() => {
+    if (refreshComplaints) refreshComplaints();
+  }, []);
+
+  const myComplaints = complaints.filter(
+    (c) => c.reportedBy === user?.name || c.reportedByUserId === user?.id
+  );
 
   return (
     <div className="page">
