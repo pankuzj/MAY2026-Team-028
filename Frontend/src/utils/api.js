@@ -207,19 +207,35 @@ export async function uploadPhotoApi(fileOrBlob) {
 }
 
 export function getMediaUrl(path) {
-  if (!path) return null;
-  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
+  if (!path || typeof path !== "string" || !path.trim() || path === "null" || path === "undefined") {
+    return null;
+  }
+  if (
+    path.startsWith("http://") ||
+    path.startsWith("https://") ||
+    path.startsWith("data:") ||
+    path.startsWith("blob:")
+  ) {
     return path;
   }
-  const backendBase = (
-    import.meta.env.VITE_API_URL ||
-    "https://smartswip.onrender.com/api/v1"
-  )
-    .replace(/\/api\/v1\/?$/, "")
-    .replace(/\/$/, "");
 
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${backendBase}${cleanPath}`;
+
+  if (import.meta.env.VITE_API_URL) {
+    const backendBase = import.meta.env.VITE_API_URL.trim()
+      .replace(/\/api\/v1\/?$/, "")
+      .replace(/\/$/, "");
+    return `${backendBase}${cleanPath}`;
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ) {
+    return `http://${window.location.hostname}:8000${cleanPath}`;
+  }
+
+  return cleanPath;
 }
 
 export async function refreshTokenApi(refreshToken) {
