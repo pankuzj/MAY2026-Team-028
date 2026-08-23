@@ -16,6 +16,9 @@ export default function CrewTasks() {
   const isGenericCrew = userName === "crew" || userName === "crew demo" || userName === "crew member" || userName.includes("demo");
 
   const allInProgress = complaints.filter((c) => c.status === "In Progress");
+  const allResolved = complaints.filter(
+    (c) => c.status === "Resolved" || c.status === "Verified" || c.status === "Closed"
+  );
 
   const myTasks = allInProgress.filter((c) => {
     if (!c.assignedTo) return true; // Unassigned in-progress jobs visible to all crew
@@ -24,7 +27,19 @@ export default function CrewTasks() {
     return assignee.includes(userName) || userName.includes(assignee);
   });
 
-  const displayedTasks = activeTab === "my" ? myTasks : allInProgress;
+  const myCompletedTasks = allResolved.filter((c) => {
+    if (!c.assignedTo) return isGenericCrew;
+    const assignee = c.assignedTo.toLowerCase();
+    if (isGenericCrew) return true;
+    return assignee.includes(userName) || userName.includes(assignee);
+  });
+
+  const displayedTasks =
+    activeTab === "my"
+      ? myTasks
+      : activeTab === "completed"
+      ? myCompletedTasks
+      : allInProgress;
 
   const handleComplete = async (id) => {
     const result = await updateStatus(id, "Resolved");
@@ -42,7 +57,7 @@ export default function CrewTasks() {
           <span className="eyebrow">Cleanup Crew Operations</span>
           <h1>Field Task Queue</h1>
           <p className="page-lead">
-            Welcome, <strong>{user?.name || "Crew Specialist"}</strong>. Review and resolve your assigned remediation tasks.
+            Welcome, <strong>{user?.name || "Crew Specialist"}</strong>. Review, complete, and track your assigned remediation tasks.
           </p>
         </div>
       </div>
@@ -54,7 +69,14 @@ export default function CrewTasks() {
           className={activeTab === "my" ? "active" : ""}
           onClick={() => setActiveTab("my")}
         >
-          <IconCheckCircle /> My Assigned Tasks ({myTasks.length})
+          <IconCheckCircle /> Active Tasks ({myTasks.length})
+        </button>
+        <button
+          type="button"
+          className={activeTab === "completed" ? "active" : ""}
+          onClick={() => setActiveTab("completed")}
+        >
+          <IconCheckCircle /> Completed Tasks ({myCompletedTasks.length})
         </button>
         <button
           type="button"
@@ -68,11 +90,17 @@ export default function CrewTasks() {
       {displayedTasks.length === 0 ? (
         <div className="empty-state" style={{ textAlign: "center", padding: "3rem 1rem", background: "var(--card-bg, rgba(255,255,255,0.03))", borderRadius: "12px" }}>
           <p style={{ fontSize: "1.1rem", fontWeight: "600" }}>
-            {activeTab === "my" ? "No specific tasks assigned to you right now." : "No in-progress tasks across the ward."}
+            {activeTab === "my"
+              ? "No active tasks assigned to you right now."
+              : activeTab === "completed"
+              ? "No completed tasks yet."
+              : "No in-progress tasks across the ward."}
           </p>
           <p style={{ color: "var(--text-muted, #888)", fontSize: "0.9rem" }}>
             {activeTab === "my"
               ? "Switch to 'All Ward Jobs' to browse active cases or wait for the supervisor to dispatch a task."
+              : activeTab === "completed"
+              ? "Tasks marked as resolved or closed will appear here as your completed work record."
               : "All reported complaints are either pending assignment or already resolved."}
           </p>
         </div>

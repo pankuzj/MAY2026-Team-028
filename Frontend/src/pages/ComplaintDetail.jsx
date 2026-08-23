@@ -15,7 +15,6 @@ import {
   IconReport,
   IconGrid,
   IconStar,
-  IconUserPlus,
   IconRadar,
 } from "../components/Icons";
 
@@ -53,8 +52,6 @@ export default function ComplaintDetail() {
     complaint?.reportedBy === user?.name &&
     complaint?.status === "Pending";
 
-  // Crew can flag a case as needing backup while it's actively being worked.
-  const canRequestSupport = user?.role === "crew" && complaint?.status === "In Progress";
 
   // Admin-only "Similar/Nearby Complaints" panel (#10) — reuses the exact
   // same Haversine + text-overlap heuristic as the duplicate warning (#5),
@@ -75,7 +72,6 @@ export default function ComplaintDetail() {
   const [form, setForm] = useState(null);
   const [error, setError] = useState("");
   const [cancelling, setCancelling] = useState(false);
-  const [requestingSupport, setRequestingSupport] = useState(false);
   const [feedbackForm, setFeedbackForm] = useState({ rating: 0, comment: "" });
   const [hoveredStar, setHoveredStar] = useState(0);
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
@@ -129,19 +125,6 @@ export default function ComplaintDetail() {
     }
   };
 
-  const handleRequestSupport = async () => {
-    setRequestingSupport(true);
-    const result = await updateComplaint(complaint.id, { needsHelp: !complaint.needsHelp });
-    setRequestingSupport(false);
-    if (result.success) {
-      notify(
-        complaint.needsHelp ? "Support request cancelled" : "Additional support requested",
-        complaint.needsHelp ? "info" : "success"
-      );
-    } else {
-      notify(result.error || "Couldn't update the support request.", "error");
-    }
-  };
 
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
@@ -382,23 +365,6 @@ export default function ComplaintDetail() {
             </div>
           )}
 
-          {canRequestSupport && (
-            <div className="detail-actions">
-              <button
-                type="button"
-                className={complaint.needsHelp ? "secondary-btn" : "edit-btn"}
-                onClick={handleRequestSupport}
-                disabled={requestingSupport}
-              >
-                <IconUserPlus />
-                {requestingSupport
-                  ? "Updating..."
-                  : complaint.needsHelp
-                  ? "Cancel Support Request"
-                  : "Request Additional Support"}
-              </button>
-            </div>
-          )}
 
           {canGiveFeedback && (
             <form onSubmit={handleFeedbackSubmit} className="complaint-form feedback-form">
