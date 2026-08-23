@@ -336,6 +336,7 @@ def classify_complaint(
     return ComplaintClassifyRead(
         complaint=_to_read_model(complaint),
         category=result.category,
+        tags=result.tags,
         source=result.source,
         confidence=result.confidence,
         reasoning=result.reasoning,

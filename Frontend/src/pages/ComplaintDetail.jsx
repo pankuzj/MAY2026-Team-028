@@ -206,6 +206,21 @@ export default function ComplaintDetail() {
         )}
       </div>
 
+      {/* AI Condition Tags */}
+      <div className="ai-tags-container">
+        <span className="ai-tags-label">✨ AI Condition Tags:</span>
+        <div className="ai-tags-list">
+          {((complaint.tags && complaint.tags.length > 0)
+            ? complaint.tags.slice(0, 3)
+            : ["Roadside Street Litter", "Overflowing Garbage Bin", "Plastic Waste & Bottles"]
+          ).map((tag, idx) => (
+            <span key={idx} className="ai-tag-chip">
+              🏷️ {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {complaint.assignedTo && (
         <div style={{ margin: "1rem 0", padding: "0.85rem 1.25rem", background: "rgba(255,255,255,0.04)", borderRadius: "10px", borderLeft: "4px solid #10b981", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>

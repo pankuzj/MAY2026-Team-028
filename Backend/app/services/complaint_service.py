@@ -88,6 +88,14 @@ class ComplaintService:
                 created_at=datetime.now(UTC),
             ),
         )
+        # Auto-tag 3 condition tags
+        from app.services.complaint_classification_service import ComplaintClassificationService
+
+        init_tags = ComplaintClassificationService._fallback_tags(created)
+        import json
+
+        created = ComplaintRepository.update(db, created, {"tags": json.dumps(init_tags)})
+
         # S2-A05: emit a duplicate_detected notification if similar reports exist.
         duplicates = DuplicateDetectionService.find_possible_duplicates(db, created)
         if duplicates:

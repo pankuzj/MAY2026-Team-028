@@ -1,10 +1,9 @@
-"""Pydantic DTOs for complaints and complaint history."""
-
+import json
 from datetime import datetime
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ComplaintStatus(str, Enum):
@@ -53,6 +52,7 @@ class ComplaintBase(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     photo_url: str | None = Field(default=None, max_length=10_000_000)
+    tags: list[str] = Field(default_factory=list)
 
 
 class ComplaintCreate(ComplaintBase):
@@ -96,6 +96,7 @@ class ComplaintUpdate(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     photo_url: str | None = Field(default=None, max_length=10_000_000)
+    tags: list[str] | None = None
 
 
 class ComplaintVerify(BaseModel):
@@ -124,6 +125,20 @@ class ComplaintRead(ComplaintBase):
     created_at: datetime
     updated_at: datetime
 
+    @field_validator("tags", mode="before")
+    @classmethod
+    def _parse_tags(cls, v: object) -> list[str]:
+        if isinstance(v, list):
+            return [str(x) for x in v]
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return [str(x) for x in parsed]
+            except Exception:
+                return [t.strip() for t in v.split(",") if t.strip()]
+        return []
+
 
 class ComplaintFilter(BaseModel):
     """Optional list filters for complaints."""
@@ -145,6 +160,7 @@ class ComplaintClassifyRead(BaseModel):
 
     complaint: ComplaintRead
     category: ComplaintCategory
+    tags: list[str] = Field(default_factory=list)
     source: Literal["llm", "heuristic"]
     confidence: float | None = None
     reasoning: str | None = None

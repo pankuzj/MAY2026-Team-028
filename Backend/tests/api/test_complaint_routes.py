@@ -464,7 +464,11 @@ def test_classify_complaint_uses_claude_when_configured(
 
     text_block = MagicMock()
     text_block.type = "text"
-    text_block.text = json.dumps({"category": "Foul Smell", "confidence": 0.92})
+    text_block.text = json.dumps({
+        "category": "Foul Smell",
+        "tags": ["Foul Odor & Decomposing Garbage", "Plastic Waste & Bottles", "Roadside Street Litter"],
+        "confidence": 0.92,
+    })
     mock_response = MagicMock(stop_reason="end_turn", content=[text_block])
 
     with patch("anthropic.Anthropic") as mock_anthropic_cls:
@@ -477,8 +481,10 @@ def test_classify_complaint_uses_claude_when_configured(
     data = resp.json()
     assert data["source"] == "llm"
     assert data["category"] == "Foul Smell"
+    assert len(data["tags"]) == 3
     assert data["confidence"] == 0.92
     assert data["complaint"]["category"] == "Foul Smell"
+    assert len(data["complaint"]["tags"]) == 3
 
 
 def test_classify_complaint_falls_back_when_claude_call_fails(
