@@ -3,6 +3,7 @@
 import logging
 from datetime import datetime
 
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from app import models as _models
@@ -100,10 +101,40 @@ DEMO_EXCEPTIONS_SEED = [
 
 
 
+def _migrate_missing_columns() -> None:
+    """Inspect all declared models and dynamically add any missing columns to existing tables."""
+    try:
+        inspector = inspect(engine)
+        existing_tables = set(inspector.get_table_names())
+        with engine.begin() as conn:
+            for table_name, table in Base.metadata.tables.items():
+                if table_name not in existing_tables:
+                    continue
+                existing_columns = {c["name"] for c in inspector.get_columns(table_name)}
+                for column in table.columns:
+                    if column.name not in existing_columns:
+                        col_type = column.type.compile(engine.dialect)
+                        sql = f"ALTER TABLE {table_name} ADD COLUMN {column.name} {col_type}"
+                        logger.info("Applying auto-migration: %s", sql)
+                        try:
+                            conn.execute(text(sql))
+                        except Exception as exc:  # noqa: BLE001
+                            logger.warning(
+                                "Auto-migration note for %s.%s (%s): %s",
+                                table_name,
+                                column.name,
+                                sql,
+                                exc,
+                            )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Auto-migration inspector encountered an error: %s", exc)
+
+
 def init_db(db: Session) -> None:
     """Ensure database tables exist and seed initial demo users, wards, and schedules."""
     _ = _models.__all__
     Base.metadata.create_all(bind=engine)
+    _migrate_missing_columns()
 
     for user_data in DEMO_USERS_SEED:
         existing = UserRepository.get_by_email(db, user_data["email"])

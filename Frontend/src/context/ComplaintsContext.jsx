@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { apiFetch, createComplaintApi, getMediaUrl } from "../utils/api";
+import { apiFetch, createComplaintApi, getMediaUrl, uploadPhotoApi } from "../utils/api";
 
 const ComplaintsContext = createContext(null);
 
