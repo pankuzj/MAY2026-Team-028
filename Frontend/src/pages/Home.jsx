@@ -60,7 +60,7 @@ const roleConfig = {
   },
   crew: {
     heading: "Cleanup Crew Portal",
-    blurb: "View field task assignments, log resolution proofs, and manage equipment & fleet vehicles.",
+    blurb: "View field task assignments, track daily routes, and log resolution proofs directly from the field.",
     primaryAction: { to: "/crew", label: "View Task Queue", icon: IconBroom },
     actions: [
       {
@@ -69,24 +69,6 @@ const roleConfig = {
         desc: "Review your task queue, update status, and attach cleanup completion photos.",
         icon: IconBroom,
         featured: true,
-      },
-      {
-        to: "/workforce",
-        label: "Workforce & Tools",
-        desc: "Inspect gear condition, safety tools, and team equipment assignments.",
-        icon: IconUsers,
-      },
-      {
-        to: "/vehicles",
-        label: "Vehicle Fleet",
-        desc: "Check vehicle availability, fuel status, and assigned collection routes.",
-        icon: IconTruck,
-      },
-      {
-        to: "/bulk-pickup-manage",
-        label: "Bulk Pickups",
-        desc: "Manage scheduled heavy waste collection dispatches and completion.",
-        icon: IconPackage,
       },
       {
         to: "/feed",

@@ -202,6 +202,34 @@ def test_patch_cannot_set_resolved_at(client: TestClient, db_session: Session):
         assert resp.json()["resolved_at"] is None
 
 
+def test_change_complaint_status_happy_path(client: TestClient, db_session: Session):
+    """Happy Path: Admin or Crew can update complaint status."""
+    citizen_token = _register_and_login(db_session, client, "stat_cit@example.com", UserRole.CITIZEN)
+    admin_token = _register_and_login(db_session, client, "stat_adm@example.com", UserRole.ADMIN)
+    complaint_id = _create_complaint(db_session, citizen_token, client)
+
+    resp = client.patch(
+        f"/api/v1/complaints/{complaint_id}/status",
+        json={"status_value": "in_progress"},
+        headers=_auth(admin_token),
+    )
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["status"] == "in_progress"
+
+
+def test_change_complaint_status_rbac_failure(client: TestClient, db_session: Session):
+    """Auth/RBAC Failure: Citizen cannot directly change complaint status."""
+    citizen_token = _register_and_login(db_session, client, "stat_cit_fail@example.com", UserRole.CITIZEN)
+    complaint_id = _create_complaint(db_session, citizen_token, client)
+
+    resp = client.patch(
+        f"/api/v1/complaints/{complaint_id}/status",
+        json={"status_value": "in_progress"},
+        headers=_auth(citizen_token),
+    )
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+
 # ---------------------------------------------------------------------------
 # S2-A18: complaint_type enum
 # ---------------------------------------------------------------------------

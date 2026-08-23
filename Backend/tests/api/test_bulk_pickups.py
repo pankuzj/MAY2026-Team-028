@@ -262,9 +262,12 @@ def test_update_pickup_validation_failure(client: TestClient, db_session: Sessio
 
 
 def test_update_pickup_rbac_failure(client: TestClient, db_session: Session):
-    """Auth/RBAC Failure: a citizen cannot update pickup lifecycle status."""
+    """Auth/RBAC Failure: a citizen or crew member cannot update pickup lifecycle status."""
     citizen_token = _register_and_login(
         db_session, client, "bp_upd_rbac@example.com", UserRole.CITIZEN
+    )
+    crew_token = _register_and_login(
+        db_session, client, "bp_upd_crew_rbac@example.com", UserRole.CREW
     )
     pickup_id = _create_pickup(client, citizen_token)
 
@@ -272,6 +275,13 @@ def test_update_pickup_rbac_failure(client: TestClient, db_session: Session):
         f"/api/v1/bulk-pickups/{pickup_id}",
         json={"status": "scheduled"},
         headers=_auth(citizen_token),
+    )
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+    resp = client.patch(
+        f"/api/v1/bulk-pickups/{pickup_id}",
+        json={"status": "scheduled"},
+        headers=_auth(crew_token),
     )
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 

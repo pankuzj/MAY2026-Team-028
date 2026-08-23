@@ -41,7 +41,7 @@ def _to_equipment_read(equipment: Equipment) -> EquipmentRead:
     "/workers",
     response_model=list[WorkerRead],
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.CREW))],
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
 )
 def list_workers(db: Session = Depends(get_db)) -> list[WorkerRead]:
     return [_to_worker_read(worker) for worker in WorkerRepository.list(db)]
@@ -65,7 +65,7 @@ def create_worker(
     "/workers/{worker_id}/status",
     response_model=WorkerRead,
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.CREW))],
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
 )
 def update_worker_status(
     worker_id: int, status_value: WorkerStatus, db: Session = Depends(get_db)

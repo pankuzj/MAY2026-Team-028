@@ -228,15 +228,23 @@ def test_get_task_validation_failure(client: TestClient, db_session: Session):
     assert resp.json()["error"]["code"] == "VALIDATION_ERROR"
 
 
-def test_get_task_rbac_failure(client: TestClient):
-    """Auth/RBAC Failure: Request without authentication header returns 401."""
-    resp = client.get("/api/v1/tasks/1")
-    # Note: If GET /{task_id} is open or protected, verify status is 200/401/403 appropriately
-    assert resp.status_code in (
-        status.HTTP_200_OK,
-        status.HTTP_401_UNAUTHORIZED,
-        status.HTTP_404_NOT_FOUND,
+def test_get_task_rbac_failure(client: TestClient, db_session: Session):
+    """Auth/RBAC Failure: Citizen role is forbidden from viewing task details."""
+    admin_token = _register_and_login(
+        db_session, client, "task_get_owner@example.com", UserRole.ADMIN
     )
+    citizen_token = _register_and_login(
+        db_session, client, "task_get_citizen@example.com", UserRole.CITIZEN
+    )
+    create_resp = client.post(
+        "/api/v1/tasks",
+        json={"title": "Task for get RBAC"},
+        headers=_auth(admin_token),
+    )
+    task_id = create_resp.json()["id"]
+
+    resp = client.get(f"/api/v1/tasks/{task_id}", headers=_auth(citizen_token))
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
 def test_get_task_edge_case_not_found(client: TestClient, db_session: Session):
@@ -255,7 +263,7 @@ def test_get_task_edge_case_not_found(client: TestClient, db_session: Session):
 
 
 def test_update_task_happy_path(client: TestClient, db_session: Session):
-    """Happy Path: Admin or Crew updates task fields successfully."""
+    """Happy Path: Admin updates task fields successfully."""
     admin_token = _register_and_login(
         db_session, client, "task_admin_patch@example.com", UserRole.ADMIN
     )
@@ -298,12 +306,15 @@ def test_update_task_validation_failure(client: TestClient, db_session: Session)
 
 
 def test_update_task_rbac_failure(client: TestClient, db_session: Session):
-    """Auth/RBAC Failure: Citizen role is forbidden from updating tasks."""
+    """Auth/RBAC Failure: Citizen and Crew roles are forbidden from updating tasks."""
     admin_token = _register_and_login(
         db_session, client, "task_patch_owner@example.com", UserRole.ADMIN
     )
     citizen_token = _register_and_login(
         db_session, client, "task_patch_citizen@example.com", UserRole.CITIZEN
+    )
+    crew_token = _register_and_login(
+        db_session, client, "task_patch_crew@example.com", UserRole.CREW
     )
 
     create_resp = client.post(
@@ -317,6 +328,13 @@ def test_update_task_rbac_failure(client: TestClient, db_session: Session):
         f"/api/v1/tasks/{task_id}",
         json={"title": "Hacked Title"},
         headers=_auth(citizen_token),
+    )
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+    resp = client.patch(
+        f"/api/v1/tasks/{task_id}",
+        json={"title": "Crew Updated Title"},
+        headers=_auth(crew_token),
     )
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 

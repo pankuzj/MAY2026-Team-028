@@ -202,7 +202,10 @@ def update_complaint(
 
 
 @router.patch(
-    "/{complaint_id}/status", response_model=ComplaintRead, status_code=status.HTTP_200_OK
+    "/{complaint_id}/status",
+    response_model=ComplaintRead,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.CREW))],
 )
 def change_complaint_status(
     complaint_id: int,

@@ -50,7 +50,7 @@ def create_task(
     "/{task_id}",
     response_model=TaskRead,
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(get_current_user)],
+    dependencies=[Depends(require_role(UserRole.CREW, UserRole.ADMIN))],
 )
 def get_task(task_id: int, db: Session = Depends(get_db)) -> TaskRead:
     return _to_read_model(TaskService.get_task(db, task_id), db)
@@ -60,7 +60,7 @@ def get_task(task_id: int, db: Session = Depends(get_db)) -> TaskRead:
     "/{task_id}",
     response_model=TaskRead,
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.CREW))],
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
 )
 def update_task(task_id: int, task_in: TaskUpdate, db: Session = Depends(get_db)) -> TaskRead:
     return _to_read_model(TaskService.update_task(db, task_id, task_in), db)

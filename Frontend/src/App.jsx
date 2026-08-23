@@ -41,16 +41,16 @@ function App() {
             <ProtectedRoute allowedRoles={["admin"]}><SupervisorDashboard /></ProtectedRoute>
           } />
           <Route path="/workforce" element={
-            <ProtectedRoute allowedRoles={["admin", "crew"]}><WorkforceEquipment /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin"]}><WorkforceEquipment /></ProtectedRoute>
           } />
           <Route path="/vehicles" element={
-            <ProtectedRoute allowedRoles={["admin", "crew"]}><VehicleAssignment /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin"]}><VehicleAssignment /></ProtectedRoute>
           } />
           <Route path="/bulk-pickup" element={
             <ProtectedRoute allowedRoles={["citizen"]}><BulkPickupScheduler /></ProtectedRoute>
           } />
           <Route path="/bulk-pickup-manage" element={
-            <ProtectedRoute allowedRoles={["admin", "crew"]}><BulkPickupManagement /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin"]}><BulkPickupManagement /></ProtectedRoute>
           } />
           <Route path="/feed" element={
             <ProtectedRoute><PublicTransparencyFeed /></ProtectedRoute>

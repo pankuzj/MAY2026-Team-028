@@ -45,14 +45,6 @@ const roleNavigation = {
       links: [
         { to: "/", label: "Home Overview", icon: IconHome },
         { to: "/crew", label: "Assigned Tasks", icon: IconBroom, highlight: true },
-        { to: "/bulk-pickup-manage", label: "Bulk Pickups", icon: IconPackage },
-      ],
-    },
-    {
-      section: "Resources & Fleet",
-      links: [
-        { to: "/workforce", label: "Workforce & Equipment", icon: IconUsers },
-        { to: "/vehicles", label: "Fleet & Vehicles", icon: IconTruck },
         { to: "/feed", label: "Public Feed", icon: IconFeed },
       ],
     },

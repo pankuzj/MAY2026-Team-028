@@ -71,7 +71,7 @@ def get_bulk_pickup(
 @router.patch(
     "/{pickup_id}",
     response_model=BulkPickupRead,
-    dependencies=[Depends(require_role(UserRole.CREW, UserRole.ADMIN))],
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
 )
 def update_bulk_pickup(
     pickup_id: int, update_in: BulkPickupUpdate, db: Session = Depends(get_db)

@@ -76,8 +76,8 @@ def _create_equipment(db: Session, name: str = "Broom Heavy") -> Equipment:
 
 
 def test_list_workers_happy_path(client: TestClient, db_session: Session):
-    """Happy Path: Admin or Crew lists workers and receives 200 OK."""
-    token = _register_and_login(db_session, client, "res_list_workers@example.com", UserRole.CREW)
+    """Happy Path: Admin lists workers and receives 200 OK."""
+    token = _register_and_login(db_session, client, "res_list_workers@example.com", UserRole.ADMIN)
     _create_worker(db_session, "Worker One")
 
     resp = client.get("/api/v1/resources/workers", headers=_auth(token))
@@ -96,9 +96,14 @@ def test_list_workers_validation_failure(client: TestClient):
 
 
 def test_list_workers_rbac_failure(client: TestClient, db_session: Session):
-    """Auth/RBAC Failure: Citizen role is forbidden from viewing workers."""
-    token = _register_and_login(db_session, client, "res_cit_workers@example.com", UserRole.CITIZEN)
-    resp = client.get("/api/v1/resources/workers", headers=_auth(token))
+    """Auth/RBAC Failure: Citizen and Crew roles are forbidden from viewing workers."""
+    cit_token = _register_and_login(db_session, client, "res_cit_workers@example.com", UserRole.CITIZEN)
+    resp = client.get("/api/v1/resources/workers", headers=_auth(cit_token))
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
+    assert resp.json()["error"]["code"] == "PERMISSION_DENIED"
+
+    crew_token = _register_and_login(db_session, client, "res_crew_workers@example.com", UserRole.CREW)
+    resp = client.get("/api/v1/resources/workers", headers=_auth(crew_token))
     assert resp.status_code == status.HTTP_403_FORBIDDEN
     assert resp.json()["error"]["code"] == "PERMISSION_DENIED"
 
@@ -117,8 +122,8 @@ def test_list_workers_edge_case_empty(client: TestClient, db_session: Session):
 
 
 def test_update_worker_status_happy_path(client: TestClient, db_session: Session):
-    """Happy Path: Crew updates worker status to off_duty."""
-    token = _register_and_login(db_session, client, "res_w_status_hp@example.com", UserRole.CREW)
+    """Happy Path: Admin updates worker status to off_duty."""
+    token = _register_and_login(db_session, client, "res_w_status_hp@example.com", UserRole.ADMIN)
     worker = _create_worker(db_session, "Worker Status Test")
 
     resp = client.patch(
@@ -142,15 +147,24 @@ def test_update_worker_status_validation_failure(client: TestClient, db_session:
 
 
 def test_update_worker_status_rbac_failure(client: TestClient, db_session: Session):
-    """Auth/RBAC Failure: Citizen role is forbidden from updating worker status."""
-    token = _register_and_login(
+    """Auth/RBAC Failure: Citizen and Crew roles are forbidden from updating worker status."""
+    cit_token = _register_and_login(
         db_session, client, "res_w_status_rbac@example.com", UserRole.CITIZEN
     )
     worker = _create_worker(db_session, "Worker RBAC Test")
 
     resp = client.patch(
         f"/api/v1/resources/workers/{worker.id}/status?status_value=off_duty",
-        headers=_auth(token),
+        headers=_auth(cit_token),
+    )
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+    crew_token = _register_and_login(
+        db_session, client, "res_w_status_crew_rbac@example.com", UserRole.CREW
+    )
+    resp = client.patch(
+        f"/api/v1/resources/workers/{worker.id}/status?status_value=off_duty",
+        headers=_auth(crew_token),
     )
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 
