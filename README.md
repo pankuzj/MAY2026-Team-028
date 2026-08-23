@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="SmartSweep Logo" width="220" />
+  <img src="Frontend/src/assets/logo.png" alt="SmartSweep Logo" width="220" />
 </p>
 
 # SmartSweep
