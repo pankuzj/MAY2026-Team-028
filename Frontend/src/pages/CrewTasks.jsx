@@ -13,7 +13,13 @@ export default function CrewTasks() {
 
   // Normalize user name for comparison
   const userName = (user?.name || user?.email || "").toLowerCase();
-  const isGenericCrew = userName === "crew" || userName === "crew demo" || userName === "crew member" || userName.includes("demo");
+  const isGenericCrew =
+    userName === "crew" ||
+    userName === "crew demo" ||
+    userName === "crew member" ||
+    userName.includes("demo") ||
+    userName.includes("suresh") ||
+    userName.includes("patil");
 
   const allInProgress = complaints.filter((c) => c.status === "In Progress");
   const allResolved = complaints.filter(
@@ -28,9 +34,9 @@ export default function CrewTasks() {
   });
 
   const myCompletedTasks = allResolved.filter((c) => {
-    if (!c.assignedTo) return isGenericCrew;
-    const assignee = c.assignedTo.toLowerCase();
     if (isGenericCrew) return true;
+    if (!c.assignedTo) return true;
+    const assignee = c.assignedTo.toLowerCase();
     return assignee.includes(userName) || userName.includes(assignee);
   });
 
@@ -42,7 +48,9 @@ export default function CrewTasks() {
       : allInProgress;
 
   const handleComplete = async (id) => {
-    const result = await updateStatus(id, "Resolved");
+    const result = await updateStatus(id, "Resolved", {
+      assignedTo: user?.name || "Suresh Patil",
+    });
     if (result.success) {
       notify(`Case #${String(id).padStart(4, "0")} marked as resolved`, "success");
     } else {
